@@ -55,7 +55,7 @@ export function AccordionTrigger({ className, open = false, onClick, children }:
     'data-state': open ? 'open' : 'closed',
     onClick,
     className: cn(
-      'flex flex-1 items-center justify-between gap-4 rounded-md py-4 text-left text-sm font-medium transition-all outline-none hover:underline',
+      'flex w-full flex-1 items-center justify-between gap-4 rounded-md py-4 px-2 text-left text-sm font-medium transition-all outline-none cursor-pointer hover:underline hover:bg-accent/50',
       'focus-visible:ring-ring/50 focus-visible:ring-[3px]',
       '[&[data-state=open]>svg]:rotate-180',
       className,
