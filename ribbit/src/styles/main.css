@@ -1,18 +1,5 @@
-/* ribbit.network — minimal reset (all component styling via Tailwind) */
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-a:hover {
-  text-decoration: none;
-}
-
-button {
-  font-family: inherit;
-  font-size: inherit;
-}
+/* ribbit.network — extra styles not handled by Tailwind */
+/* a/button resets moved to tailwind.css @layer base */
 
 /* Scrollbar */
 ::-webkit-scrollbar {

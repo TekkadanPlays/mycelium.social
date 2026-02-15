@@ -123,7 +123,7 @@ function HeroSection() {
         className: 'text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.1] mb-6',
       },
         createElement('span', { className: 'block' }, 'Social networking'),
-        createElement('span', { className: 'block text-primary' }, 'without permission.'),
+        createElement('span', { className: 'block', style: { color: 'oklch(0.45 0.10 150)' } }, 'without permission.'),
       ),
 
       // Subheadline
