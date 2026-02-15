@@ -93,6 +93,16 @@ export function BlazecnIntro() {
           { label: 'Command', path: '/docs/blazecn/command' },
           { label: 'Input OTP', path: '/docs/blazecn/input-otp' },
           { label: 'Carousel', path: '/docs/blazecn/carousel' },
+          { label: 'Context Menu', path: '/docs/blazecn/context-menu' },
+          { label: 'Drawer', path: '/docs/blazecn/drawer' },
+          { label: 'Menubar', path: '/docs/blazecn/menubar' },
+          { label: 'Navigation Menu', path: '/docs/blazecn/navigation-menu' },
+          { label: 'Resizable', path: '/docs/blazecn/resizable' },
+          { label: 'Combobox', path: '/docs/blazecn/combobox' },
+          { label: 'Kbd', path: '/docs/blazecn/kbd' },
+          { label: 'Typography', path: '/docs/blazecn/typography' },
+          { label: 'Empty', path: '/docs/blazecn/empty' },
+          { label: 'Button Group', path: '/docs/blazecn/button-group' },
         ].map((item) =>
           createElement(Link, {
             key: item.label,
