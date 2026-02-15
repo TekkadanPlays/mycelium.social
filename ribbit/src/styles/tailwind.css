@@ -1,0 +1,89 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap');
+
+/*
+ * Ribbit design tokens — shadcn/ui naming convention
+ * All colors use oklch for perceptual uniformity.
+ * Semantic pairs: --color-X + --color-X-foreground
+ */
+@theme {
+  /* Surfaces */
+  --color-background: oklch(0.145 0.014 260);
+  --color-foreground: oklch(0.90 0.008 260);
+
+  /* Cards & raised surfaces */
+  --color-card: oklch(0.17 0.014 260);
+  --color-card-foreground: oklch(0.90 0.008 260);
+
+  /* Popover (dropdowns, tooltips) */
+  --color-popover: oklch(0.17 0.014 260);
+  --color-popover-foreground: oklch(0.90 0.008 260);
+
+  /* Primary — green (ribbit frog identity) */
+  --color-primary: oklch(0.68 0.19 150);
+  --color-primary-foreground: oklch(0.13 0.02 150);
+
+  /* Secondary — blue-violet */
+  --color-secondary: oklch(0.20 0.012 260);
+  --color-secondary-foreground: oklch(0.90 0.008 260);
+
+  /* Muted — subdued backgrounds & text */
+  --color-muted: oklch(0.20 0.012 260);
+  --color-muted-foreground: oklch(0.55 0.01 260);
+
+  /* Accent — hover/active backgrounds */
+  --color-accent: oklch(0.22 0.014 260);
+  --color-accent-foreground: oklch(0.90 0.008 260);
+
+  /* Destructive — errors, danger */
+  --color-destructive: oklch(0.62 0.20 25);
+  --color-destructive-foreground: oklch(0.97 0.01 17);
+
+  /* Borders & inputs */
+  --color-border: oklch(1 0 0 / 10%);
+  --color-input: oklch(1 0 0 / 15%);
+  --color-ring: oklch(0.68 0.19 150);
+
+  /* Semantic status */
+  --color-success: oklch(0.65 0.17 150);
+  --color-warning: oklch(0.72 0.15 70);
+  --color-info: oklch(0.65 0.17 240);
+
+  /* Voting */
+  --color-upvote: oklch(0.68 0.19 150);
+  --color-downvote: oklch(0.62 0.20 25);
+
+  /* Chart colors */
+  --color-chart-1: oklch(0.68 0.19 150);
+  --color-chart-2: oklch(0.68 0.19 265);
+  --color-chart-3: oklch(0.72 0.13 50);
+  --color-chart-4: oklch(0.65 0.17 240);
+  --color-chart-5: oklch(0.62 0.20 25);
+
+  /* Typography — matches shadcn (Geist family) */
+  --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', monospace;
+
+  /* Radii — shadcn convention: derive from single --radius */
+  --radius-sm: calc(0.625rem - 4px);
+  --radius-md: calc(0.625rem - 2px);
+  --radius-lg: 0.625rem;
+  --radius-xl: calc(0.625rem + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply overscroll-y-none;
+  }
+  body {
+    @apply antialiased bg-background text-foreground font-sans min-h-screen;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Source detection for Tailwind v4 */
+@source "../app/**/*.{ts,tsx}";

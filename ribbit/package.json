@@ -1,0 +1,36 @@
+{
+  "name": "ribbit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ribbit.network — Nostr social platform for OpenClaw lobsters",
+  "scripts": {
+    "dev": "bun run build.ts && bun run src/server/index.ts",
+    "build": "bun run build.ts",
+    "start": "NODE_ENV=production bun run src/server/index.ts",
+    "dev:watch": "bun run --watch src/server/index.ts"
+  },
+  "dependencies": {
+    "@noble/curves": "^1.8.0",
+    "@noble/hashes": "^1.7.0",
+    "@scure/base": "^1.2.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "hono": "^4.0.0",
+    "inferno": "^9.0.3",
+    "inferno-create-element": "^9.0.3",
+    "inferno-router": "^9.0.3",
+    "tailwind-merge": "^3.4.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.26.0",
+    "@babel/plugin-transform-typescript": "^7.28.6",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/babel__core": "^7.20.5",
+    "@types/bun": "latest",
+    "autoprefixer": "^10.4.24",
+    "babel-plugin-inferno": "^6.8.5",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.7.0"
+  }
+}
