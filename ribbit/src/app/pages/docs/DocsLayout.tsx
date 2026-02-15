@@ -316,27 +316,32 @@ function DocsSidebar({ currentPath }: { currentPath: string }) {
     className: 'hidden lg:block w-56 shrink-0',
   },
     createElement('div', {
-      className: 'sticky top-[72px] space-y-1 max-h-[calc(100vh-100px)] overflow-y-auto pr-2 pb-8',
+      className: 'sticky top-[72px] flex flex-col max-h-[calc(100vh-100px)]',
     },
-      createElement(ProjectSwitcher, { activeGroup, currentPath }),
+      // Project switcher sits above the scrollable area so its dropdown isn't clipped
+      createElement('div', { className: 'relative z-20 shrink-0 mb-1' },
+        createElement(ProjectSwitcher, { activeGroup, currentPath }),
+      ),
 
-      // Active group sections
-      ...activeGroup.sections.map((section) =>
-        createElement('div', { key: section.heading, className: 'mb-4' },
-          createElement('p', {
-            className: 'px-2 mb-1 text-xs font-semibold tracking-wider uppercase text-muted-foreground/60',
-          }, section.heading),
-          ...section.items.map((item) =>
-            createElement(Link, {
-              key: item.path,
-              to: item.path,
-              className: cn(
-                'flex items-center px-2 py-1.5 text-sm rounded-md transition-colors',
-                currentPath === item.path
-                  ? 'bg-accent text-accent-foreground font-medium'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
-              ),
-            }, item.label),
+      // Scrollable nav links
+      createElement('div', { className: 'overflow-y-auto space-y-1 pr-2 pb-8' },
+        ...activeGroup.sections.map((section) =>
+          createElement('div', { key: section.heading, className: 'mb-4' },
+            createElement('p', {
+              className: 'px-2 mb-1 text-xs font-semibold tracking-wider uppercase text-muted-foreground/60',
+            }, section.heading),
+            ...section.items.map((item) =>
+              createElement(Link, {
+                key: item.path,
+                to: item.path,
+                className: cn(
+                  'flex items-center px-2 py-1.5 text-sm rounded-md transition-colors',
+                  currentPath === item.path
+                    ? 'bg-accent text-accent-foreground font-medium'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
+                ),
+              }, item.label),
+            ),
           ),
         ),
       ),
