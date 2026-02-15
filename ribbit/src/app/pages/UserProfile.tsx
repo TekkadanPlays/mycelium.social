@@ -10,7 +10,9 @@ import { npubEncode, shortenNpub } from '../../nostr/utils';
 import { isRootNote } from '../../nostr/nip10';
 import { getAuthState } from '../store/auth';
 import { isFollowing, followUser, unfollowUser, subscribeContacts } from '../store/contacts';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/Avatar';
 import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
 import { Spinner } from '../ui/Spinner';
 
 interface UserProfileProps {
@@ -101,74 +103,103 @@ export class UserProfile extends Component<UserProfileProps, UserProfileState> {
     const npub = npubEncode(pubkey);
     const displayName = profile?.displayName || profile?.name || shortenNpub(npub);
     const initial = (displayName || '?')[0].toUpperCase();
+    const auth = getAuthState();
+    const isOwnProfile = auth.pubkey === pubkey;
 
-    return createElement('div', { className: 'space-y-4' },
+    return createElement('div', { className: 'space-y-4 max-w-2xl' },
+      // Back link
       createElement(Link, {
-        to: '/',
-        className: 'inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2',
+        to: '/feed',
+        className: 'inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors',
       }, '\u2190 Back to feed'),
 
-      // Profile header
-      createElement('div', { className: 'rounded-lg border border-border overflow-hidden' },
+      // Profile card
+      createElement('div', { className: 'rounded-xl border border-border overflow-hidden' },
         // Banner
-        createElement('div', { className: 'h-32 bg-muted relative overflow-hidden' },
+        createElement('div', { className: 'h-36 sm:h-44 bg-muted relative overflow-hidden' },
           profile?.banner
             ? createElement('img', { src: profile.banner, alt: '', className: 'w-full h-full object-cover' })
-            : createElement('div', { className: 'w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20' }),
-          createElement('div', { className: 'absolute inset-0 bg-gradient-to-t from-background/90 to-transparent' }),
+            : createElement('div', { className: 'w-full h-full bg-gradient-to-br from-primary/15 via-primary/5 to-transparent' }),
         ),
-        // Info
-        createElement('div', { className: 'px-5 pb-5 -mt-10 relative text-center' },
-          // Avatar
-          profile?.picture
-            ? createElement('img', {
-                src: profile.picture,
-                alt: displayName,
-                className: 'w-16 h-16 rounded-full object-cover border-4 border-background mx-auto',
-              })
-            : createElement('div', {
-                className: 'w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center border-4 border-background mx-auto',
-              },
-                createElement('span', { className: 'text-lg font-semibold text-primary' }, initial),
-              ),
-          createElement('h2', { className: 'font-bold text-lg mt-3' }, displayName),
-          // Follow/unfollow button
-          getAuthState().pubkey && getAuthState().pubkey !== pubkey
-            ? createElement(Button, {
-                onClick: this.handleFollow,
-                disabled: this.state.followLoading,
-                variant: this.state.isFollowed ? 'outline' : 'default',
-                size: 'xs',
-                className: this.state.isFollowed ? 'mt-2 hover:text-destructive hover:border-destructive/50' : 'mt-2',
-              }, this.state.followLoading ? '...' : this.state.isFollowed ? 'Unfollow' : 'Follow')
-            : null,
-          profile?.nip05
-            ? createElement('p', { className: 'text-xs text-primary mt-0.5' }, profile.nip05)
-            : null,
-          createElement('p', { className: 'text-xs font-mono text-muted-foreground/40 mt-1 break-all' }, npub),
-          profile?.about
-            ? createElement('p', { className: 'text-sm text-muted-foreground mt-3 leading-relaxed max-w-lg mx-auto' }, profile.about)
-            : null,
-        ),
-      ),
 
-      // Posts heading
-      createElement('p', { className: 'text-xs font-semibold tracking-wider uppercase text-muted-foreground' },
-        `Posts (${posts.length})`,
-      ),
-
-      // Posts list
-      isLoading && posts.length === 0
-        ? createElement('div', { className: 'flex justify-center py-16' },
-            createElement(Spinner, null),
-          )
-        : posts.length > 0
-          ? createElement('div', { className: 'space-y-3' },
-              ...posts.map((event) => createElement(PostCard, { key: event.id, event })),
-            )
-          : createElement('div', { className: 'text-center py-8 text-xs text-muted-foreground' },
-              'No posts yet',
+        // Profile info
+        createElement('div', { className: 'px-5 pb-5 -mt-12 relative' },
+          // Avatar + actions row
+          createElement('div', { className: 'flex items-end justify-between mb-3' },
+            createElement(Avatar, { className: 'size-20 border-4 border-background shadow-lg' },
+              profile?.picture
+                ? createElement(AvatarImage, { src: profile.picture, alt: displayName })
+                : null,
+              createElement(AvatarFallback, { className: 'text-xl' }, initial),
             ),
+
+            // Actions
+            createElement('div', { className: 'flex items-center gap-2 pt-14' },
+              isOwnProfile
+                ? createElement(Link, { to: '/settings' },
+                    createElement(Button, { variant: 'outline', size: 'sm' }, 'Edit Profile'),
+                  )
+                : auth.pubkey
+                  ? createElement(Button, {
+                      onClick: this.handleFollow,
+                      disabled: this.state.followLoading,
+                      variant: this.state.isFollowed ? 'outline' : 'default',
+                      size: 'sm',
+                      className: this.state.isFollowed ? 'hover:text-destructive hover:border-destructive/50' : '',
+                    }, this.state.followLoading ? '...' : this.state.isFollowed ? 'Unfollow' : 'Follow')
+                  : null,
+            ),
+          ),
+
+          // Name + NIP-05
+          createElement('h1', { className: 'text-xl font-bold tracking-tight' }, displayName),
+          profile?.nip05
+            ? createElement('p', { className: 'text-sm text-primary mt-0.5' }, profile.nip05)
+            : null,
+
+          // Npub
+          createElement('button', {
+            className: 'text-xs font-mono text-muted-foreground/50 mt-1 hover:text-muted-foreground transition-colors truncate max-w-full text-left',
+            onClick: () => navigator.clipboard.writeText(npub),
+            title: 'Click to copy',
+          }, npub),
+
+          // Bio
+          profile?.about
+            ? createElement('p', { className: 'text-sm text-muted-foreground mt-3 leading-relaxed' }, profile.about)
+            : null,
+
+          // Stats row
+          createElement('div', { className: 'flex items-center gap-4 mt-4 pt-3 border-t border-border' },
+            createElement('div', { className: 'text-center' },
+              createElement('p', { className: 'text-sm font-bold' }, String(posts.length)),
+              createElement('p', { className: 'text-[11px] text-muted-foreground' }, 'Posts'),
+            ),
+            this.state.isFollowed
+              ? createElement(Badge, { variant: 'secondary', className: 'text-[10px]' }, 'Following')
+              : null,
+          ),
+        ),
+      ),
+
+      // Posts section
+      createElement('div', { className: 'space-y-3' },
+        createElement('p', { className: 'text-xs font-semibold tracking-wider uppercase text-muted-foreground' },
+          'Posts',
+        ),
+
+        isLoading && posts.length === 0
+          ? createElement('div', { className: 'flex justify-center py-16' },
+              createElement(Spinner, null),
+            )
+          : posts.length > 0
+            ? createElement('div', { className: 'space-y-3' },
+                ...posts.map((event) => createElement(PostCard, { key: event.id, event, compact: true })),
+              )
+            : createElement('div', { className: 'text-center py-12' },
+                createElement('p', { className: 'text-sm text-muted-foreground' }, 'No posts yet.'),
+              ),
+      ),
     );
   }
 }

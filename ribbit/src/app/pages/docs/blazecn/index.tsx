@@ -1,0 +1,95 @@
+import { createElement } from 'inferno-create-element';
+import { Link } from 'inferno-router';
+import { Badge } from '../../../ui/Badge';
+import { ThemeToggle } from '../../../ui/ThemeToggle';
+
+export function BlazecnIntro() {
+  return createElement('div', { className: 'space-y-8' },
+    // Hero
+    createElement('div', null,
+      createElement('div', { className: 'flex items-center gap-3 mb-2' },
+        createElement('span', { className: 'text-3xl' }, '\u26A1'),
+        createElement('h1', { className: 'text-3xl font-bold tracking-tight' }, 'Blazecn'),
+        createElement(ThemeToggle, null),
+      ),
+      createElement('p', { className: 'text-muted-foreground max-w-2xl mb-4' },
+        'A shadcn/ui-compatible component library for InfernoJS. Same design tokens, same class strings, zero React dependency. Built for speed.',
+      ),
+      createElement('div', { className: 'flex flex-wrap gap-3 mb-6' },
+        createElement(Badge, null, 'InfernoJS'),
+        createElement(Badge, { variant: 'secondary' }, 'Tailwind CSS v4'),
+        createElement(Badge, { variant: 'secondary' }, 'class-variance-authority'),
+        createElement(Badge, { variant: 'outline' }, 'MIT License'),
+      ),
+      createElement('div', { className: 'flex items-center gap-3' },
+        createElement('a', {
+          href: 'https://github.com/TekkadanPlays/blazecn',
+          target: '_blank',
+          rel: 'noopener',
+          className: 'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors',
+        }, 'GitHub \u2192'),
+        createElement(Link, {
+          to: '/docs',
+          className: 'inline-flex items-center gap-2 rounded-md border border-input px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
+        }, '\u2190 All docs'),
+      ),
+    ),
+
+    // Overview
+    createElement('div', { className: 'space-y-4' },
+      createElement('h2', { className: 'text-xl font-bold tracking-tight' }, 'Overview'),
+      createElement('p', { className: 'text-sm text-muted-foreground' },
+        'Blazecn follows the shadcn philosophy \u2014 you own the code. Copy the components you need into your project. Every component is a single file with only cn() as a local dependency.',
+      ),
+      createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-3 gap-4' },
+        ...[
+          { title: '32 Components', desc: 'Buttons, forms, overlays, data display, navigation, and layout primitives.' },
+          { title: 'InfernoJS Native', desc: 'Pure createElement calls. No JSX runtime, no React, no hooks. Class components for state.' },
+          { title: 'Tailwind v4', desc: 'OKLCH design tokens, CSS custom properties, @theme inline bridge. Light + dark themes.' },
+        ].map((item) =>
+          createElement('div', {
+            key: item.title,
+            className: 'rounded-lg border border-border p-4',
+          },
+            createElement('p', { className: 'text-sm font-semibold mb-1' }, item.title),
+            createElement('p', { className: 'text-xs text-muted-foreground' }, item.desc),
+          ),
+        ),
+      ),
+    ),
+
+    // Component list
+    createElement('div', { className: 'space-y-4' },
+      createElement('h2', { className: 'text-xl font-bold tracking-tight' }, 'Components'),
+      createElement('p', { className: 'text-sm text-muted-foreground' },
+        'Browse individual component documentation from the sidebar, or jump to a category:',
+      ),
+      createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-4 gap-2' },
+        ...[
+          { label: 'Button', path: '/docs/blazecn/button' },
+          { label: 'Badge', path: '/docs/blazecn/badge' },
+          { label: 'Card', path: '/docs/blazecn/card' },
+          { label: 'Input', path: '/docs/blazecn/input' },
+          { label: 'Switch', path: '/docs/blazecn/switch' },
+          { label: 'Checkbox', path: '/docs/blazecn/checkbox' },
+          { label: 'Radio Group', path: '/docs/blazecn/radio-group' },
+          { label: 'Select', path: '/docs/blazecn/select' },
+          { label: 'Slider', path: '/docs/blazecn/slider' },
+          { label: 'Tabs', path: '/docs/blazecn/tabs' },
+          { label: 'Toggle', path: '/docs/blazecn/toggle' },
+          { label: 'Dialog', path: '/docs/blazecn/dialog' },
+          { label: 'Tooltip', path: '/docs/blazecn/tooltip' },
+          { label: 'Toast', path: '/docs/blazecn/toast' },
+          { label: 'Accordion', path: '/docs/blazecn/accordion' },
+          { label: 'Table', path: '/docs/blazecn/table' },
+        ].map((item) =>
+          createElement(Link, {
+            key: item.label,
+            to: item.path,
+            className: 'rounded-md border border-border px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors',
+          }, item.label),
+        ),
+      ),
+    ),
+  );
+}

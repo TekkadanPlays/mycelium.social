@@ -4,16 +4,18 @@ import { Link } from 'inferno-router';
 import type { NostrEvent } from '../../nostr/event';
 import { Kind, createEvent } from '../../nostr/event';
 import { signWithExtension } from '../../nostr/nip07';
-import { summarizeReactions, buildReactionTags, getReactionType } from '../../nostr/nip25';
+import { summarizeReactions, buildReactionTags } from '../../nostr/nip25';
 import { getProfile, fetchProfile, subscribeProfiles } from '../store/profiles';
 import { getFeedState, subscribeFeed } from '../store/feed';
 import { getAuthState } from '../store/auth';
 import { getPool } from '../store/relay';
 import { npubEncode, shortenNpub } from '../../nostr/utils';
 import { ContentRenderer } from './ContentRenderer';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/Avatar';
 
 interface PostCardProps {
   event: NostrEvent;
+  compact?: boolean;
 }
 
 interface PostCardState {
@@ -94,103 +96,95 @@ export class PostCard extends Component<PostCardProps, PostCardState> {
   }
 
   render() {
-    const { event } = this.props;
+    const { event, compact } = this.props;
     const { profileName, profilePicture, reactions, isVoting } = this.state;
     const auth = getAuthState();
 
     const summary = summarizeReactions(reactions, auth.pubkey || undefined);
     const userLiked = summary.userReaction === '+' || summary.userReaction === '';
     const userDisliked = summary.userReaction === '-';
-
     const initial = (profileName || '?')[0].toUpperCase();
+    const replyCount = getFeedState().replyCounts.get(event.id) || 0;
 
     return createElement('div', {
-      className: 'rounded-lg border border-border overflow-hidden hover:border-border/80 transition-all group',
+      className: 'rounded-xl border border-border p-4 hover:border-primary/20 transition-all',
     },
-      createElement('div', { className: 'flex' },
-        // Vote column
-        createElement('div', {
-          className: 'flex flex-col items-center gap-0.5 py-3 px-2.5 bg-muted/30',
-        },
-          createElement('button', {
-            onClick: () => this.vote('+'),
-            disabled: isVoting || !auth.pubkey,
-            title: 'Upvote',
-            className: `p-1 rounded transition-colors ${
-              userLiked ? 'text-upvote' : 'text-muted-foreground/40 hover:text-upvote'
-            } disabled:opacity-30 disabled:pointer-events-none`,
-          }, '\u25B2'),
-          createElement('span', {
-            className: `text-xs font-semibold tabular-nums ${
-              summary.score > 0 ? 'text-upvote' : summary.score < 0 ? 'text-downvote' : 'text-muted-foreground'
-            }`,
-          }, summary.score),
-          createElement('button', {
-            onClick: () => this.vote('-'),
-            disabled: isVoting || !auth.pubkey,
-            title: 'Downvote',
-            className: `p-1 rounded transition-colors ${
-              userDisliked ? 'text-downvote' : 'text-muted-foreground/40 hover:text-downvote'
-            } disabled:opacity-30 disabled:pointer-events-none`,
-          }, '\u25BC'),
-        ),
-
-        // Content
-        createElement('div', { className: 'flex-1 min-w-0 p-3' },
-          // Author row
-          createElement('div', { className: 'flex items-center gap-2 mb-2' },
-            // Avatar
+      // Author row
+      createElement('div', { className: 'flex items-center gap-2.5 mb-3' },
+        createElement(Link, { to: `/u/${event.pubkey}`, className: 'shrink-0' },
+          createElement(Avatar, { className: compact ? 'size-7' : 'size-9' },
             profilePicture
-              ? createElement('img', {
-                  src: profilePicture,
-                  alt: '',
-                  className: 'w-6 h-6 rounded-full object-cover',
-                })
-              : createElement('div', {
-                  className: 'w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center',
-                },
-                  createElement('span', { className: 'text-[10px] font-semibold text-primary' }, initial),
-                ),
+              ? createElement(AvatarImage, { src: profilePicture, alt: profileName })
+              : null,
+            createElement(AvatarFallback, { className: compact ? 'text-[10px]' : 'text-xs' }, initial),
+          ),
+        ),
+        createElement('div', { className: 'flex-1 min-w-0' },
+          createElement('div', { className: 'flex items-center gap-1.5' },
             createElement(Link, {
               to: `/u/${event.pubkey}`,
-              className: 'text-sm font-medium text-muted-foreground hover:text-foreground transition-colors',
+              className: 'text-sm font-semibold hover:underline truncate',
             }, profileName),
-            createElement('span', { className: 'text-muted-foreground/30' }, '\u00B7'),
+            createElement('span', { className: 'text-muted-foreground/40 text-xs' }, '\u00B7'),
             createElement('span', {
-              className: 'text-xs text-muted-foreground',
+              className: 'text-xs text-muted-foreground shrink-0',
               title: new Date(event.created_at * 1000).toLocaleString(),
             }, this.formatTime(event.created_at)),
           ),
-
-          // Content
-          createElement('div', { className: 'line-clamp-4' },
-            createElement(ContentRenderer, { content: event.content }),
-          ),
-
-          // Actions
-          createElement('div', { className: 'flex items-center gap-4 mt-3 pt-2 border-t border-border' },
-            createElement(Link, {
-              to: `/post/${event.id}`,
-              className: 'text-xs text-muted-foreground hover:text-foreground transition-colors',
-            }, `\u{1F4AC} ${(() => { const feed = getFeedState(); const c = feed.replyCounts.get(event.id); return c ? `${c} Repl${c === 1 ? 'y' : 'ies'}` : 'Comments'; })()}`),
-            createElement('button', {
-              className: 'text-xs text-muted-foreground hover:text-foreground transition-colors',
-              onClick: async () => {
-                const auth = getAuthState();
-                if (!auth.pubkey) return;
-                try {
-                  const unsigned = createEvent(Kind.Repost, JSON.stringify(event), [['e', event.id, ''], ['p', event.pubkey]], auth.pubkey);
-                  const signed = await signWithExtension(unsigned);
-                  await getPool().publish(signed);
-                } catch (err) { console.error('Repost error:', err); }
-              },
-            }, '\u{1F501} Repost'),
-            createElement('button', {
-              className: 'text-xs text-muted-foreground hover:text-foreground transition-colors',
-              onClick: () => navigator.clipboard.writeText(`${window.location.origin}/post/${event.id}`),
-            }, '\u{1F517} Share'),
-          ),
         ),
+      ),
+
+      // Content — click to open thread
+      createElement(Link, {
+        to: `/post/${event.id}`,
+        className: 'block',
+      },
+        createElement('div', { className: compact ? 'line-clamp-3' : 'line-clamp-6' },
+          createElement(ContentRenderer, { content: event.content }),
+        ),
+      ),
+
+      // Action bar
+      createElement('div', { className: 'flex items-center gap-1 mt-3 -ml-1.5' },
+        // Like
+        createElement('button', {
+          onClick: () => this.vote('+'),
+          disabled: isVoting || !auth.pubkey,
+          className: `inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-colors ${
+            userLiked
+              ? 'text-primary bg-primary/10'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+          } disabled:opacity-30 disabled:pointer-events-none`,
+        },
+          '\u25B2',
+          summary.likes > 0 ? createElement('span', { className: 'tabular-nums' }, String(summary.likes)) : null,
+        ),
+        // Dislike
+        createElement('button', {
+          onClick: () => this.vote('-'),
+          disabled: isVoting || !auth.pubkey,
+          className: `inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs transition-colors ${
+            userDisliked
+              ? 'text-destructive bg-destructive/10'
+              : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+          } disabled:opacity-30 disabled:pointer-events-none`,
+        },
+          '\u25BC',
+          summary.dislikes > 0 ? createElement('span', { className: 'tabular-nums' }, String(summary.dislikes)) : null,
+        ),
+        // Comments
+        createElement(Link, {
+          to: `/post/${event.id}`,
+          className: 'inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
+        },
+          '\u{1F4AC}',
+          replyCount > 0 ? createElement('span', { className: 'tabular-nums' }, String(replyCount)) : null,
+        ),
+        // Share
+        createElement('button', {
+          className: 'inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-accent transition-colors ml-auto',
+          onClick: () => navigator.clipboard.writeText(`${window.location.origin}/post/${event.id}`),
+        }, '\u{1F517}'),
       ),
     );
   }

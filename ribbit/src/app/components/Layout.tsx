@@ -2,21 +2,25 @@ import { Component } from 'inferno';
 import { createElement } from 'inferno-create-element';
 import { Link } from 'inferno-router';
 import { getAuthState, subscribeAuth, login, logout } from '../store/auth';
-import { getRelayState, subscribeRelay } from '../store/relay';
 import { getProfile, subscribeProfiles } from '../store/profiles';
 import { npubEncode, shortenNpub } from '../../nostr/utils';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/Avatar';
+import { Button } from '../ui/Button';
+
+// ---------------------------------------------------------------------------
+// Header
+// ---------------------------------------------------------------------------
 
 interface HeaderState {
   auth: ReturnType<typeof getAuthState>;
-  relay: ReturnType<typeof getRelayState>;
   profileName: string;
+  profilePicture: string;
   mobileOpen: boolean;
   dropdownOpen: boolean;
 }
 
 export class Header extends Component<{}, HeaderState> {
   private unsubAuth: (() => void) | null = null;
-  private unsubRelay: (() => void) | null = null;
   private unsubProfiles: (() => void) | null = null;
   private outsideClickHandler: ((e: Event) => void) | null = null;
   declare state: HeaderState;
@@ -25,8 +29,8 @@ export class Header extends Component<{}, HeaderState> {
     super(props);
     this.state = {
       auth: getAuthState(),
-      relay: getRelayState(),
       profileName: '',
+      profilePicture: '',
       mobileOpen: false,
       dropdownOpen: false,
     };
@@ -36,15 +40,12 @@ export class Header extends Component<{}, HeaderState> {
     this.unsubAuth = subscribeAuth(() => {
       const auth = getAuthState();
       this.setState({ ...this.state, auth });
-      this.updateProfileName(auth.pubkey);
-    });
-    this.unsubRelay = subscribeRelay(() => {
-      this.setState({ ...this.state, relay: getRelayState() });
+      this.updateProfile(auth.pubkey);
     });
     this.unsubProfiles = subscribeProfiles(() => {
-      this.updateProfileName(this.state.auth.pubkey);
+      this.updateProfile(this.state.auth.pubkey);
     });
-    this.updateProfileName(this.state.auth.pubkey);
+    this.updateProfile(this.state.auth.pubkey);
 
     this.outsideClickHandler = () => {
       if (this.state.dropdownOpen) this.setState({ ...this.state, dropdownOpen: false });
@@ -54,143 +55,110 @@ export class Header extends Component<{}, HeaderState> {
 
   componentWillUnmount() {
     this.unsubAuth?.();
-    this.unsubRelay?.();
     this.unsubProfiles?.();
     if (this.outsideClickHandler) document.removeEventListener('click', this.outsideClickHandler);
   }
 
-  updateProfileName(pubkey: string | null) {
+  updateProfile(pubkey: string | null) {
     if (!pubkey) {
-      this.setState({ profileName: '' });
+      this.setState({ profileName: '', profilePicture: '' });
       return;
     }
     const profile = getProfile(pubkey);
     const name = profile?.displayName || profile?.name || shortenNpub(npubEncode(pubkey));
-    this.setState({ profileName: name });
-  }
-
-  getRelayStatus(): string {
-    const statuses = Array.from(this.state.relay.statuses.values());
-    if (statuses.some((s) => s === 'connected')) return 'connected';
-    if (statuses.some((s) => s === 'connecting')) return 'connecting';
-    return 'disconnected';
+    this.setState({ profileName: name, profilePicture: profile?.picture || '' });
   }
 
   render() {
-    const { auth, profileName, mobileOpen, dropdownOpen } = this.state;
-    const relayStatus = this.getRelayStatus();
+    const { auth, profileName, profilePicture, mobileOpen, dropdownOpen } = this.state;
     const initials = (profileName || '??').substring(0, 2).toUpperCase();
 
     const navLinks = [
-      { to: '/', label: 'Feed' },
-      { to: '/notifications', label: 'Notifications' },
-      { to: '/raw', label: 'Events' },
-      { to: '/docs', label: 'Blazecn' },
+      { to: '/feed', label: 'Feed' },
+      { to: '/docs', label: 'Docs' },
     ];
 
     return createElement('nav', {
       className: 'sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md',
     },
       createElement('div', { className: 'mx-auto max-w-6xl px-5 sm:px-6 lg:px-8' },
-        // 3-column grid: logo | center nav | right actions
-        createElement('div', {
-          className: 'grid h-14 items-center',
-          style: { gridTemplateColumns: '1fr auto 1fr' },
-        },
+        createElement('div', { className: 'flex h-16 items-center justify-between' },
           // Left: Logo
-          createElement('div', { className: 'flex items-center' },
-            createElement(Link, { to: '/', className: 'flex items-center gap-2 group' },
-              createElement('span', { className: 'text-lg' }, '\u{1F438}'),
-              createElement('span', { className: 'font-bold text-sm tracking-tight' }, 'ribbit'),
-            ),
+          createElement(Link, { to: '/', className: 'flex items-center gap-2.5 group shrink-0' },
+            createElement('span', { className: 'text-2xl' }, '\u{1F438}'),
+            createElement('span', { className: 'font-extrabold text-lg tracking-tight' }, 'ribbit'),
           ),
 
-          // Center: Nav links (desktop)
-          createElement('div', { className: 'hidden lg:flex items-center gap-1' },
-            ...navLinks.map((link) =>
-              createElement(Link, {
-                key: link.label,
-                to: link.to,
-                className: 'px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors',
-              }, link.label),
-            ),
-          ),
-
-          // Right: Actions
-          createElement('div', { className: 'flex items-center justify-end gap-2' },
-            // Relay status badge
-            createElement('div', {
-              className: `inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${
-                relayStatus === 'connected' ? 'bg-success/10 text-success'
-                : relayStatus === 'connecting' ? 'bg-warning/10 text-warning'
-                : 'bg-destructive/10 text-destructive'
-              }`,
-            },
-              createElement('span', {
-                className: `w-1.5 h-1.5 rounded-full ${
-                  relayStatus === 'connected' ? 'bg-success'
-                  : relayStatus === 'connecting' ? 'bg-warning animate-pulse'
-                  : 'bg-destructive'
-                }`,
-              }),
-              relayStatus,
+          // Right: Nav links + actions
+          createElement('div', { className: 'flex items-center gap-2' },
+            // Nav links (desktop)
+            createElement('div', { className: 'hidden md:flex items-center gap-1 mr-2' },
+              ...navLinks.map((link) =>
+                createElement(Link, {
+                  key: link.label,
+                  to: link.to,
+                  className: 'px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent/50',
+                }, link.label),
+              ),
             ),
 
             auth.pubkey
-              ? createElement('div', { className: 'relative hidden lg:block' },
+              ? createElement('div', { className: 'relative hidden md:block' },
                   // User dropdown trigger
                   createElement('button', {
                     onClick: (e: Event) => { e.stopPropagation(); this.setState({ ...this.state, dropdownOpen: !dropdownOpen }); },
-                    className: 'flex items-center gap-1.5 py-1 text-muted-foreground hover:text-foreground transition-colors',
+                    className: 'flex items-center gap-2 rounded-full border border-border px-1 py-1 pr-3 hover:bg-accent/50 transition-colors',
                   },
-                    createElement('div', {
-                      className: 'w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center',
-                    },
-                      createElement('span', { className: 'text-xs font-semibold text-primary' }, initials),
+                    createElement(Avatar, { className: 'size-7' },
+                      profilePicture
+                        ? createElement(AvatarImage, { src: profilePicture, alt: profileName })
+                        : null,
+                      createElement(AvatarFallback, { className: 'text-[10px]' }, initials),
                     ),
-                    createElement('span', { className: 'text-sm font-medium' }, profileName),
+                    createElement('span', { className: 'text-sm font-medium max-w-[120px] truncate' }, profileName),
                     createElement('span', { className: 'text-xs opacity-40' }, '\u25BE'),
                   ),
 
                   // Dropdown menu
                   dropdownOpen
                     ? createElement('div', {
-                        className: 'absolute right-0 top-full mt-2 w-52 bg-popover border border-border rounded-lg shadow-lg py-1 z-50',
+                        className: 'absolute right-0 top-full mt-2 w-56 bg-popover border border-border rounded-xl shadow-lg py-1.5 z-50',
                       },
                         createElement(Link, {
                           to: `/u/${auth.pubkey}`,
-                          className: 'flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
+                          className: 'flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
                         }, 'Profile'),
                         createElement(Link, {
                           to: '/notifications',
-                          className: 'flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
+                          className: 'flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
                         }, 'Notifications'),
                         createElement(Link, {
-                          to: '/relays',
-                          className: 'flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
-                        }, 'Relay Settings'),
+                          to: '/settings',
+                          className: 'flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
+                        }, 'Settings'),
                         createElement(Link, {
-                          to: '/raw',
-                          className: 'flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
-                        }, 'Raw Events'),
-                        createElement('div', { className: 'border-t border-border my-1' }),
+                          to: '/settings/relays',
+                          className: 'flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
+                        }, 'Relay Manager'),
+                        createElement('div', { className: 'border-t border-border my-1.5' }),
                         createElement('button', {
                           onClick: logout,
-                          className: 'flex items-center gap-2.5 px-3 py-2 w-full text-sm text-destructive/70 hover:text-destructive hover:bg-destructive/5 transition-colors',
+                          className: 'flex items-center gap-2.5 px-4 py-2.5 w-full text-sm text-destructive/70 hover:text-destructive hover:bg-destructive/5 transition-colors',
                         }, 'Sign Out'),
                       )
                     : null,
                 )
-              : createElement('button', {
+              : createElement(Button, {
                   onClick: login,
                   disabled: auth.isLoading,
-                  className: 'hidden lg:inline-flex text-sm font-medium text-primary hover:text-primary/80 transition-colors',
+                  size: 'sm',
+                  className: 'hidden md:inline-flex',
                 }, auth.isLoading ? 'Connecting...' : 'Sign In'),
 
             // Mobile menu button
             createElement('button', {
               onClick: () => this.setState({ ...this.state, mobileOpen: !mobileOpen }),
-              className: 'lg:hidden p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
+              className: 'md:hidden p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
             }, mobileOpen ? '\u2715' : '\u2630'),
           ),
         ),
@@ -198,7 +166,7 @@ export class Header extends Component<{}, HeaderState> {
 
       // Mobile menu
       mobileOpen
-        ? createElement('div', { className: 'lg:hidden border-t border-border bg-background' },
+        ? createElement('div', { className: 'md:hidden border-t border-border bg-background' },
             createElement('div', { className: 'mx-auto max-w-6xl px-5 sm:px-6 py-3 space-y-0.5' },
               ...navLinks.map((link) =>
                 createElement(Link, {
@@ -208,24 +176,40 @@ export class Header extends Component<{}, HeaderState> {
                   onClick: () => this.setState({ ...this.state, mobileOpen: false }),
                 }, link.label),
               ),
-              createElement('div', { className: 'border-t border-border mt-2 pt-3' },
-                auth.pubkey
-                  ? createElement('div', { className: 'space-y-0.5' },
-                      createElement(Link, {
-                        to: `/u/${auth.pubkey}`,
-                        className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
-                        onClick: () => this.setState({ ...this.state, mobileOpen: false }),
-                      }, 'Profile'),
-                      createElement('button', {
-                        onClick: () => { logout(); this.setState({ ...this.state, mobileOpen: false }); },
-                        className: 'flex items-center px-3 py-2.5 w-full text-sm text-destructive/70 hover:text-destructive rounded-md transition-colors',
-                      }, 'Sign Out'),
-                    )
-                  : createElement('button', {
+              auth.pubkey
+                ? createElement('div', { className: 'space-y-0.5 border-t border-border mt-2 pt-2' },
+                    createElement(Link, {
+                      to: `/u/${auth.pubkey}`,
+                      className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
+                      onClick: () => this.setState({ ...this.state, mobileOpen: false }),
+                    }, 'Profile'),
+                    createElement(Link, {
+                      to: '/notifications',
+                      className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
+                      onClick: () => this.setState({ ...this.state, mobileOpen: false }),
+                    }, 'Notifications'),
+                    createElement(Link, {
+                      to: '/settings',
+                      className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
+                      onClick: () => this.setState({ ...this.state, mobileOpen: false }),
+                    }, 'Settings'),
+                    createElement(Link, {
+                      to: '/settings/relays',
+                      className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
+                      onClick: () => this.setState({ ...this.state, mobileOpen: false }),
+                    }, 'Relay Manager'),
+                    createElement('button', {
+                      onClick: () => { logout(); this.setState({ ...this.state, mobileOpen: false }); },
+                      className: 'flex items-center px-3 py-2.5 w-full text-sm text-destructive/70 hover:text-destructive rounded-md transition-colors',
+                    }, 'Sign Out'),
+                  )
+                : createElement('div', { className: 'border-t border-border mt-2 pt-3 px-3' },
+                    createElement(Button, {
                       onClick: () => { login(); this.setState({ ...this.state, mobileOpen: false }); },
-                      className: 'w-full text-center py-2.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors',
+                      className: 'w-full',
+                      size: 'sm',
                     }, 'Sign In with Nostr'),
-              ),
+                  ),
             ),
           )
         : null,
@@ -233,44 +217,51 @@ export class Header extends Component<{}, HeaderState> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Sidebar
+// ---------------------------------------------------------------------------
+
 export class Sidebar extends Component {
   render() {
+    const auth = getAuthState();
     const sections = [
       {
         heading: 'Feed',
         links: [
-          { to: '/', label: 'Hot', icon: '\u{1F525}' },
-          { to: '/?sort=new', label: 'New', icon: '\u2728' },
-          { to: '/?sort=top', label: 'Top', icon: '\u{1F4C8}' },
+          { to: '/feed', label: 'Global', icon: '\u{1F30D}' },
+          { to: '/feed?mode=following', label: 'Following', icon: '\u{1F465}' },
         ],
       },
-      {
+      ...(auth.pubkey ? [{
         heading: 'You',
         links: [
+          { to: `/u/${auth.pubkey}`, label: 'Profile', icon: '\u{1F464}' },
           { to: '/notifications', label: 'Notifications', icon: '\u{1F514}' },
-          { to: '/relays', label: 'Relays', icon: '\u{1F4E1}' },
+          { to: '/settings', label: 'Settings', icon: '\u2699\uFE0F' },
         ],
-      },
+      }] : []),
       {
-        heading: 'Explore',
+        heading: 'Network',
         links: [
-          { to: '/raw', label: 'Raw Events', icon: '\u{1F50C}' },
+          { to: '/settings/relays', label: 'Relay Manager', icon: '\u{1F4E1}' },
+          { to: '/discover', label: 'Discover Relays', icon: '\u{1F50D}' },
         ],
       },
       {
         heading: 'Developer',
         links: [
-          { to: '/docs', label: 'Blazecn', icon: '\u26A1' },
+          { to: '/raw', label: 'Raw Events', icon: '\u{1F50C}' },
+          { to: '/docs', label: 'Documentation', icon: '\uD83D\uDCDA' },
         ],
       },
     ];
 
     return createElement('aside', { className: 'hidden lg:block w-52 shrink-0' },
-      createElement('div', { className: 'sticky top-[72px] space-y-5' },
+      createElement('div', { className: 'sticky top-[80px] space-y-5' },
         ...sections.map((section) =>
           createElement('div', { key: section.heading },
             createElement('p', {
-              className: 'px-3 mb-1.5 text-xs font-semibold tracking-wider uppercase text-muted-foreground/60',
+              className: 'px-3 mb-1.5 text-[11px] font-semibold tracking-wider uppercase text-muted-foreground/50',
             }, section.heading),
             ...section.links.map((link) =>
               createElement(Link, {
@@ -278,18 +269,10 @@ export class Sidebar extends Component {
                 to: link.to,
                 className: 'flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
               },
-                createElement('span', { className: 'text-muted-foreground/60' }, link.icon),
+                createElement('span', { className: 'text-sm' }, link.icon),
                 link.label,
               ),
             ),
-          ),
-        ),
-        // About
-        createElement('div', { className: 'border-t border-border pt-4 mt-4' },
-          createElement('div', { className: 'px-3 text-xs text-muted-foreground/50 leading-relaxed' },
-            'ribbit.network',
-            createElement('br', null),
-            'Powered by Nostr',
           ),
         ),
       ),
@@ -297,13 +280,29 @@ export class Sidebar extends Component {
   }
 }
 
+// ---------------------------------------------------------------------------
+// MainLayout
+// ---------------------------------------------------------------------------
+
 export class MainLayout extends Component<{ children: any }> {
   render() {
-    const hideSidebar = typeof window !== 'undefined' && window.location.pathname === '/docs';
+    const path = typeof window !== 'undefined' ? window.location.pathname : '/';
+    const isLanding = path === '/';
+    const hideSidebar = isLanding || path.startsWith('/docs');
+
+    // Landing page gets full-width, no header chrome padding
+    if (isLanding) {
+      return createElement('div', { className: 'min-h-screen bg-background' },
+        createElement(Header, null),
+        createElement('main', null,
+          this.props.children,
+        ),
+      );
+    }
 
     return createElement('div', { className: 'min-h-screen bg-background' },
       createElement(Header, null),
-      createElement('div', { className: 'mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-8' },
+      createElement('div', { className: 'mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-6' },
         createElement('div', { className: 'flex gap-8' },
           !hideSidebar ? createElement(Sidebar, null) : null,
           createElement('main', { className: 'flex-1 min-w-0' },

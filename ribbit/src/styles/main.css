@@ -11,10 +11,6 @@ a:hover {
 
 button {
   font-family: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-  color: inherit;
   font-size: inherit;
 }
 

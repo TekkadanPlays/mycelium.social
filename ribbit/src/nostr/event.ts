@@ -103,4 +103,6 @@ export const Kind = {
   GroupRoles: 39003,
   // NIP-42 client authentication
   ClientAuth: 22242,
+  // NIP-65 relay list metadata
+  RelayList: 10002,
 } as const;

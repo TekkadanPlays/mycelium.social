@@ -22,10 +22,12 @@ export function Checkbox(props: CheckboxProps) {
     disabled,
     onClick: () => onChange?.(!checked),
     className: cn(
-      'peer size-4 shrink-0 rounded-[4px] border-2 shadow-xs transition-all outline-none cursor-pointer',
-      'focus-visible:ring-ring/50 focus-visible:ring-[3px]',
+      'peer size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none cursor-pointer',
+      'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
       'disabled:cursor-not-allowed disabled:opacity-50',
-      checked ? 'bg-primary border-primary text-primary-foreground' : 'border-input bg-transparent',
+      checked
+        ? 'bg-primary text-primary-foreground border-primary'
+        : 'border-input dark:bg-input/30',
       className,
     ),
   },

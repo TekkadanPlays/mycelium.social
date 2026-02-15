@@ -4,6 +4,7 @@ import { Feed } from '../components/Feed';
 import { Compose } from '../components/Compose';
 import { getAuthState, subscribeAuth, login } from '../store/auth';
 import { loadFeed } from '../store/feed';
+import { Button } from '../ui/Button';
 
 interface HomeState {
   isAuthenticated: boolean;
@@ -39,19 +40,19 @@ export class Home extends Component<{}, HomeState> {
       // Login prompt for logged-out users
       !isAuthenticated
         ? createElement('div', {
-            className: 'rounded-lg border border-primary/20 bg-primary/5 p-4 flex items-center justify-between gap-4 flex-wrap',
+            className: 'rounded-xl border border-border bg-muted/30 p-5 flex items-center justify-between gap-4 flex-wrap',
           },
             createElement('div', null,
-              createElement('p', { className: 'text-sm font-medium text-foreground' },
+              createElement('p', { className: 'text-sm font-semibold' },
                 '\u{1F438} Welcome to ribbit',
               ),
-              createElement('p', { className: 'text-xs text-muted-foreground mt-0.5' },
-                'Sign in with your Nostr extension to post, vote, and reply.',
+              createElement('p', { className: 'text-xs text-muted-foreground mt-1' },
+                'Sign in with your Nostr extension to post, react, and reply.',
               ),
             ),
-            createElement('button', {
+            createElement(Button, {
               onClick: login,
-              className: 'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors shrink-0',
+              size: 'sm',
             }, 'Sign In'),
           )
         : null,

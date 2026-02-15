@@ -1,10 +1,7 @@
 import { RelayPool } from '../../nostr/pool';
 import type { RelayStatus } from '../../nostr/relay';
 
-const DEFAULT_RELAYS = [
-  'wss://relay.damus.io',
-  'wss://nos.lol',
-];
+const DEFAULT_RELAYS: string[] = [];
 
 type Listener = () => void;
 

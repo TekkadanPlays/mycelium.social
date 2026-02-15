@@ -54,7 +54,7 @@ export class RelaySettings extends Component<{}, RelaySettingsState> {
 
     return createElement('div', { className: 'space-y-4' },
       createElement(Link, {
-        to: '/',
+        to: '/feed',
         className: 'inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2',
       }, '\u2190 Back to feed'),
 
