@@ -95,7 +95,7 @@ export class DropdownMenuContent extends Component<DropdownMenuContentProps> {
       'data-slot': 'dropdown-menu-content',
       role: 'menu',
       className: cn(
-        'absolute z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md',
+        'absolute z-50 min-w-[12rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md',
         alignClasses[align],
         sideClasses[side],
         className,

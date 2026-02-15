@@ -91,7 +91,7 @@ const NAV: NavGroup[] = [
         items: [
           { path: '/docs/blazecn/dialog', label: 'Dialog' },
           { path: '/docs/blazecn/tooltip', label: 'Tooltip' },
-          { path: '/docs/blazecn/toast', label: 'Toast' },
+          { path: '/docs/blazecn/toast', label: 'Sonner' },
           { path: '/docs/blazecn/dropdown-menu', label: 'Dropdown Menu' },
           { path: '/docs/blazecn/popover', label: 'Popover' },
           { path: '/docs/blazecn/sheet', label: 'Sheet' },

@@ -31,11 +31,12 @@ interface ToggleProps extends VariantProps<typeof toggleVariants> {
   pressed?: boolean;
   disabled?: boolean;
   onClick?: (e: Event) => void;
+  'aria-label'?: string;
   children?: any;
 }
 
 export function Toggle(props: ToggleProps) {
-  const { variant, size, className, pressed = false, disabled, onClick, children } = props;
+  const { variant, size, className, pressed = false, disabled, onClick, children, ...rest } = props;
 
   return createElement('button', {
     'data-slot': 'toggle',
@@ -44,6 +45,7 @@ export function Toggle(props: ToggleProps) {
     'data-state': pressed ? 'on' : 'off',
     disabled,
     onClick,
+    'aria-label': rest['aria-label'],
     className: cn(toggleVariants({ variant, size }), className),
   }, children);
 }
