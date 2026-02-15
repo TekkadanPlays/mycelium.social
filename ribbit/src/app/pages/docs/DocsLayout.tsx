@@ -59,6 +59,7 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/radio-group', label: 'Radio Group' },
           { path: '/docs/blazecn/select', label: 'Select' },
           { path: '/docs/blazecn/slider', label: 'Slider' },
+          { path: '/docs/blazecn/input-otp', label: 'Input OTP' },
         ],
       },
       {
@@ -72,6 +73,7 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/progress', label: 'Progress' },
           { path: '/docs/blazecn/alert', label: 'Alert' },
           { path: '/docs/blazecn/hover-card', label: 'Hover Card' },
+          { path: '/docs/blazecn/carousel', label: 'Carousel' },
         ],
       },
       {
@@ -84,12 +86,14 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/breadcrumb', label: 'Breadcrumb' },
           { path: '/docs/blazecn/pagination', label: 'Pagination' },
           { path: '/docs/blazecn/collapsible', label: 'Collapsible' },
+          { path: '/docs/blazecn/command', label: 'Command' },
         ],
       },
       {
         heading: 'Overlay',
         items: [
           { path: '/docs/blazecn/dialog', label: 'Dialog' },
+          { path: '/docs/blazecn/alert-dialog', label: 'Alert Dialog' },
           { path: '/docs/blazecn/tooltip', label: 'Tooltip' },
           { path: '/docs/blazecn/toast', label: 'Sonner' },
           { path: '/docs/blazecn/dropdown-menu', label: 'Dropdown Menu' },
