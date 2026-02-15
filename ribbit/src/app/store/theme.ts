@@ -1,0 +1,68 @@
+// ---------------------------------------------------------------------------
+// Theme store — persists base color theme + dark mode to localStorage
+// ---------------------------------------------------------------------------
+
+export type BaseTheme = 'neutral' | 'zinc' | 'slate' | 'stone' | 'gray' | 'ribbit';
+
+const THEME_KEY = 'ribbit_base_theme';
+const DARK_KEY = 'ribbit_dark_mode';
+
+type ThemeListener = () => void;
+let _listeners: ThemeListener[] = [];
+
+function notify() { _listeners.forEach((fn) => fn()); }
+
+export function subscribeTheme(fn: ThemeListener): () => void {
+  _listeners.push(fn);
+  return () => { _listeners = _listeners.filter((l) => l !== fn); };
+}
+
+export function getBaseTheme(): BaseTheme {
+  return (localStorage.getItem(THEME_KEY) as BaseTheme) || 'neutral';
+}
+
+export function setBaseTheme(theme: BaseTheme) {
+  localStorage.setItem(THEME_KEY, theme);
+  applyTheme();
+  notify();
+}
+
+export function isDarkMode(): boolean {
+  const stored = localStorage.getItem(DARK_KEY);
+  if (stored !== null) return stored === 'true';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+export function setDarkMode(dark: boolean) {
+  localStorage.setItem(DARK_KEY, String(dark));
+  applyTheme();
+  notify();
+}
+
+export function toggleDarkMode() {
+  setDarkMode(!isDarkMode());
+}
+
+export function applyTheme() {
+  const html = document.documentElement;
+  const dark = isDarkMode();
+  const base = getBaseTheme();
+
+  // Dark mode
+  if (dark) {
+    html.classList.add('dark');
+  } else {
+    html.classList.remove('dark');
+  }
+
+  // Base color theme — remove all, then add current
+  html.classList.remove('theme-zinc', 'theme-slate', 'theme-stone', 'theme-gray', 'theme-ribbit');
+  if (base !== 'neutral') {
+    html.classList.add(`theme-${base}`);
+  }
+}
+
+// Initialize on load
+export function initTheme() {
+  applyTheme();
+}

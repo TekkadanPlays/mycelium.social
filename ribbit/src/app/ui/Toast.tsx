@@ -168,7 +168,7 @@ function ToastItem({ data, onDismiss }: ToastItemProps) {
     role: 'alert',
     className: cn(
       'group pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-lg border bg-background text-foreground border-border p-4 shadow-lg',
-      data.dismissing && 'animate-out fade-out-0 slide-out-to-right-full',
+      data.dismissing && 'animate-out fade-out-0 slide-out-to-top-full',
     ),
   },
     // Icon
@@ -279,13 +279,13 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
 
   render() {
     const { toasts } = this.state;
-    const position = this.props.position || 'bottom-right';
+    const position = this.props.position || 'top-center';
     const isTop = position.startsWith('top');
 
     if (toasts.length === 0) return null;
 
     const maxVisible = 5;
-    const visible = isTop ? toasts.slice(0, maxVisible) : toasts.slice(-maxVisible);
+    const visible = isTop ? toasts.slice(-maxVisible).reverse() : toasts.slice(-maxVisible);
     const count = visible.length;
 
     return createElement('div', {
@@ -300,7 +300,7 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
         style: { height: count > 0 ? `${64 + (count - 1) * 14}px` : '0px' },
       },
         ...visible.map((t, i) => {
-          const fromFront = isTop ? (count - 1 - i) : (count - 1 - i);
+          const fromFront = count - 1 - i;
           const scale = 1 - fromFront * 0.04;
           const translateY = isTop ? fromFront * 10 : fromFront * -10;
           const opacity = 1 - fromFront * 0.12;

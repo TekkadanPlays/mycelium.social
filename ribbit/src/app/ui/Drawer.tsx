@@ -82,14 +82,14 @@ interface SlotProps {
 export function DrawerHeader({ className, children }: SlotProps) {
   return createElement('div', {
     'data-slot': 'drawer-header',
-    className: cn('grid gap-1.5 p-4 text-center sm:text-left', className),
+    className: cn('grid gap-1.5 p-4 text-center', className),
   }, children);
 }
 
 export function DrawerFooter({ className, children }: SlotProps) {
   return createElement('div', {
     'data-slot': 'drawer-footer',
-    className: cn('mt-auto flex flex-col gap-2 p-4', className),
+    className: cn('mt-auto flex flex-col gap-2 p-4 mx-auto w-full max-w-sm', className),
   }, children);
 }
 
