@@ -1,82 +1,123 @@
 import { createElement } from 'inferno-create-element';
 import { PageHeader, SectionHeading, DemoBox, CodeBlock, PropTable } from '../_helpers';
 import { ThemeToggle } from '../../../ui/ThemeToggle';
+import { ThemePicker } from '../../../ui/ThemePicker';
 
 export function ThemeTogglePage() {
   return createElement('div', { className: 'space-y-10' },
     createElement(PageHeader, {
-      title: 'ThemeToggle',
-      description: 'A button that toggles between light and dark themes. Persists preference in localStorage and respects system preference on first visit.',
+      title: 'Themes',
+      description: 'Toggle between light and dark modes, and choose from multiple base color themes. All preferences persist in localStorage.',
     }),
 
-    // Demo
-    createElement(SectionHeading, { id: 'demo' }, 'Demo'),
+    // Dark mode toggle
+    createElement(SectionHeading, { id: 'dark-mode' }, 'Dark Mode'),
+    createElement('p', { className: 'text-sm text-muted-foreground mb-3' },
+      'Toggle between light and dark mode. Respects system preference on first visit.',
+    ),
     createElement(DemoBox, null,
       createElement('div', { className: 'flex items-center gap-4' },
         createElement(ThemeToggle, null),
-        createElement('span', { className: 'text-sm text-muted-foreground' }, 'Click to toggle theme'),
+        createElement('span', { className: 'text-sm text-muted-foreground' }, 'Click to toggle dark mode'),
+      ),
+    ),
+
+    // Base color theme
+    createElement(SectionHeading, { id: 'base-theme' }, 'Base Color Theme'),
+    createElement('p', { className: 'text-sm text-muted-foreground mb-3' },
+      'Choose a base color palette. Each theme adjusts the primary, secondary, muted, accent, and border colors across the entire UI. Includes all shadcn base colors plus a custom Ribbit green theme.',
+    ),
+    createElement(DemoBox, { className: 'block p-6' },
+      createElement(ThemePicker, null),
+    ),
+
+    // Available themes
+    createElement(SectionHeading, { id: 'themes' }, 'Available Themes'),
+    createElement('div', { className: 'space-y-2' },
+      ...[
+        { name: 'Neutral', desc: 'Pure black/white with zero chroma. The shadcn default.' },
+        { name: 'Zinc', desc: 'Cool neutral with a subtle blue-violet tint.' },
+        { name: 'Slate', desc: 'Deeper blue-violet undertone, slightly warmer than Zinc.' },
+        { name: 'Stone', desc: 'Warm neutral with a subtle brown/amber tint.' },
+        { name: 'Gray', desc: 'True gray with a faint blue undertone.' },
+        { name: 'Ribbit', desc: 'Custom green theme for the Ribbit ecosystem.' },
+      ].map((t) =>
+        createElement('div', { key: t.name, className: 'flex items-baseline gap-2' },
+          createElement('span', { className: 'text-sm font-semibold' }, t.name),
+          createElement('span', { className: 'text-sm text-muted-foreground' }, '\u2014 ' + t.desc),
+        ),
       ),
     ),
 
     // Usage
     createElement(SectionHeading, { id: 'usage' }, 'Usage'),
-    createElement(CodeBlock, { code: `import { ThemeToggle } from './ui/ThemeToggle'
+    createElement(CodeBlock, { code: `import { ThemeToggle } from '@/ui/ThemeToggle'
+import { ThemePicker } from '@/ui/ThemePicker'
 
-// Basic usage
-<ThemeToggle />
+// Dark mode toggle button
+createElement(ThemeToggle, null)
 
-// With custom class
-<ThemeToggle className="size-8" />` }),
+// Base color theme picker
+createElement(ThemePicker, null)
+
+// Programmatic API
+import { setBaseTheme, setDarkMode, toggleDarkMode } from '@/store/theme'
+
+setBaseTheme('ribbit')  // Switch to Ribbit green
+setDarkMode(true)       // Force dark mode
+toggleDarkMode()        // Toggle dark/light` }),
 
     // How it works
     createElement(SectionHeading, { id: 'how-it-works' }, 'How It Works'),
     createElement('div', { className: 'space-y-3' },
       createElement('p', { className: 'text-sm text-muted-foreground' },
-        'ThemeToggle manages the .dark class on the <html> element:',
+        'The theme system uses CSS custom properties with class-based overrides:',
       ),
       createElement('ul', { className: 'text-sm text-muted-foreground space-y-1 list-disc pl-5' },
-        createElement('li', null, 'On mount, reads theme from localStorage or falls back to system preference (prefers-color-scheme)'),
-        createElement('li', null, 'Adds or removes the .dark class on document.documentElement'),
-        createElement('li', null, 'Persists the choice to localStorage under the key "theme"'),
-        createElement('li', null, 'Displays a sun icon in dark mode (click to go light) and a moon icon in light mode (click to go dark)'),
+        createElement('li', null, 'Base colors defined in :root (light) and .dark (dark) using oklch values'),
+        createElement('li', null, 'Theme classes (.theme-zinc, .theme-slate, etc.) override the CSS variables on <html>'),
+        createElement('li', null, 'Dark variants use .dark.theme-* compound selectors'),
+        createElement('li', null, 'Both dark mode and base theme persist to localStorage'),
+        createElement('li', null, 'initTheme() in App.tsx applies persisted preferences on load'),
       ),
     ),
-
-    // Integration
-    createElement(SectionHeading, { id: 'integration' }, 'Integration'),
-    createElement('p', { className: 'text-sm text-muted-foreground mb-3' },
-      'Place the ThemeToggle in your app header so it is always accessible. The toggle works with Tailwind CSS v4\'s @custom-variant dark selector and CSS custom properties defined on :root and .dark.',
-    ),
-    createElement(CodeBlock, { code: `// In your header component
-createElement('div', { className: 'flex items-center gap-2' },
-  createElement(ThemeToggle, { className: 'size-8' }),
-  // ... other header items
-)` }),
 
     // CSS setup
     createElement(SectionHeading, { id: 'css-setup' }, 'CSS Setup'),
     createElement('p', { className: 'text-sm text-muted-foreground mb-3' },
-      'Your tailwind.css must include the dark variant and define color tokens for both :root and .dark:',
+      'Define base tokens in :root/.dark, then add theme class overrides:',
     ),
-    createElement(CodeBlock, { code: `@custom-variant dark (&:where(.dark, .dark *));
-
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  /* ... other tokens */
+    createElement(CodeBlock, { code: `:root {
+  --primary: oklch(0.205 0 0);        /* Neutral default */
+  --primary-foreground: oklch(0.985 0 0);
+  /* ... */
+}
+.dark {
+  --primary: oklch(0.922 0 0);
+  /* ... */
 }
 
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  /* ... other tokens */
+/* Theme override */
+.theme-ribbit {
+  --primary: oklch(0.45 0.10 150);    /* Green */
+  --primary-foreground: oklch(0.985 0.01 150);
+}
+.dark.theme-ribbit {
+  --primary: oklch(0.65 0.10 155);
 }` }),
 
     // Props
     createElement(SectionHeading, { id: 'props' }, 'Props'),
+    createElement('h3', { className: 'text-sm font-semibold mb-2' }, 'ThemeToggle'),
     createElement(PropTable, {
       rows: [
-        { prop: 'className', type: 'string', default: '—' },
+        { prop: 'className', type: 'string', default: '\u2014' },
+      ],
+    }),
+    createElement('h3', { className: 'text-sm font-semibold mb-2 mt-4' }, 'ThemePicker'),
+    createElement(PropTable, {
+      rows: [
+        { prop: 'className', type: 'string', default: '\u2014' },
       ],
     }),
   );

@@ -1,5 +1,6 @@
 import { createElement } from 'inferno-create-element';
 import { AspectRatio } from '../../../ui/AspectRatio';
+import { cn } from '../../../ui/utils';
 import { PageHeader, SectionHeading, DemoBox, CodeBlock, PropTable } from '../_helpers';
 
 export function AspectRatioPage() {
@@ -9,16 +10,19 @@ export function AspectRatioPage() {
       description: 'Displays content within a desired ratio. Uses the padding-bottom technique for zero-JS layout.',
     }),
 
-    // 16:9 with image
+    // 16:9 with gradient placeholder
     createElement(SectionHeading, { id: 'demo' }, 'Demo'),
     createElement(DemoBox, { className: 'block p-8' },
       createElement('div', { className: 'max-w-md mx-auto' },
-        createElement(AspectRatio, { ratio: 16 / 9, className: 'rounded-lg overflow-hidden bg-muted' },
-          createElement('img', {
-            src: 'https://images.unsplash.com/photo-1588345921523-c2dcdb7f1dcd?w=800&dpr=2&q=80',
-            alt: 'Photo by Drew Beamer',
-            className: 'object-cover w-full h-full',
-          }),
+        createElement(AspectRatio, { ratio: 16 / 9, className: 'rounded-lg overflow-hidden' },
+          createElement('div', {
+            className: 'w-full h-full bg-gradient-to-br from-primary/20 via-primary/10 to-muted flex items-end p-4',
+          },
+            createElement('div', null,
+              createElement('div', { className: 'text-sm font-semibold' }, 'Photo by Drew Beamer'),
+              createElement('div', { className: 'text-xs text-muted-foreground' }, 'Unsplash \u2014 16:9 Widescreen'),
+            ),
+          ),
         ),
       ),
     ),
@@ -27,12 +31,15 @@ export function AspectRatioPage() {
     createElement(SectionHeading, { id: 'square' }, 'Square (1:1)'),
     createElement(DemoBox, { className: 'block p-8' },
       createElement('div', { className: 'max-w-[250px] mx-auto' },
-        createElement(AspectRatio, { ratio: 1, className: 'rounded-lg overflow-hidden bg-muted' },
-          createElement('img', {
-            src: 'https://images.unsplash.com/photo-1535025183041-0991a977e25b?w=600&dpr=2&q=80',
-            alt: 'Photo by Alvaro Pinot',
-            className: 'object-cover w-full h-full',
-          }),
+        createElement(AspectRatio, { ratio: 1, className: 'rounded-lg overflow-hidden' },
+          createElement('div', {
+            className: 'w-full h-full bg-gradient-to-br from-accent via-muted to-accent/50 flex items-center justify-center',
+          },
+            createElement('div', { className: 'text-center' },
+              createElement('div', { className: 'text-2xl mb-1' }, '\uD83D\uDDBC\uFE0F'),
+              createElement('div', { className: 'text-xs text-muted-foreground' }, '1:1 Square'),
+            ),
+          ),
         ),
       ),
     ),
@@ -45,19 +52,19 @@ export function AspectRatioPage() {
     createElement(DemoBox, { className: 'block p-8' },
       createElement('div', { className: 'grid grid-cols-3 gap-6 max-w-2xl mx-auto' },
         ...[
-          { ratio: 16 / 9, label: '16:9', desc: 'Widescreen' },
-          { ratio: 4 / 3, label: '4:3', desc: 'Classic TV' },
-          { ratio: 1, label: '1:1', desc: 'Square' },
-          { ratio: 3 / 2, label: '3:2', desc: 'Photography' },
-          { ratio: 21 / 9, label: '21:9', desc: 'Ultrawide' },
-          { ratio: 9 / 16, label: '9:16', desc: 'Portrait' },
+          { ratio: 16 / 9, label: '16:9', desc: 'Widescreen', color: 'from-blue-500/20 to-blue-500/5' },
+          { ratio: 4 / 3, label: '4:3', desc: 'Classic TV', color: 'from-green-500/20 to-green-500/5' },
+          { ratio: 1, label: '1:1', desc: 'Square', color: 'from-purple-500/20 to-purple-500/5' },
+          { ratio: 3 / 2, label: '3:2', desc: 'Photography', color: 'from-orange-500/20 to-orange-500/5' },
+          { ratio: 21 / 9, label: '21:9', desc: 'Ultrawide', color: 'from-red-500/20 to-red-500/5' },
+          { ratio: 9 / 16, label: '9:16', desc: 'Portrait', color: 'from-teal-500/20 to-teal-500/5' },
         ].map((item) =>
           createElement('div', { key: item.label },
-            createElement(AspectRatio, { ratio: item.ratio, className: 'rounded-lg overflow-hidden border bg-muted' },
+            createElement(AspectRatio, { ratio: item.ratio, className: 'rounded-lg overflow-hidden border' },
               createElement('div', {
-                className: 'w-full h-full flex flex-col items-center justify-center',
+                className: cn('w-full h-full flex flex-col items-center justify-center bg-gradient-to-br', item.color),
               },
-                createElement('span', { className: 'text-sm font-semibold' }, item.label),
+                createElement('span', { className: 'text-sm font-bold' }, item.label),
                 createElement('span', { className: 'text-xs text-muted-foreground' }, item.desc),
               ),
             ),
@@ -66,20 +73,22 @@ export function AspectRatioPage() {
       ),
     ),
 
-    // Map placeholder
+    // Video placeholder
     createElement(SectionHeading, { id: 'with-content' }, 'With Embedded Content'),
     createElement('p', { className: 'text-sm text-muted-foreground mb-3' },
       'AspectRatio works with any content \u2014 images, videos, maps, or iframes.',
     ),
     createElement(DemoBox, { className: 'block p-8' },
       createElement('div', { className: 'max-w-md mx-auto' },
-        createElement(AspectRatio, { ratio: 16 / 9, className: 'rounded-lg overflow-hidden' },
-          createElement('iframe', {
-            src: 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d387193.30596698663!2d-74.25986548248684!3d40.69714941932609!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c24fa5d33f083b%3A0xc80b8f06e177fe62!2sNew%20York%2C%20NY!5e0!3m2!1sen!2sus!4v1',
-            className: 'w-full h-full border-0',
-            loading: 'lazy',
-            title: 'Map of New York',
-          }),
+        createElement(AspectRatio, { ratio: 16 / 9, className: 'rounded-lg overflow-hidden border' },
+          createElement('div', {
+            className: 'w-full h-full bg-gradient-to-br from-muted to-muted/50 flex flex-col items-center justify-center gap-2',
+          },
+            createElement('svg', { className: 'size-10 text-muted-foreground/40', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '1.5' },
+              createElement('polygon', { points: '5 3 19 12 5 21 5 3' }),
+            ),
+            createElement('span', { className: 'text-xs text-muted-foreground' }, 'Video / iframe placeholder'),
+          ),
         ),
       ),
     ),

@@ -96,6 +96,22 @@ export class NavigationMenuItem extends Component<NavigationMenuItemProps> {
   render() {
     const { className, children } = this.props;
     const open = _navMenuOpenId === this.id;
+    const kids = Array.isArray(children) ? children : [children];
+
+    let triggerChild: any = null;
+    let contentChild: any = null;
+    const others: any[] = [];
+
+    for (const child of kids) {
+      if (!child) continue;
+      if (child.type === NavigationMenuTrigger || (child.props && child.props['data-slot'] === 'navigation-menu-trigger')) {
+        triggerChild = child;
+      } else if (child.type === NavigationMenuContent || (child.props && child.props['data-slot'] === 'navigation-menu-content')) {
+        contentChild = child;
+      } else {
+        others.push(child);
+      }
+    }
 
     return createElement('li', {
       'data-slot': 'navigation-menu-item',
@@ -103,20 +119,15 @@ export class NavigationMenuItem extends Component<NavigationMenuItemProps> {
       className: cn('relative', className),
       onmouseenter: this.handleMouseEnter,
     },
-      ...(Array.isArray(children) ? children : [children]).map((child: any) => {
-        if (!child?.props) return child;
-        if (child.type === NavigationMenuTrigger) {
-          return createElement(NavigationMenuTrigger, {
-            ...child.props,
+      triggerChild
+        ? createElement(NavigationMenuTrigger, {
+            ...(triggerChild.props || {}),
             onClick: this.handleClick,
             'data-state': open ? 'open' : 'closed',
-          }, child.children || child.props.children);
-        }
-        if (child.type === NavigationMenuContent) {
-          return open ? child : null;
-        }
-        return child;
-      }),
+          }, triggerChild.children != null ? triggerChild.children : (triggerChild.props && triggerChild.props.children))
+        : null,
+      open && contentChild ? contentChild : null,
+      ...others,
     );
   }
 }

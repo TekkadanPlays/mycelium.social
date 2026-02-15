@@ -21,6 +21,7 @@ import { loadRelayList, resetRelayList } from './store/relaylist';
 import { loadRelayManager, syncPoolToActiveProfile } from './store/relaymanager';
 import { fetchProfile } from './store/profiles';
 import { signWithExtension } from '../nostr/nip07';
+import { initTheme } from './store/theme';
 
 interface AppState {
   isAuthenticated: boolean;
@@ -63,6 +64,9 @@ export class App extends Component<{}, AppState> {
   }
 
   componentDidMount() {
+    // Apply persisted theme immediately
+    initTheme();
+
     this.unsub = subscribeAuth(() => this.onAuthChange());
 
     // Load relay manager from localStorage and sync pool

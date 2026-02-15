@@ -22,7 +22,6 @@ interface MenubarProps {
 }
 
 export class Menubar extends Component<MenubarProps> {
-  private unsub: (() => void) | null = null;
   private ref: HTMLDivElement | null = null;
 
   private handleOutside = (e: MouseEvent) => {
@@ -36,13 +35,11 @@ export class Menubar extends Component<MenubarProps> {
   };
 
   componentDidMount() {
-    this.unsub = menubarSubscribe(() => this.forceUpdate());
     document.addEventListener('mousedown', this.handleOutside);
     document.addEventListener('keydown', this.handleKey);
   }
 
   componentWillUnmount() {
-    this.unsub?.();
     document.removeEventListener('mousedown', this.handleOutside);
     document.removeEventListener('keydown', this.handleKey);
   }
@@ -89,7 +86,6 @@ export class MenubarMenu extends Component<MenubarMenuProps> {
   };
 
   private handleMouseEnter = () => {
-    // Only switch on hover if another menu is already open
     if (_menubarOpenId && _menubarOpenId !== this.id) {
       menubarSetOpen(this.id);
     }
@@ -98,26 +94,41 @@ export class MenubarMenu extends Component<MenubarMenuProps> {
   render() {
     const { children } = this.props;
     const open = _menubarOpenId === this.id;
+    const kids = Array.isArray(children) ? children : [children];
+
+    // Separate trigger and content from children
+    let triggerChild: any = null;
+    let contentChild: any = null;
+    const others: any[] = [];
+
+    for (const child of kids) {
+      if (!child) continue;
+      // In Inferno, VNode flags or type can identify the component
+      if (child.type === MenubarTrigger || (child.props && child.props['data-slot'] === 'menubar-trigger')) {
+        triggerChild = child;
+      } else if (child.type === MenubarContent || (child.props && child.props['data-slot'] === 'menubar-content')) {
+        contentChild = child;
+      } else {
+        others.push(child);
+      }
+    }
 
     return createElement('div', {
       'data-slot': 'menubar-menu',
       className: 'relative',
       onmouseenter: this.handleMouseEnter,
     },
-      ...(Array.isArray(children) ? children : [children]).map((child: any) => {
-        if (!child?.props) return child;
-        if (child.type === MenubarTrigger) {
-          return createElement(MenubarTrigger, {
-            ...child.props,
+      // Always re-create trigger with current state
+      triggerChild
+        ? createElement(MenubarTrigger, {
+            ...(triggerChild.props || {}),
             onClick: this.handleClick,
             'data-state': open ? 'open' : 'closed',
-          }, child.children || child.props.children);
-        }
-        if (child.type === MenubarContent) {
-          return open ? child : null;
-        }
-        return child;
-      }),
+          }, triggerChild.children != null ? triggerChild.children : (triggerChild.props && triggerChild.props.children))
+        : null,
+      // Only show content when open
+      open && contentChild ? contentChild : null,
+      ...others,
     );
   }
 }

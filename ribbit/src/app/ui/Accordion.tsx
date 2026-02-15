@@ -55,7 +55,7 @@ export function AccordionTrigger({ className, open = false, onClick, children }:
     'data-state': open ? 'open' : 'closed',
     onClick,
     className: cn(
-      'flex w-full flex-1 items-center justify-between gap-4 py-4 text-left text-sm font-medium transition-all cursor-pointer hover:underline',
+      'flex w-full flex-1 items-center justify-between gap-4 py-4 text-left text-sm font-medium cursor-pointer hover:underline',
       'outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]',
       '[&[data-state=open]>svg]:rotate-180',
       className,
@@ -91,12 +91,13 @@ export function AccordionContent({ className, open = false, children }: Accordio
     'data-slot': 'accordion-content',
     'data-state': open ? 'open' : 'closed',
     className: cn(
-      'overflow-hidden text-sm transition-all duration-300 ease-in-out',
+      'overflow-hidden text-sm',
+      'transition-[grid-template-rows,opacity] duration-300 ease-in-out',
       open ? 'grid grid-rows-[1fr] opacity-100' : 'grid grid-rows-[0fr] opacity-0',
       className,
     ),
   },
-    createElement('div', { className: 'min-h-0' },
+    createElement('div', { className: 'min-h-0 overflow-hidden' },
       createElement('div', { className: 'pt-0 pb-4' }, children),
     ),
   );

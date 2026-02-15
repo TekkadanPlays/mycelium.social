@@ -104,8 +104,8 @@ export class DialogPage extends Component<{}, DialogPageState> {
               { label: 'Email digests', desc: 'Get a weekly summary of activity.' },
               { label: 'Marketing emails', desc: 'Receive emails about new features.' },
             ].map((item) =>
-              createElement('div', { key: item.label, className: 'flex items-start gap-3 rounded-md border p-3' },
-                createElement('div', { className: 'size-4 mt-0.5 rounded border border-primary bg-primary flex items-center justify-center' },
+              createElement('div', { key: item.label, className: 'flex items-center gap-3 rounded-md border p-3' },
+                createElement('div', { className: 'size-4 shrink-0 rounded border border-primary bg-primary flex items-center justify-center' },
                   createElement('svg', { className: 'size-3 text-primary-foreground', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
                     createElement('path', { d: 'M20 6L9 17l-5-5' }),
                   ),
