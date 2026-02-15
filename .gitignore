@@ -7,10 +7,10 @@ bun.lock
 ribbit/dist/
 
 # Nested repos (each has its own GitHub repo)
-nos2x-fox/
-nips/
-ui/
-moltbook-frontend/
+/nos2x-fox/
+/nips/
+/ui/
+/moltbook-frontend/
 
 # OS
 .DS_Store
