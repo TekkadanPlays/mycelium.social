@@ -31,11 +31,12 @@ interface ToggleGroupItemProps {
   variant?: ToggleVariant;
   size?: ToggleSize;
   onClick?: (e: Event) => void;
+  'aria-label'?: string;
   children?: any;
 }
 
 export function ToggleGroupItem(props: ToggleGroupItemProps) {
-  const { className, value, pressed = false, disabled, variant = 'default', size = 'default', onClick, children } = props;
+  const { className, value, pressed = false, disabled, variant = 'default', size = 'default', onClick, children, ...rest } = props;
 
   return createElement('button', {
     'data-slot': 'toggle-group-item',
@@ -45,6 +46,7 @@ export function ToggleGroupItem(props: ToggleGroupItemProps) {
     'data-value': value,
     disabled,
     onClick,
+    'aria-label': rest['aria-label'],
     className: cn(
       toggleVariants({ variant, size }),
       'focus-visible:z-10',

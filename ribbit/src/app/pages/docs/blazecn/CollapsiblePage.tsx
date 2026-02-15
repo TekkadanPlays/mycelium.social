@@ -27,7 +27,7 @@ export class CollapsiblePage extends Component<{}, CollapsiblePageState> {
 
       // Demo
       createElement(SectionHeading, { id: 'demo' }, 'Demo'),
-      createElement(DemoBox, { className: 'block p-8' },
+      createElement(DemoBox, { className: 'block p-8 min-h-[280px]' },
         createElement(Collapsible, { open, className: 'max-w-sm mx-auto' },
           createElement('div', { className: 'flex items-center justify-between space-x-4 px-4' },
             createElement('h4', { className: 'text-sm font-semibold' }, '@peduarte starred 3 repositories'),
