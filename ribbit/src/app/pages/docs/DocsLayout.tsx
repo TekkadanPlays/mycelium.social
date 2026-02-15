@@ -1,7 +1,6 @@
 import { createElement } from 'inferno-create-element';
 import { Link } from 'inferno-router';
 import { cn } from '../../ui/utils';
-import { ThemeToggle } from '../../ui/ThemeToggle';
 import { Separator } from '../../ui/Separator';
 
 // ---------------------------------------------------------------------------
@@ -46,6 +45,7 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/button', label: 'Button' },
           { path: '/docs/blazecn/badge', label: 'Badge' },
           { path: '/docs/blazecn/card', label: 'Card' },
+          { path: '/docs/blazecn/theme-toggle', label: 'Theme Toggle' },
         ],
       },
       {
@@ -71,6 +71,7 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/skeleton', label: 'Skeleton' },
           { path: '/docs/blazecn/progress', label: 'Progress' },
           { path: '/docs/blazecn/alert', label: 'Alert' },
+          { path: '/docs/blazecn/hover-card', label: 'Hover Card' },
         ],
       },
       {
@@ -78,7 +79,11 @@ const NAV: NavGroup[] = [
         items: [
           { path: '/docs/blazecn/tabs', label: 'Tabs' },
           { path: '/docs/blazecn/toggle', label: 'Toggle' },
+          { path: '/docs/blazecn/toggle-group', label: 'Toggle Group' },
           { path: '/docs/blazecn/accordion', label: 'Accordion' },
+          { path: '/docs/blazecn/breadcrumb', label: 'Breadcrumb' },
+          { path: '/docs/blazecn/pagination', label: 'Pagination' },
+          { path: '/docs/blazecn/collapsible', label: 'Collapsible' },
         ],
       },
       {
@@ -87,6 +92,9 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/dialog', label: 'Dialog' },
           { path: '/docs/blazecn/tooltip', label: 'Tooltip' },
           { path: '/docs/blazecn/toast', label: 'Toast' },
+          { path: '/docs/blazecn/dropdown-menu', label: 'Dropdown Menu' },
+          { path: '/docs/blazecn/popover', label: 'Popover' },
+          { path: '/docs/blazecn/sheet', label: 'Sheet' },
         ],
       },
       {

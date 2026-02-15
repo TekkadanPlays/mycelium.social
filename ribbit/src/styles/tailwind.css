@@ -212,5 +212,16 @@
   }
 }
 
+/* Shiki dual-theme: use CSS variables for light/dark switching */
+.shiki-wrapper .shiki,
+.shiki-wrapper .shiki span {
+  color: var(--shiki-light) !important;
+  background-color: transparent !important;
+}
+.dark .shiki-wrapper .shiki,
+.dark .shiki-wrapper .shiki span {
+  color: var(--shiki-dark) !important;
+}
+
 /* Source detection for Tailwind v4 */
 @source "../app/**/*.{ts,tsx}";

@@ -1,7 +1,6 @@
 import { createElement } from 'inferno-create-element';
 import { Link } from 'inferno-router';
 import { Badge } from '../../ui/Badge';
-import { ThemeToggle } from '../../ui/ThemeToggle';
 
 interface ProjectCard {
   icon: string;
@@ -73,10 +72,7 @@ export function DocsIndex() {
   return createElement('div', { className: 'space-y-10' },
     // Hero
     createElement('div', null,
-      createElement('div', { className: 'flex items-center gap-3 mb-3' },
-        createElement('h1', { className: 'text-3xl font-bold tracking-tight' }, 'ribbit.network'),
-        createElement(ThemeToggle, null),
-      ),
+      createElement('h1', { className: 'text-3xl font-bold tracking-tight mb-3' }, 'ribbit.network'),
       createElement('p', { className: 'text-muted-foreground max-w-2xl text-lg' },
         'Documentation for the ribbit.network stack. Explore the tools, libraries, and protocols that power a decentralized social experience.',
       ),

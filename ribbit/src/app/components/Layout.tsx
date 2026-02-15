@@ -6,6 +6,7 @@ import { getProfile, subscribeProfiles } from '../store/profiles';
 import { npubEncode, shortenNpub } from '../../nostr/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/Avatar';
 import { Button } from '../ui/Button';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 // ---------------------------------------------------------------------------
 // Header
@@ -101,6 +102,9 @@ export class Header extends Component<{}, HeaderState> {
                 }, link.label),
               ),
             ),
+
+            // Theme toggle
+            createElement(ThemeToggle, { className: 'size-8' }),
 
             auth.pubkey
               ? createElement('div', { className: 'relative hidden md:block' },

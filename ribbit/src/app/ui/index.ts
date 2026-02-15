@@ -17,6 +17,7 @@ export { Slider } from './Slider';
 
 // Data Display
 export { Avatar, AvatarImage, AvatarFallback } from './Avatar';
+export { HoverCard, HoverCardTrigger, HoverCardContent, HoverCardWrapper } from './HoverCard';
 export { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell, TableCaption } from './Table';
 export { Separator } from './Separator';
 export { Spinner } from './Spinner';
@@ -30,6 +31,8 @@ export { Toggle, toggleVariants, type ToggleVariant, type ToggleSize } from './T
 export { ToggleGroup, ToggleGroupItem } from './ToggleGroup';
 export { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './Accordion';
 export { Collapsible, CollapsibleTrigger, CollapsibleContent } from './Collapsible';
+export { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, BreadcrumbEllipsis } from './Breadcrumb';
+export { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis } from './Pagination';
 
 // Overlay
 export { Dialog, DialogContent, DialogOverlay, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './Dialog';

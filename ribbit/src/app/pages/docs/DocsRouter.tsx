@@ -35,6 +35,15 @@ import { TooltipPage } from './blazecn/TooltipPage';
 import { ToastPage } from './blazecn/ToastPage';
 import { ScrollAreaPage } from './blazecn/ScrollAreaPage';
 import { AspectRatioPage } from './blazecn/AspectRatioPage';
+import { ThemeTogglePage } from './blazecn/ThemeTogglePage';
+import { CollapsiblePage } from './blazecn/CollapsiblePage';
+import { DropdownMenuPage } from './blazecn/DropdownMenuPage';
+import { PopoverPage } from './blazecn/PopoverPage';
+import { SheetPage } from './blazecn/SheetPage';
+import { ToggleGroupPage } from './blazecn/ToggleGroupPage';
+import { BreadcrumbPage_ } from './blazecn/BreadcrumbPage';
+import { PaginationPage_ } from './blazecn/PaginationPage';
+import { HoverCardPage } from './blazecn/HoverCardPage';
 
 // Kaji module pages
 import { KajiEventPage } from './kaji/EventPage';
@@ -95,6 +104,15 @@ const ROUTES: Record<string, any> = {
   '/docs/blazecn/toast': ToastPage,
   '/docs/blazecn/scroll-area': ScrollAreaPage,
   '/docs/blazecn/aspect-ratio': AspectRatioPage,
+  '/docs/blazecn/theme-toggle': ThemeTogglePage,
+  '/docs/blazecn/collapsible': CollapsiblePage,
+  '/docs/blazecn/dropdown-menu': DropdownMenuPage,
+  '/docs/blazecn/popover': PopoverPage,
+  '/docs/blazecn/sheet': SheetPage,
+  '/docs/blazecn/toggle-group': ToggleGroupPage,
+  '/docs/blazecn/breadcrumb': BreadcrumbPage_,
+  '/docs/blazecn/pagination': PaginationPage_,
+  '/docs/blazecn/hover-card': HoverCardPage,
 
   // Kaji modules
   '/docs/kaji': KajiIntro,

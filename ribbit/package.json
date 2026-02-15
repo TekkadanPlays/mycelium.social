@@ -19,6 +19,7 @@
     "inferno": "^9.0.3",
     "inferno-create-element": "^9.0.3",
     "inferno-router": "^9.0.3",
+    "shiki": "^3.22.0",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {

@@ -1,7 +1,6 @@
 import { createElement } from 'inferno-create-element';
 import { Link } from 'inferno-router';
 import { Badge } from '../../../ui/Badge';
-import { ThemeToggle } from '../../../ui/ThemeToggle';
 
 export function BlazecnIntro() {
   return createElement('div', { className: 'space-y-8' },
@@ -10,7 +9,6 @@ export function BlazecnIntro() {
       createElement('div', { className: 'flex items-center gap-3 mb-2' },
         createElement('span', { className: 'text-3xl' }, '\u26A1'),
         createElement('h1', { className: 'text-3xl font-bold tracking-tight' }, 'Blazecn'),
-        createElement(ThemeToggle, null),
       ),
       createElement('p', { className: 'text-muted-foreground max-w-2xl mb-4' },
         'A shadcn/ui-compatible component library for InfernoJS. Same design tokens, same class strings, zero React dependency. Built for speed.',
@@ -43,7 +41,7 @@ export function BlazecnIntro() {
       ),
       createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-3 gap-4' },
         ...[
-          { title: '32 Components', desc: 'Buttons, forms, overlays, data display, navigation, and layout primitives.' },
+          { title: '38 Components', desc: 'Buttons, forms, overlays, data display, navigation, and layout primitives.' },
           { title: 'InfernoJS Native', desc: 'Pure createElement calls. No JSX runtime, no React, no hooks. Class components for state.' },
           { title: 'Tailwind v4', desc: 'OKLCH design tokens, CSS custom properties, @theme inline bridge. Light + dark themes.' },
         ].map((item) =>
@@ -82,6 +80,15 @@ export function BlazecnIntro() {
           { label: 'Toast', path: '/docs/blazecn/toast' },
           { label: 'Accordion', path: '/docs/blazecn/accordion' },
           { label: 'Table', path: '/docs/blazecn/table' },
+          { label: 'Theme Toggle', path: '/docs/blazecn/theme-toggle' },
+          { label: 'Dropdown Menu', path: '/docs/blazecn/dropdown-menu' },
+          { label: 'Popover', path: '/docs/blazecn/popover' },
+          { label: 'Sheet', path: '/docs/blazecn/sheet' },
+          { label: 'Collapsible', path: '/docs/blazecn/collapsible' },
+          { label: 'Toggle Group', path: '/docs/blazecn/toggle-group' },
+          { label: 'Breadcrumb', path: '/docs/blazecn/breadcrumb' },
+          { label: 'Pagination', path: '/docs/blazecn/pagination' },
+          { label: 'Hover Card', path: '/docs/blazecn/hover-card' },
         ].map((item) =>
           createElement(Link, {
             key: item.label,
