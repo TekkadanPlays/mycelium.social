@@ -153,11 +153,20 @@ export class Toaster extends Component<{}, ToasterState> {
     const { toasts } = this.state;
     if (toasts.length === 0) return null;
 
+    const maxVisible = 3;
+    const visible = toasts.slice(-maxVisible);
+    const hiddenCount = toasts.length - visible.length;
+
     return createElement('div', {
       'data-slot': 'toaster',
       className: 'fixed bottom-4 right-4 z-[100] flex flex-col gap-2 w-full max-w-sm pointer-events-none',
     },
-      ...toasts.map((t) =>
+      hiddenCount > 0
+        ? createElement('div', {
+            className: 'text-center text-xs text-muted-foreground py-1',
+          }, `+${hiddenCount} more`)
+        : null,
+      ...visible.map((t) =>
         createElement(ToastItem, {
           key: t.id,
           data: t,

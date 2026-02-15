@@ -71,7 +71,7 @@ export class Tooltip extends Component<TooltipProps, TooltipState> {
             'data-slot': 'tooltip-content',
             role: 'tooltip',
             className: cn(
-              'absolute z-50 w-fit rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground shadow-md pointer-events-none whitespace-nowrap',
+              'absolute z-50 w-fit rounded-md bg-popover border border-border px-3 py-1.5 text-xs text-popover-foreground shadow-md pointer-events-none whitespace-nowrap animate-in fade-in-0 zoom-in-95',
               positionClasses[side],
               className,
             ),

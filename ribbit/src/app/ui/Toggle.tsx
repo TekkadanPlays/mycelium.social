@@ -7,8 +7,8 @@ export const toggleVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-transparent hover:bg-muted hover:text-muted-foreground data-[state=on]:bg-accent data-[state=on]:text-accent-foreground',
-        outline: 'border border-input bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground data-[state=on]:bg-accent data-[state=on]:text-accent-foreground',
+        default: 'bg-transparent hover:bg-muted hover:text-muted-foreground data-[state=on]:bg-primary/15 data-[state=on]:text-primary data-[state=on]:border data-[state=on]:border-primary/30',
+        outline: 'border border-border bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground data-[state=on]:bg-primary/15 data-[state=on]:text-primary data-[state=on]:border-primary/30',
       },
       size: {
         default: 'h-9 px-2 min-w-9',

@@ -87,13 +87,17 @@ interface AccordionContentProps {
 }
 
 export function AccordionContent({ className, open = false, children }: AccordionContentProps) {
-  if (!open) return null;
-
   return createElement('div', {
     'data-slot': 'accordion-content',
-    'data-state': 'open',
-    className: cn('overflow-hidden text-sm', className),
+    'data-state': open ? 'open' : 'closed',
+    className: cn(
+      'overflow-hidden text-sm transition-all duration-300 ease-in-out',
+      open ? 'grid grid-rows-[1fr] opacity-100' : 'grid grid-rows-[0fr] opacity-0',
+      className,
+    ),
   },
-    createElement('div', { className: 'pt-0 pb-4' }, children),
+    createElement('div', { className: 'min-h-0' },
+      createElement('div', { className: 'pt-0 pb-4' }, children),
+    ),
   );
 }
