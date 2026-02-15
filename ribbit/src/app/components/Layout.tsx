@@ -7,6 +7,7 @@ import { npubEncode, shortenNpub } from '../../nostr/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/Avatar';
 import { Button } from '../ui/Button';
 import { ThemeToggle } from '../ui/ThemeToggle';
+import { ThemeSelector } from '../ui/ThemeSelector';
 
 // ---------------------------------------------------------------------------
 // Header
@@ -103,7 +104,8 @@ export class Header extends Component<{}, HeaderState> {
               ),
             ),
 
-            // Theme toggle
+            // Theme controls
+            createElement(ThemeSelector, { className: 'size-8' }),
             createElement(ThemeToggle, { className: 'size-8' }),
 
             auth.pubkey

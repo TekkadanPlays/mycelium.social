@@ -2,6 +2,7 @@ import { createElement } from 'inferno-create-element';
 import { PageHeader, SectionHeading, DemoBox, CodeBlock, PropTable } from '../_helpers';
 import { ThemeToggle } from '../../../ui/ThemeToggle';
 import { ThemePicker } from '../../../ui/ThemePicker';
+import { ThemeSelector } from '../../../ui/ThemeSelector';
 
 export function ThemeTogglePage() {
   return createElement('div', { className: 'space-y-10' },
@@ -25,7 +26,7 @@ export function ThemeTogglePage() {
     // Base color theme
     createElement(SectionHeading, { id: 'base-theme' }, 'Base Color Theme'),
     createElement('p', { className: 'text-sm text-muted-foreground mb-3' },
-      'Choose a base color palette. Each theme adjusts the primary, secondary, muted, accent, and border colors across the entire UI. Includes all shadcn base colors plus a custom Ribbit green theme.',
+      'Choose a base color palette. Each theme adjusts the primary color (buttons, links, focus rings) while keeping neutral surfaces. Includes Ribbit green, Nostr purple, and Bitcoin orange.',
     ),
     createElement(DemoBox, { className: 'block p-6' },
       createElement(ThemePicker, null),
@@ -36,11 +37,9 @@ export function ThemeTogglePage() {
     createElement('div', { className: 'space-y-2' },
       ...[
         { name: 'Neutral', desc: 'Pure black/white with zero chroma. The shadcn default.' },
-        { name: 'Zinc', desc: 'Cool neutral with a subtle blue-violet tint.' },
-        { name: 'Slate', desc: 'Deeper blue-violet undertone, slightly warmer than Zinc.' },
-        { name: 'Stone', desc: 'Warm neutral with a subtle brown/amber tint.' },
-        { name: 'Gray', desc: 'True gray with a faint blue undertone.' },
-        { name: 'Ribbit', desc: 'Custom green theme for the Ribbit ecosystem.' },
+        { name: 'Ribbit', desc: 'Muted green \u2014 the Ribbit frog identity.' },
+        { name: 'Nostr', desc: 'Purple accent based on #8e30eb.' },
+        { name: 'Bitcoin', desc: 'Orange accent based on #F7931A.' },
       ].map((t) =>
         createElement('div', { key: t.name, className: 'flex items-baseline gap-2' },
           createElement('span', { className: 'text-sm font-semibold' }, t.name),
@@ -75,7 +74,7 @@ toggleDarkMode()        // Toggle dark/light` }),
       ),
       createElement('ul', { className: 'text-sm text-muted-foreground space-y-1 list-disc pl-5' },
         createElement('li', null, 'Base colors defined in :root (light) and .dark (dark) using oklch values'),
-        createElement('li', null, 'Theme classes (.theme-zinc, .theme-slate, etc.) override the CSS variables on <html>'),
+        createElement('li', null, 'Theme classes (.theme-ribbit, .theme-nostr, .theme-bitcoin) override primary/ring CSS variables on <html>'),
         createElement('li', null, 'Dark variants use .dark.theme-* compound selectors'),
         createElement('li', null, 'Both dark mode and base theme persist to localStorage'),
         createElement('li', null, 'initTheme() in App.tsx applies persisted preferences on load'),

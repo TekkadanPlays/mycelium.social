@@ -2,7 +2,7 @@
 // Theme store — persists base color theme + dark mode to localStorage
 // ---------------------------------------------------------------------------
 
-export type BaseTheme = 'neutral' | 'zinc' | 'slate' | 'stone' | 'gray' | 'ribbit';
+export type BaseTheme = 'neutral' | 'ribbit' | 'nostr' | 'bitcoin';
 
 const THEME_KEY = 'ribbit_base_theme';
 const DARK_KEY = 'ribbit_dark_mode';
@@ -56,7 +56,7 @@ export function applyTheme() {
   }
 
   // Base color theme — remove all, then add current
-  html.classList.remove('theme-zinc', 'theme-slate', 'theme-stone', 'theme-gray', 'theme-ribbit');
+  html.classList.remove('theme-ribbit', 'theme-nostr', 'theme-bitcoin');
   if (base !== 'neutral') {
     html.classList.add(`theme-${base}`);
   }

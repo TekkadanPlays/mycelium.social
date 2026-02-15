@@ -9,11 +9,9 @@ import { getBaseTheme, setBaseTheme, subscribeTheme, type BaseTheme } from '../s
 
 const THEMES: { id: BaseTheme; label: string; swatch: string }[] = [
   { id: 'neutral', label: 'Neutral', swatch: 'bg-[oklch(0.205_0_0)]' },
-  { id: 'zinc', label: 'Zinc', swatch: 'bg-[oklch(0.21_0.006_285.885)]' },
-  { id: 'slate', label: 'Slate', swatch: 'bg-[oklch(0.208_0.042_265.755)]' },
-  { id: 'stone', label: 'Stone', swatch: 'bg-[oklch(0.216_0.006_56.043)]' },
-  { id: 'gray', label: 'Gray', swatch: 'bg-[oklch(0.21_0.034_264.665)]' },
   { id: 'ribbit', label: 'Ribbit', swatch: 'bg-[oklch(0.45_0.10_150)]' },
+  { id: 'nostr', label: 'Nostr', swatch: 'bg-[oklch(0.50_0.25_300)]' },
+  { id: 'bitcoin', label: 'Bitcoin', swatch: 'bg-[oklch(0.65_0.18_60)]' },
 ];
 
 interface ThemePickerProps {
