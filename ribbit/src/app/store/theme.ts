@@ -62,7 +62,17 @@ export function applyTheme() {
   }
 }
 
+// Migrate from old 'theme' key used by the previous ThemeToggle
+function migrateOldKey() {
+  const old = localStorage.getItem('theme');
+  if (old && localStorage.getItem(DARK_KEY) === null) {
+    localStorage.setItem(DARK_KEY, old === 'dark' ? 'true' : 'false');
+    localStorage.removeItem('theme');
+  }
+}
+
 // Initialize on load
 export function initTheme() {
+  migrateOldKey();
   applyTheme();
 }

@@ -13,7 +13,14 @@
 <body>
   <script>
     // Prevent flash of wrong theme — runs before first paint
-    (function(){var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark')})();
+    (function(){
+      var d=localStorage.getItem('ribbit_dark_mode');
+      if(d===null){var old=localStorage.getItem('theme');if(old){d=old==='dark'?'true':'false'}}
+      var dark=d==='true'||(d===null&&matchMedia('(prefers-color-scheme:dark)').matches);
+      if(dark)document.documentElement.classList.add('dark');
+      var t=localStorage.getItem('ribbit_base_theme');
+      if(t&&t!=='neutral')document.documentElement.classList.add('theme-'+t);
+    })();
   </script>
   <div id="app"></div>
   <script type="module" src="__BUNDLE_PATH__"></script>
