@@ -32,7 +32,7 @@ export function AccordionItem({ className, value, children }: AccordionItemProps
   return createElement('div', {
     'data-slot': 'accordion-item',
     'data-value': value,
-    className: cn('border-b last:border-b-0', className),
+    className: cn('border-b border-border last:border-b-0', className),
   }, children);
 }
 
@@ -55,8 +55,8 @@ export function AccordionTrigger({ className, open = false, onClick, children }:
     'data-state': open ? 'open' : 'closed',
     onClick,
     className: cn(
-      'flex w-full flex-1 items-center justify-between gap-4 py-4 text-left text-sm font-medium transition-all outline-none cursor-pointer hover:underline',
-      'focus-visible:ring-ring/50 focus-visible:ring-[3px]',
+      'flex w-full flex-1 items-center justify-between gap-4 py-4 text-left text-sm font-medium transition-all cursor-pointer hover:underline',
+      'outline-none focus-visible:ring-ring/50 focus-visible:ring-[3px]',
       '[&[data-state=open]>svg]:rotate-180',
       className,
     ),
