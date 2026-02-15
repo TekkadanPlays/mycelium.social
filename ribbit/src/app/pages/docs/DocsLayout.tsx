@@ -45,6 +45,8 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/button', label: 'Button' },
           { path: '/docs/blazecn/badge', label: 'Badge' },
           { path: '/docs/blazecn/card', label: 'Card' },
+          { path: '/docs/blazecn/button-group', label: 'Button Group' },
+          { path: '/docs/blazecn/kbd', label: 'Kbd' },
           { path: '/docs/blazecn/theme-toggle', label: 'Theme Toggle' },
         ],
       },
@@ -60,6 +62,7 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/select', label: 'Select' },
           { path: '/docs/blazecn/slider', label: 'Slider' },
           { path: '/docs/blazecn/input-otp', label: 'Input OTP' },
+          { path: '/docs/blazecn/combobox', label: 'Combobox' },
         ],
       },
       {
@@ -74,6 +77,8 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/alert', label: 'Alert' },
           { path: '/docs/blazecn/hover-card', label: 'Hover Card' },
           { path: '/docs/blazecn/carousel', label: 'Carousel' },
+          { path: '/docs/blazecn/empty', label: 'Empty' },
+          { path: '/docs/blazecn/typography', label: 'Typography' },
         ],
       },
       {
@@ -87,6 +92,8 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/pagination', label: 'Pagination' },
           { path: '/docs/blazecn/collapsible', label: 'Collapsible' },
           { path: '/docs/blazecn/command', label: 'Command' },
+          { path: '/docs/blazecn/menubar', label: 'Menubar' },
+          { path: '/docs/blazecn/navigation-menu', label: 'Navigation Menu' },
         ],
       },
       {
@@ -99,6 +106,8 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/dropdown-menu', label: 'Dropdown Menu' },
           { path: '/docs/blazecn/popover', label: 'Popover' },
           { path: '/docs/blazecn/sheet', label: 'Sheet' },
+          { path: '/docs/blazecn/drawer', label: 'Drawer' },
+          { path: '/docs/blazecn/context-menu', label: 'Context Menu' },
         ],
       },
       {
@@ -106,6 +115,7 @@ const NAV: NavGroup[] = [
         items: [
           { path: '/docs/blazecn/scroll-area', label: 'Scroll Area' },
           { path: '/docs/blazecn/aspect-ratio', label: 'Aspect Ratio' },
+          { path: '/docs/blazecn/resizable', label: 'Resizable' },
         ],
       },
     ],

@@ -48,6 +48,16 @@ import { AlertDialogPage } from './blazecn/AlertDialogPage';
 import { CommandPage } from './blazecn/CommandPage';
 import { InputOTPPage } from './blazecn/InputOTPPage';
 import { CarouselPage } from './blazecn/CarouselPage';
+import { ContextMenuPage } from './blazecn/ContextMenuPage';
+import { DrawerPage } from './blazecn/DrawerPage';
+import { MenubarPage } from './blazecn/MenubarPage';
+import { NavigationMenuPage } from './blazecn/NavigationMenuPage';
+import { ResizablePage } from './blazecn/ResizablePage';
+import { ComboboxPage } from './blazecn/ComboboxPage';
+import { KbdPage } from './blazecn/KbdPage';
+import { TypographyPage } from './blazecn/TypographyPage';
+import { EmptyPage } from './blazecn/EmptyPage';
+import { ButtonGroupPage } from './blazecn/ButtonGroupPage';
 
 // Kaji module pages
 import { KajiEventPage } from './kaji/EventPage';
@@ -121,6 +131,16 @@ const ROUTES: Record<string, any> = {
   '/docs/blazecn/command': CommandPage,
   '/docs/blazecn/input-otp': InputOTPPage,
   '/docs/blazecn/carousel': CarouselPage,
+  '/docs/blazecn/context-menu': ContextMenuPage,
+  '/docs/blazecn/drawer': DrawerPage,
+  '/docs/blazecn/menubar': MenubarPage,
+  '/docs/blazecn/navigation-menu': NavigationMenuPage,
+  '/docs/blazecn/resizable': ResizablePage,
+  '/docs/blazecn/combobox': ComboboxPage,
+  '/docs/blazecn/kbd': KbdPage,
+  '/docs/blazecn/typography': TypographyPage,
+  '/docs/blazecn/empty': EmptyPage,
+  '/docs/blazecn/button-group': ButtonGroupPage,
 
   // Kaji modules
   '/docs/kaji': KajiIntro,
