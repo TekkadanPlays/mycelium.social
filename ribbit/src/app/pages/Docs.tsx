@@ -11,6 +11,22 @@ import { Switch } from '../ui/Switch';
 import { Separator } from '../ui/Separator';
 import { Spinner } from '../ui/Spinner';
 import { Skeleton } from '../ui/Skeleton';
+import { Avatar, AvatarImage, AvatarFallback } from '../ui/Avatar';
+import { Alert, AlertTitle, AlertDescription } from '../ui/Alert';
+import { Toggle } from '../ui/Toggle';
+import { ToggleGroup, ToggleGroupItem } from '../ui/ToggleGroup';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/Tabs';
+import { Checkbox } from '../ui/Checkbox';
+import { RadioGroup, RadioGroupItem } from '../ui/RadioGroup';
+import { Progress } from '../ui/Progress';
+import { Slider } from '../ui/Slider';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/Dialog';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '../ui/Accordion';
+import { Tooltip } from '../ui/Tooltip';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../ui/Table';
+import { ScrollArea } from '../ui/ScrollArea';
+import { AspectRatio } from '../ui/AspectRatio';
+import { toast, Toaster } from '../ui/Toast';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -73,18 +89,59 @@ const NAV_SECTIONS = [
     ],
   },
   {
-    heading: 'Components',
+    heading: 'Core',
     items: [
       { id: 'button', label: 'Button' },
       { id: 'badge', label: 'Badge' },
       { id: 'card', label: 'Card' },
+    ],
+  },
+  {
+    heading: 'Form',
+    items: [
       { id: 'input', label: 'Input' },
       { id: 'textarea', label: 'Textarea' },
       { id: 'label', label: 'Label' },
       { id: 'switch', label: 'Switch' },
+      { id: 'checkbox', label: 'Checkbox' },
+      { id: 'radio', label: 'Radio Group' },
+      { id: 'select', label: 'Select' },
+      { id: 'slider', label: 'Slider' },
+    ],
+  },
+  {
+    heading: 'Data Display',
+    items: [
+      { id: 'avatar', label: 'Avatar' },
+      { id: 'table', label: 'Table' },
       { id: 'separator', label: 'Separator' },
       { id: 'spinner', label: 'Spinner' },
       { id: 'skeleton', label: 'Skeleton' },
+      { id: 'progress', label: 'Progress' },
+      { id: 'alert', label: 'Alert' },
+    ],
+  },
+  {
+    heading: 'Navigation',
+    items: [
+      { id: 'tabs', label: 'Tabs' },
+      { id: 'toggle', label: 'Toggle' },
+      { id: 'accordion', label: 'Accordion' },
+    ],
+  },
+  {
+    heading: 'Overlay',
+    items: [
+      { id: 'dialog', label: 'Dialog' },
+      { id: 'tooltip', label: 'Tooltip' },
+      { id: 'toast', label: 'Toast' },
+    ],
+  },
+  {
+    heading: 'Layout',
+    items: [
+      { id: 'scroll-area', label: 'Scroll Area' },
+      { id: 'aspect-ratio', label: 'Aspect Ratio' },
     ],
   },
   {
@@ -122,6 +179,15 @@ function DocsSidebar() {
 
 interface DocsState {
   switchChecked: boolean;
+  checkboxChecked: boolean;
+  radioValue: string;
+  tabValue: string;
+  toggleBold: boolean;
+  toggleItalic: boolean;
+  sliderValue: number;
+  progressValue: number;
+  dialogOpen: boolean;
+  accordionOpen: string;
 }
 
 export class Docs extends Component<{}, DocsState> {
@@ -129,7 +195,18 @@ export class Docs extends Component<{}, DocsState> {
 
   constructor(props: {}) {
     super(props);
-    this.state = { switchChecked: false };
+    this.state = {
+      switchChecked: false,
+      checkboxChecked: false,
+      radioValue: 'default',
+      tabValue: 'preview',
+      toggleBold: false,
+      toggleItalic: false,
+      sliderValue: 50,
+      progressValue: 60,
+      dialogOpen: false,
+      accordionOpen: '',
+    };
   }
 
   render() {
@@ -485,6 +562,435 @@ export class Docs extends Component<{}, DocsState> {
         ),
 
         // ===================================================================
+        // CHECKBOX
+        // ===================================================================
+        createElement(SectionHeading, { id: 'checkbox' }, 'Checkbox'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'A control that allows the user to toggle between checked and not checked.',
+          ),
+          createElement('div', { className: 'flex items-center gap-3' },
+            createElement(Checkbox, {
+              id: 'terms',
+              checked: this.state.checkboxChecked,
+              onChange: (checked: boolean) => this.setState({ checkboxChecked: checked }),
+            }),
+            createElement(Label, { htmlFor: 'terms' }, 'Accept terms and conditions'),
+          ),
+          createElement(CodeBlock, { code: "createElement(Checkbox, {\n  checked: isChecked,\n  onChange: (checked) => setChecked(checked),\n})" }),
+          createElement(PropTable, { rows: [
+            { prop: 'checked', type: 'boolean', default: 'false' },
+            { prop: 'disabled', type: 'boolean', default: 'false' },
+            { prop: 'onChange', type: '(checked: boolean) => void', default: '\u2014' },
+            { prop: 'className', type: 'string', default: '\u2014' },
+          ]}),
+        ),
+
+        // ===================================================================
+        // RADIO GROUP
+        // ===================================================================
+        createElement(SectionHeading, { id: 'radio' }, 'Radio Group'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'A set of checkable buttons where only one can be checked at a time.',
+          ),
+          createElement(RadioGroup, null,
+            ...['default', 'comfortable', 'compact'].map((val) =>
+              createElement('div', { key: val, className: 'flex items-center gap-2' },
+                createElement(RadioGroupItem, {
+                  value: val,
+                  checked: this.state.radioValue === val,
+                  onClick: () => this.setState({ radioValue: val }),
+                }),
+                createElement(Label, null, val.charAt(0).toUpperCase() + val.slice(1)),
+              ),
+            ),
+          ),
+          createElement(CodeBlock, { code: "createElement(RadioGroup, null,\n  createElement(RadioGroupItem, { value: 'a', checked: val === 'a', onClick: () => set('a') }),\n  createElement(RadioGroupItem, { value: 'b', checked: val === 'b', onClick: () => set('b') }),\n)" }),
+        ),
+
+        // ===================================================================
+        // SELECT (static demo)
+        // ===================================================================
+        createElement(SectionHeading, { id: 'select' }, 'Select'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'A custom styled dropdown select. Trigger + positioned content list with click-outside close.',
+          ),
+          createElement(CodeBlock, { code: "createElement(Select, null,\n  createElement(SelectTrigger, { open, onClick: toggle },\n    createElement(SelectValue, { placeholder: 'Pick one' }, selected),\n  ),\n  createElement(SelectContent, { open, onClose: close },\n    createElement(SelectItem, { value: 'a', selected: val === 'a', onClick: () => pick('a') }, 'Option A'),\n    createElement(SelectItem, { value: 'b', selected: val === 'b', onClick: () => pick('b') }, 'Option B'),\n  ),\n)" }),
+          createElement(PropTable, { rows: [
+            { prop: 'open', type: 'boolean', default: 'false' },
+            { prop: 'onClose', type: '() => void', default: '\u2014' },
+            { prop: 'value', type: 'string', default: '\u2014' },
+            { prop: 'selected', type: 'boolean', default: 'false' },
+          ]}),
+        ),
+
+        // ===================================================================
+        // SLIDER
+        // ===================================================================
+        createElement(SectionHeading, { id: 'slider' }, 'Slider'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'An input where the user selects a value from within a given range by dragging.',
+          ),
+          createElement('div', { className: 'max-w-sm space-y-2' },
+            createElement(Slider, {
+              value: this.state.sliderValue,
+              min: 0,
+              max: 100,
+              step: 1,
+              onValueChange: (v: number) => this.setState({ sliderValue: v }),
+            }),
+            createElement('p', { className: 'text-xs text-muted-foreground text-center' },
+              'Value: ' + this.state.sliderValue,
+            ),
+          ),
+          createElement(CodeBlock, { code: "createElement(Slider, {\n  value: 50,\n  min: 0,\n  max: 100,\n  step: 1,\n  onValueChange: (v) => setValue(v),\n})" }),
+          createElement(PropTable, { rows: [
+            { prop: 'value', type: 'number', default: '0' },
+            { prop: 'min', type: 'number', default: '0' },
+            { prop: 'max', type: 'number', default: '100' },
+            { prop: 'step', type: 'number', default: '1' },
+            { prop: 'disabled', type: 'boolean', default: 'false' },
+            { prop: 'onValueChange', type: '(value: number) => void', default: '\u2014' },
+          ]}),
+        ),
+
+        // ===================================================================
+        // AVATAR
+        // ===================================================================
+        createElement(SectionHeading, { id: 'avatar' }, 'Avatar'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'An image element with a fallback for representing the user.',
+          ),
+          createElement(ExampleRow, { label: 'With image & fallback' },
+            createElement(Avatar, null,
+              createElement(AvatarImage, { src: 'https://github.com/shadcn.png', alt: 'shadcn' }),
+              createElement(AvatarFallback, null, 'CN'),
+            ),
+            createElement(Avatar, null,
+              createElement(AvatarFallback, null, 'JD'),
+            ),
+            createElement(Avatar, { className: 'size-12' },
+              createElement(AvatarFallback, { className: 'text-sm' }, 'AB'),
+            ),
+          ),
+          createElement(CodeBlock, { code: "createElement(Avatar, null,\n  createElement(AvatarImage, { src: '/avatar.png', alt: 'User' }),\n  createElement(AvatarFallback, null, 'JD'),\n)" }),
+        ),
+
+        // ===================================================================
+        // TABLE
+        // ===================================================================
+        createElement(SectionHeading, { id: 'table' }, 'Table'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'A responsive table component with composable header, body, and row slots.',
+          ),
+          createElement(Table, null,
+            createElement(TableHeader, null,
+              createElement(TableRow, null,
+                createElement(TableHead, null, 'Invoice'),
+                createElement(TableHead, null, 'Status'),
+                createElement(TableHead, null, 'Method'),
+                createElement(TableHead, { className: 'text-right' }, 'Amount'),
+              ),
+            ),
+            createElement(TableBody, null,
+              ...([
+                { inv: 'INV001', status: 'Paid', method: 'Credit Card', amount: '$250.00' },
+                { inv: 'INV002', status: 'Pending', method: 'PayPal', amount: '$150.00' },
+                { inv: 'INV003', status: 'Unpaid', method: 'Bank Transfer', amount: '$350.00' },
+              ] as const).map((row) =>
+                createElement(TableRow, { key: row.inv },
+                  createElement(TableCell, { className: 'font-medium' }, row.inv),
+                  createElement(TableCell, null, row.status),
+                  createElement(TableCell, null, row.method),
+                  createElement(TableCell, { className: 'text-right' }, row.amount),
+                ),
+              ),
+            ),
+          ),
+          createElement(CodeBlock, { code: "createElement(Table, null,\n  createElement(TableHeader, null,\n    createElement(TableRow, null,\n      createElement(TableHead, null, 'Name'),\n      createElement(TableHead, null, 'Amount'),\n    ),\n  ),\n  createElement(TableBody, null,\n    createElement(TableRow, null,\n      createElement(TableCell, null, 'Item'),\n      createElement(TableCell, null, '$100'),\n    ),\n  ),\n)" }),
+        ),
+
+        // ===================================================================
+        // PROGRESS
+        // ===================================================================
+        createElement(SectionHeading, { id: 'progress' }, 'Progress'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'Displays an indicator showing the completion progress of a task.',
+          ),
+          createElement('div', { className: 'max-w-sm space-y-4' },
+            createElement(Progress, { value: this.state.progressValue }),
+            createElement('div', { className: 'flex gap-2' },
+              createElement(Button, { size: 'xs', variant: 'outline', onClick: () => this.setState({ progressValue: Math.max(0, this.state.progressValue - 10) }) }, '-10'),
+              createElement('span', { className: 'text-xs text-muted-foreground self-center' }, this.state.progressValue + '%'),
+              createElement(Button, { size: 'xs', variant: 'outline', onClick: () => this.setState({ progressValue: Math.min(100, this.state.progressValue + 10) }) }, '+10'),
+            ),
+          ),
+          createElement(CodeBlock, { code: "createElement(Progress, { value: 60 })" }),
+          createElement(PropTable, { rows: [
+            { prop: 'value', type: 'number', default: '0' },
+            { prop: 'max', type: 'number', default: '100' },
+            { prop: 'className', type: 'string', default: '\u2014' },
+          ]}),
+        ),
+
+        // ===================================================================
+        // ALERT
+        // ===================================================================
+        createElement(SectionHeading, { id: 'alert' }, 'Alert'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'Displays a callout for important information. 2 variants.',
+          ),
+          createElement('div', { className: 'space-y-3 max-w-lg' },
+            createElement(Alert, null,
+              createElement(AlertTitle, null, 'Heads up!'),
+              createElement(AlertDescription, null, 'You can add components to your app using the CLI.'),
+            ),
+            createElement(Alert, { variant: 'destructive' },
+              createElement(AlertTitle, null, 'Error'),
+              createElement(AlertDescription, null, 'Your session has expired. Please log in again.'),
+            ),
+          ),
+          createElement(CodeBlock, { code: "createElement(Alert, { variant: 'destructive' },\n  createElement(AlertTitle, null, 'Error'),\n  createElement(AlertDescription, null, 'Something went wrong.'),\n)" }),
+        ),
+
+        // ===================================================================
+        // TABS
+        // ===================================================================
+        createElement(SectionHeading, { id: 'tabs' }, 'Tabs'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'A set of layered sections of content, known as tab panels, displayed one at a time.',
+          ),
+          createElement(Tabs, null,
+            createElement(TabsList, null,
+              createElement(TabsTrigger, {
+                value: 'preview',
+                active: this.state.tabValue === 'preview',
+                onClick: () => this.setState({ tabValue: 'preview' }),
+              }, 'Preview'),
+              createElement(TabsTrigger, {
+                value: 'code',
+                active: this.state.tabValue === 'code',
+                onClick: () => this.setState({ tabValue: 'code' }),
+              }, 'Code'),
+              createElement(TabsTrigger, {
+                value: 'settings',
+                active: this.state.tabValue === 'settings',
+                onClick: () => this.setState({ tabValue: 'settings' }),
+              }, 'Settings'),
+            ),
+            createElement(TabsContent, { value: 'preview', active: this.state.tabValue === 'preview' },
+              createElement(Card, null,
+                createElement(CardContent, { className: 'pt-6' },
+                  createElement('p', { className: 'text-sm text-muted-foreground' }, 'This is the preview tab content.'),
+                ),
+              ),
+            ),
+            createElement(TabsContent, { value: 'code', active: this.state.tabValue === 'code' },
+              createElement(Card, null,
+                createElement(CardContent, { className: 'pt-6' },
+                  createElement('p', { className: 'text-sm font-mono text-muted-foreground' }, 'console.log("Hello from code tab")'),
+                ),
+              ),
+            ),
+            createElement(TabsContent, { value: 'settings', active: this.state.tabValue === 'settings' },
+              createElement(Card, null,
+                createElement(CardContent, { className: 'pt-6' },
+                  createElement('p', { className: 'text-sm text-muted-foreground' }, 'Settings panel content goes here.'),
+                ),
+              ),
+            ),
+          ),
+          createElement(CodeBlock, { code: "createElement(Tabs, null,\n  createElement(TabsList, null,\n    createElement(TabsTrigger, { value: 'a', active: tab === 'a', onClick: () => set('a') }, 'Tab A'),\n    createElement(TabsTrigger, { value: 'b', active: tab === 'b', onClick: () => set('b') }, 'Tab B'),\n  ),\n  createElement(TabsContent, { value: 'a', active: tab === 'a' }, 'Content A'),\n  createElement(TabsContent, { value: 'b', active: tab === 'b' }, 'Content B'),\n)" }),
+        ),
+
+        // ===================================================================
+        // TOGGLE
+        // ===================================================================
+        createElement(SectionHeading, { id: 'toggle' }, 'Toggle'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'A two-state button that can be either on or off. Also available as a group.',
+          ),
+          createElement(ExampleRow, { label: 'Single toggles' },
+            createElement(Toggle, {
+              pressed: this.state.toggleBold,
+              onClick: () => this.setState({ toggleBold: !this.state.toggleBold }),
+            }, 'B'),
+            createElement(Toggle, {
+              pressed: this.state.toggleItalic,
+              onClick: () => this.setState({ toggleItalic: !this.state.toggleItalic }),
+            }, 'I'),
+            createElement(Toggle, { variant: 'outline' }, 'Outline'),
+          ),
+          createElement(ExampleRow, { label: 'Toggle group' },
+            createElement(ToggleGroup, null,
+              createElement(ToggleGroupItem, { value: 'bold', pressed: this.state.toggleBold, onClick: () => this.setState({ toggleBold: !this.state.toggleBold }) }, 'B'),
+              createElement(ToggleGroupItem, { value: 'italic', pressed: this.state.toggleItalic, onClick: () => this.setState({ toggleItalic: !this.state.toggleItalic }) }, 'I'),
+              createElement(ToggleGroupItem, { value: 'underline' }, 'U'),
+            ),
+          ),
+          createElement(CodeBlock, { code: "createElement(Toggle, { pressed: isBold, onClick: () => toggle() }, 'B')" }),
+          createElement(PropTable, { rows: [
+            { prop: 'pressed', type: 'boolean', default: 'false' },
+            { prop: 'variant', type: "'default' | 'outline'", default: "'default'" },
+            { prop: 'size', type: "'default' | 'sm' | 'lg'", default: "'default'" },
+            { prop: 'disabled', type: 'boolean', default: 'false' },
+            { prop: 'onClick', type: '(e: Event) => void', default: '\u2014' },
+          ]}),
+        ),
+
+        // ===================================================================
+        // ACCORDION
+        // ===================================================================
+        createElement(SectionHeading, { id: 'accordion' }, 'Accordion'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'A vertically stacked set of interactive headings that each reveal a section of content.',
+          ),
+          createElement('div', { className: 'max-w-lg' },
+            createElement(Accordion, null,
+              ...([
+                { value: 'item-1', title: 'Is it accessible?', content: 'Yes. It follows WAI-ARIA design patterns with proper aria-expanded attributes.' },
+                { value: 'item-2', title: 'Is it styled?', content: 'Yes. It comes with default styles that match the other Blazecn components.' },
+                { value: 'item-3', title: 'Is it animated?', content: 'CSS transitions handle the chevron rotation. Content show/hide is instant (no height animation without JS measurement).' },
+              ] as const).map((item) =>
+                createElement(AccordionItem, { key: item.value, value: item.value },
+                  createElement(AccordionTrigger, {
+                    open: this.state.accordionOpen === item.value,
+                    onClick: () => this.setState({ accordionOpen: this.state.accordionOpen === item.value ? '' : item.value }),
+                  }, item.title),
+                  createElement(AccordionContent, { open: this.state.accordionOpen === item.value }, item.content),
+                ),
+              ),
+            ),
+          ),
+          createElement(CodeBlock, { code: "createElement(Accordion, null,\n  createElement(AccordionItem, { value: 'a' },\n    createElement(AccordionTrigger, { open: val === 'a', onClick: toggle }, 'Title'),\n    createElement(AccordionContent, { open: val === 'a' }, 'Content'),\n  ),\n)" }),
+        ),
+
+        // ===================================================================
+        // DIALOG
+        // ===================================================================
+        createElement(SectionHeading, { id: 'dialog' }, 'Dialog'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'A modal dialog that interrupts the user with important content and expects a response.',
+          ),
+          createElement(Button, {
+            variant: 'outline',
+            onClick: () => this.setState({ dialogOpen: true }),
+          }, 'Open Dialog'),
+          createElement(Dialog, { open: this.state.dialogOpen, onOpenChange: (open: boolean) => this.setState({ dialogOpen: open }) },
+            createElement(DialogContent, { onClose: () => this.setState({ dialogOpen: false }) },
+              createElement(DialogHeader, null,
+                createElement(DialogTitle, null, 'Are you sure?'),
+                createElement(DialogDescription, null, 'This action cannot be undone. This will permanently delete your account.'),
+              ),
+              createElement(DialogFooter, null,
+                createElement(Button, { variant: 'outline', onClick: () => this.setState({ dialogOpen: false }) }, 'Cancel'),
+                createElement(Button, { variant: 'destructive', onClick: () => this.setState({ dialogOpen: false }) }, 'Delete'),
+              ),
+            ),
+          ),
+          createElement(CodeBlock, { code: "createElement(Dialog, { open: isOpen },\n  createElement(DialogContent, { onClose: () => setOpen(false) },\n    createElement(DialogHeader, null,\n      createElement(DialogTitle, null, 'Title'),\n      createElement(DialogDescription, null, 'Description'),\n    ),\n    createElement(DialogFooter, null,\n      createElement(Button, { onClick: close }, 'OK'),\n    ),\n  ),\n)" }),
+        ),
+
+        // ===================================================================
+        // TOOLTIP
+        // ===================================================================
+        createElement(SectionHeading, { id: 'tooltip' }, 'Tooltip'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'A popup that displays information related to an element when the element receives focus or is hovered.',
+          ),
+          createElement(ExampleRow, { label: 'Sides' },
+            createElement(Tooltip, { content: 'Top tooltip', side: 'top' },
+              createElement(Button, { variant: 'outline', size: 'sm' }, 'Top'),
+            ),
+            createElement(Tooltip, { content: 'Bottom tooltip', side: 'bottom' },
+              createElement(Button, { variant: 'outline', size: 'sm' }, 'Bottom'),
+            ),
+            createElement(Tooltip, { content: 'Left tooltip', side: 'left' },
+              createElement(Button, { variant: 'outline', size: 'sm' }, 'Left'),
+            ),
+            createElement(Tooltip, { content: 'Right tooltip', side: 'right' },
+              createElement(Button, { variant: 'outline', size: 'sm' }, 'Right'),
+            ),
+          ),
+          createElement(CodeBlock, { code: "createElement(Tooltip, { content: 'Add to library', side: 'top' },\n  createElement(Button, { variant: 'outline' }, 'Hover me'),\n)" }),
+          createElement(PropTable, { rows: [
+            { prop: 'content', type: 'string', default: '\u2014' },
+            { prop: 'side', type: "'top' | 'bottom' | 'left' | 'right'", default: "'top'" },
+            { prop: 'delayMs', type: 'number', default: '200' },
+            { prop: 'className', type: 'string', default: '\u2014' },
+          ]}),
+        ),
+
+        // ===================================================================
+        // TOAST
+        // ===================================================================
+        createElement(SectionHeading, { id: 'toast' }, 'Toast'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'A succinct message that is displayed temporarily. Uses an imperative toast() API with a pub/sub pattern.',
+          ),
+          createElement(ExampleRow, { label: 'Trigger toasts' },
+            createElement(Button, {
+              variant: 'outline',
+              onClick: () => toast({ title: 'Event created', description: 'Sunday, December 03, 2023 at 9:00 AM' }),
+            }, 'Show Toast'),
+            createElement(Button, {
+              variant: 'destructive',
+              onClick: () => toast({ title: 'Error', description: 'Something went wrong.', variant: 'destructive' }),
+            }, 'Destructive Toast'),
+          ),
+          createElement(CodeBlock, { code: "import { toast, Toaster } from './ui/Toast';\n\n// Mount once at root\ncreateElement(Toaster, null)\n\n// Call anywhere\ntoast({ title: 'Saved', description: 'Your changes have been saved.' })\ntoast({ title: 'Error', variant: 'destructive' })" }),
+        ),
+
+        // ===================================================================
+        // SCROLL AREA
+        // ===================================================================
+        createElement(SectionHeading, { id: 'scroll-area' }, 'Scroll Area'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'Augments native scroll functionality with a custom styled scrollbar. CSS-only, no JS overhead.',
+          ),
+          createElement(ScrollArea, { className: 'h-48 w-64 rounded-md border p-4' },
+            ...Array.from({ length: 20 }, (_, i) =>
+              createElement('div', { key: i, className: 'py-1 text-sm' }, 'Item ' + (i + 1)),
+            ),
+          ),
+          createElement(CodeBlock, { code: "createElement(ScrollArea, { className: 'h-48 w-64 rounded-md border p-4' },\n  ...items.map((item) => createElement('div', null, item)),\n)" }),
+        ),
+
+        // ===================================================================
+        // ASPECT RATIO
+        // ===================================================================
+        createElement(SectionHeading, { id: 'aspect-ratio' }, 'Aspect Ratio'),
+        createElement('div', { className: 'space-y-6' },
+          createElement('p', { className: 'text-sm text-muted-foreground' },
+            'Displays content within a desired ratio. Uses padding-bottom technique for zero-JS layout.',
+          ),
+          createElement('div', { className: 'max-w-sm' },
+            createElement(AspectRatio, { ratio: 16 / 9, className: 'rounded-lg overflow-hidden bg-muted' },
+              createElement('div', { className: 'flex items-center justify-center h-full text-sm text-muted-foreground' }, '16:9'),
+            ),
+          ),
+          createElement(CodeBlock, { code: "createElement(AspectRatio, { ratio: 16 / 9 },\n  createElement('img', { src: '/photo.jpg', className: 'object-cover w-full h-full' }),\n)" }),
+          createElement(PropTable, { rows: [
+            { prop: 'ratio', type: 'number', default: '16/9' },
+            { prop: 'className', type: 'string', default: '\u2014' },
+          ]}),
+        ),
+
+        // ===================================================================
         // CN UTILITY
         // ===================================================================
         createElement(SectionHeading, { id: 'cn' }, 'cn() Utility'),
@@ -521,6 +1027,7 @@ export class Docs extends Component<{}, DocsState> {
           ),
         ),
       ),
+      createElement(Toaster, null),
     );
   }
 }
