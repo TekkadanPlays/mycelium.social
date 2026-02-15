@@ -5,17 +5,32 @@ import { ToggleGroup, ToggleGroupItem } from '../../../ui/ToggleGroup';
 import { PageHeader, SectionHeading, DemoBox, ExampleRow, CodeBlock, PropTable } from '../_helpers';
 
 interface TogglePageState {
-  bold: boolean;
-  italic: boolean;
-  underline: boolean;
   bookmark: boolean;
+  outlineItalic: boolean;
+  textItalic: boolean;
+  sizeSm: boolean;
+  sizeMd: boolean;
+  sizeLg: boolean;
+  groupBold: boolean;
+  groupItalic: boolean;
+  groupUnderline: boolean;
+  outGroupBold: boolean;
+  outGroupItalic: boolean;
+  outGroupUnderline: boolean;
 }
 
 export class TogglePage extends Component<{}, TogglePageState> {
   declare state: TogglePageState;
   constructor(props: {}) {
     super(props);
-    this.state = { bold: false, italic: false, underline: false, bookmark: false };
+    this.state = {
+      bookmark: false,
+      outlineItalic: false,
+      textItalic: false,
+      sizeSm: false, sizeMd: false, sizeLg: false,
+      groupBold: false, groupItalic: false, groupUnderline: false,
+      outGroupBold: false, outGroupItalic: false, outGroupUnderline: false,
+    };
   }
 
   // SVG icon helpers
@@ -44,7 +59,7 @@ export class TogglePage extends Component<{}, TogglePageState> {
   }
 
   render() {
-    const { bold, italic, underline, bookmark } = this.state;
+    const s = this.state;
 
     return createElement('div', { className: 'space-y-10' },
       createElement(PageHeader, {
@@ -56,8 +71,8 @@ export class TogglePage extends Component<{}, TogglePageState> {
       createElement(SectionHeading, { id: 'demo' }, 'Demo'),
       createElement(DemoBox, null,
         createElement(Toggle, {
-          pressed: bookmark,
-          onClick: () => this.setState({ bookmark: !bookmark }),
+          pressed: s.bookmark,
+          onClick: () => this.setState({ bookmark: !s.bookmark }),
           'aria-label': 'Toggle bookmark',
         }, this.bookmarkIcon()),
       ),
@@ -70,8 +85,8 @@ export class TogglePage extends Component<{}, TogglePageState> {
       createElement(DemoBox, null,
         createElement(Toggle, {
           variant: 'outline',
-          pressed: italic,
-          onClick: () => this.setState({ italic: !italic }),
+          pressed: s.outlineItalic,
+          onClick: () => this.setState({ outlineItalic: !s.outlineItalic }),
           'aria-label': 'Toggle italic',
         }, this.italicIcon()),
       ),
@@ -80,8 +95,8 @@ export class TogglePage extends Component<{}, TogglePageState> {
       createElement(SectionHeading, { id: 'with-text' }, 'With Text'),
       createElement(DemoBox, null,
         createElement(Toggle, {
-          pressed: italic,
-          onClick: () => this.setState({ italic: !italic }),
+          pressed: s.textItalic,
+          onClick: () => this.setState({ textItalic: !s.textItalic }),
           'aria-label': 'Toggle italic',
         }, this.italicIcon(), ' Italic'),
       ),
@@ -93,9 +108,9 @@ export class TogglePage extends Component<{}, TogglePageState> {
       ),
       createElement(DemoBox, null,
         createElement(ExampleRow, { label: '' },
-          createElement(Toggle, { size: 'sm', pressed: bold, onClick: () => this.setState({ bold: !bold }), 'aria-label': 'Toggle bold sm' }, this.boldIcon()),
-          createElement(Toggle, { pressed: bold, onClick: () => this.setState({ bold: !bold }), 'aria-label': 'Toggle bold default' }, this.boldIcon()),
-          createElement(Toggle, { size: 'lg', pressed: bold, onClick: () => this.setState({ bold: !bold }), 'aria-label': 'Toggle bold lg' }, this.boldIcon()),
+          createElement(Toggle, { size: 'sm', pressed: s.sizeSm, onClick: () => this.setState({ sizeSm: !s.sizeSm }), 'aria-label': 'Toggle bold sm' }, this.boldIcon()),
+          createElement(Toggle, { pressed: s.sizeMd, onClick: () => this.setState({ sizeMd: !s.sizeMd }), 'aria-label': 'Toggle bold default' }, this.boldIcon()),
+          createElement(Toggle, { size: 'lg', pressed: s.sizeLg, onClick: () => this.setState({ sizeLg: !s.sizeLg }), 'aria-label': 'Toggle bold lg' }, this.boldIcon()),
         ),
       ),
 
@@ -112,9 +127,9 @@ export class TogglePage extends Component<{}, TogglePageState> {
       ),
       createElement(DemoBox, null,
         createElement(ToggleGroup, null,
-          createElement(ToggleGroupItem, { value: 'bold', pressed: bold, onClick: () => this.setState({ bold: !bold }), 'aria-label': 'Toggle bold' }, this.boldIcon()),
-          createElement(ToggleGroupItem, { value: 'italic', pressed: italic, onClick: () => this.setState({ italic: !italic }), 'aria-label': 'Toggle italic' }, this.italicIcon()),
-          createElement(ToggleGroupItem, { value: 'underline', pressed: underline, onClick: () => this.setState({ underline: !underline }), 'aria-label': 'Toggle underline' }, this.underlineIcon()),
+          createElement(ToggleGroupItem, { value: 'bold', pressed: s.groupBold, onClick: () => this.setState({ groupBold: !s.groupBold }), 'aria-label': 'Toggle bold' }, this.boldIcon()),
+          createElement(ToggleGroupItem, { value: 'italic', pressed: s.groupItalic, onClick: () => this.setState({ groupItalic: !s.groupItalic }), 'aria-label': 'Toggle italic' }, this.italicIcon()),
+          createElement(ToggleGroupItem, { value: 'underline', pressed: s.groupUnderline, onClick: () => this.setState({ groupUnderline: !s.groupUnderline }), 'aria-label': 'Toggle underline' }, this.underlineIcon()),
         ),
       ),
 
@@ -122,9 +137,9 @@ export class TogglePage extends Component<{}, TogglePageState> {
       createElement(SectionHeading, { id: 'toggle-group-outline' }, 'Toggle Group Outline'),
       createElement(DemoBox, null,
         createElement(ToggleGroup, null,
-          createElement(ToggleGroupItem, { value: 'bold', variant: 'outline', pressed: bold, onClick: () => this.setState({ bold: !bold }), 'aria-label': 'Toggle bold' }, this.boldIcon()),
-          createElement(ToggleGroupItem, { value: 'italic', variant: 'outline', pressed: italic, onClick: () => this.setState({ italic: !italic }), 'aria-label': 'Toggle italic' }, this.italicIcon()),
-          createElement(ToggleGroupItem, { value: 'underline', variant: 'outline', pressed: underline, onClick: () => this.setState({ underline: !underline }), 'aria-label': 'Toggle underline' }, this.underlineIcon()),
+          createElement(ToggleGroupItem, { value: 'bold', variant: 'outline', pressed: s.outGroupBold, onClick: () => this.setState({ outGroupBold: !s.outGroupBold }), 'aria-label': 'Toggle bold' }, this.boldIcon()),
+          createElement(ToggleGroupItem, { value: 'italic', variant: 'outline', pressed: s.outGroupItalic, onClick: () => this.setState({ outGroupItalic: !s.outGroupItalic }), 'aria-label': 'Toggle italic' }, this.italicIcon()),
+          createElement(ToggleGroupItem, { value: 'underline', variant: 'outline', pressed: s.outGroupUnderline, onClick: () => this.setState({ outGroupUnderline: !s.outGroupUnderline }), 'aria-label': 'Toggle underline' }, this.underlineIcon()),
         ),
       ),
 

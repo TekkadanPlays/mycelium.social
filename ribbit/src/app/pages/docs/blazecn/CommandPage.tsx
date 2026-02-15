@@ -69,7 +69,7 @@ export class CommandPage extends Component<{}, CommandPageState> {
 
       // Inline demo
       createElement(SectionHeading, { id: 'demo' }, 'Demo'),
-      createElement(DemoBox, { className: 'block p-0' },
+      createElement(DemoBox, { className: 'block p-6' },
         createElement(Command, { className: 'rounded-lg border shadow-md max-w-md mx-auto' },
           createElement(CommandInput, {
             value: search,

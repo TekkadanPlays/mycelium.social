@@ -4,89 +4,116 @@ import { cn } from './utils';
 
 // ---------------------------------------------------------------------------
 // Menubar — desktop-style horizontal menu bar
+// Coordinates open state across menus so hovering switches when one is open.
 // ---------------------------------------------------------------------------
+
+// Simple pub/sub so MenubarMenu instances coordinate
+let _menubarOpenId: string | null = null;
+const _menubarListeners: Set<() => void> = new Set();
+function menubarSetOpen(id: string | null) {
+  _menubarOpenId = id;
+  _menubarListeners.forEach((fn) => fn());
+}
+function menubarSubscribe(fn: () => void) { _menubarListeners.add(fn); return () => { _menubarListeners.delete(fn); }; }
 
 interface MenubarProps {
   className?: string;
   children?: any;
 }
 
-export function Menubar({ className, children }: MenubarProps) {
-  return createElement('div', {
-    'data-slot': 'menubar',
-    role: 'menubar',
-    className: cn(
-      'flex h-9 items-center gap-1 rounded-md border bg-background p-1 shadow-xs',
-      className,
-    ),
-  }, children);
+export class Menubar extends Component<MenubarProps> {
+  private unsub: (() => void) | null = null;
+  private ref: HTMLDivElement | null = null;
+
+  private handleOutside = (e: MouseEvent) => {
+    if (_menubarOpenId && this.ref && !this.ref.contains(e.target as Node)) {
+      menubarSetOpen(null);
+    }
+  };
+
+  private handleKey = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && _menubarOpenId) menubarSetOpen(null);
+  };
+
+  componentDidMount() {
+    this.unsub = menubarSubscribe(() => this.forceUpdate());
+    document.addEventListener('mousedown', this.handleOutside);
+    document.addEventListener('keydown', this.handleKey);
+  }
+
+  componentWillUnmount() {
+    this.unsub?.();
+    document.removeEventListener('mousedown', this.handleOutside);
+    document.removeEventListener('keydown', this.handleKey);
+  }
+
+  render() {
+    const { className, children } = this.props;
+    return createElement('div', {
+      'data-slot': 'menubar',
+      role: 'menubar',
+      ref: (el: HTMLDivElement | null) => { this.ref = el; },
+      className: cn(
+        'flex h-9 items-center gap-1 rounded-md border bg-background p-1 shadow-xs',
+        className,
+      ),
+    }, children);
+  }
 }
 
 // ---------------------------------------------------------------------------
 // MenubarMenu — wraps a trigger + content pair
 // ---------------------------------------------------------------------------
 
+let _menuIdCounter = 0;
+
 interface MenubarMenuProps {
   children?: any;
 }
 
-interface MenubarMenuState {
-  open: boolean;
-}
-
-export class MenubarMenu extends Component<MenubarMenuProps, MenubarMenuState> {
-  declare state: MenubarMenuState;
-  private ref: HTMLDivElement | null = null;
-
-  constructor(props: MenubarMenuProps) {
-    super(props);
-    this.state = { open: false };
-  }
-
-  private toggle = () => this.setState((s: MenubarMenuState) => ({ open: !s.open }));
-  private close = () => this.setState({ open: false });
-
-  private handleOutside = (e: MouseEvent) => {
-    if (this.state.open && this.ref && !this.ref.contains(e.target as Node)) {
-      this.close();
-    }
-  };
-
-  private handleKey = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') this.close();
-  };
+export class MenubarMenu extends Component<MenubarMenuProps> {
+  private id = `mbm-${++_menuIdCounter}`;
+  private unsub: (() => void) | null = null;
 
   componentDidMount() {
-    document.addEventListener('mousedown', this.handleOutside);
-    document.addEventListener('keydown', this.handleKey);
+    this.unsub = menubarSubscribe(() => this.forceUpdate());
   }
 
   componentWillUnmount() {
-    document.removeEventListener('mousedown', this.handleOutside);
-    document.removeEventListener('keydown', this.handleKey);
+    this.unsub?.();
+    if (_menubarOpenId === this.id) menubarSetOpen(null);
   }
+
+  private handleClick = () => {
+    menubarSetOpen(_menubarOpenId === this.id ? null : this.id);
+  };
+
+  private handleMouseEnter = () => {
+    // Only switch on hover if another menu is already open
+    if (_menubarOpenId && _menubarOpenId !== this.id) {
+      menubarSetOpen(this.id);
+    }
+  };
 
   render() {
     const { children } = this.props;
-    const { open } = this.state;
+    const open = _menubarOpenId === this.id;
 
     return createElement('div', {
       'data-slot': 'menubar-menu',
-      ref: (el: HTMLDivElement | null) => { this.ref = el; },
       className: 'relative',
+      onmouseenter: this.handleMouseEnter,
     },
-      // Pass open/toggle to children via cloning
       ...(Array.isArray(children) ? children : [children]).map((child: any) => {
         if (!child?.props) return child;
-        const slot = child.props['data-slot'] || (child.type && child.type.name);
-        if (slot === 'menubar-trigger' || child.type === MenubarTrigger) {
+        if (child.type === MenubarTrigger) {
           return createElement(MenubarTrigger, {
             ...child.props,
-            onClick: this.toggle,
+            onClick: this.handleClick,
             'data-state': open ? 'open' : 'closed',
           }, child.children || child.props.children);
         }
-        if (slot === 'menubar-content' || child.type === MenubarContent) {
+        if (child.type === MenubarContent) {
           return open ? child : null;
         }
         return child;

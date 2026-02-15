@@ -1,3 +1,4 @@
+import { Component } from 'inferno';
 import { createElement } from 'inferno-create-element';
 import { Link } from 'inferno-router';
 import { cn } from '../../ui/utils';
@@ -21,6 +22,7 @@ interface NavGroup {
   title: string;
   basePath: string;
   icon: string;
+  description: string;
   sections: NavSection[];
 }
 
@@ -29,6 +31,7 @@ const NAV: NavGroup[] = [
     title: 'Blazecn',
     basePath: '/docs/blazecn',
     icon: '\u26A1',
+    description: 'UI component library',
     sections: [
       {
         heading: 'Getting Started',
@@ -124,6 +127,7 @@ const NAV: NavGroup[] = [
     title: 'Ribbit',
     basePath: '/docs/ribbit',
     icon: '\uD83D\uDC38',
+    description: 'Nostr social client',
     sections: [
       {
         heading: 'Overview',
@@ -137,6 +141,7 @@ const NAV: NavGroup[] = [
     title: 'Kaji',
     basePath: '/docs/kaji',
     icon: '\uD83D\uDD25',
+    description: 'Nostr protocol library',
     sections: [
       {
         heading: 'Overview',
@@ -181,6 +186,7 @@ const NAV: NavGroup[] = [
     title: 'Ribbit Android',
     basePath: '/docs/ribbit-android',
     icon: '\uD83D\uDCF1',
+    description: 'Native Android app',
     sections: [
       {
         heading: 'Overview',
@@ -194,6 +200,7 @@ const NAV: NavGroup[] = [
     title: 'nos2x-frog',
     basePath: '/docs/nos2x-frog',
     icon: '\uD83D\uDD10',
+    description: 'Browser signer extension',
     sections: [
       {
         heading: 'Overview',
@@ -207,6 +214,7 @@ const NAV: NavGroup[] = [
     title: 'NIPs',
     basePath: '/docs/nips',
     icon: '\uD83D\uDCDC',
+    description: 'Nostr protocol specs',
     sections: [
       {
         heading: 'Overview',
@@ -221,11 +229,111 @@ const NAV: NavGroup[] = [
 export { NAV };
 
 // ---------------------------------------------------------------------------
+// ProjectSwitcher — dropdown to select docs project
+// ---------------------------------------------------------------------------
+
+interface ProjectSwitcherState {
+  open: boolean;
+}
+
+class ProjectSwitcher extends Component<{ activeGroup: NavGroup; currentPath: string }, ProjectSwitcherState> {
+  declare state: ProjectSwitcherState;
+  private ref: HTMLDivElement | null = null;
+
+  constructor(props: { activeGroup: NavGroup; currentPath: string }) {
+    super(props);
+    this.state = { open: false };
+  }
+
+  private handleOutside = (e: MouseEvent) => {
+    if (this.state.open && this.ref && !this.ref.contains(e.target as Node)) {
+      this.setState({ open: false });
+    }
+  };
+
+  private handleKey = (e: KeyboardEvent) => {
+    if (e.key === 'Escape') this.setState({ open: false });
+  };
+
+  componentDidMount() {
+    document.addEventListener('mousedown', this.handleOutside);
+    document.addEventListener('keydown', this.handleKey);
+  }
+
+  componentWillUnmount() {
+    document.removeEventListener('mousedown', this.handleOutside);
+    document.removeEventListener('keydown', this.handleKey);
+  }
+
+  render() {
+    const { activeGroup } = this.props;
+    const { open } = this.state;
+
+    return createElement('div', {
+      ref: (el: HTMLDivElement | null) => { this.ref = el; },
+      className: 'relative mb-4',
+    },
+      // Trigger button
+      createElement('button', {
+        type: 'button',
+        onClick: () => this.setState((s: ProjectSwitcherState) => ({ open: !s.open })),
+        className: cn(
+          'flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium transition-colors',
+          'hover:bg-accent/50',
+          open && 'bg-accent/50',
+        ),
+      },
+        createElement('span', { className: 'text-base' }, activeGroup.icon),
+        createElement('div', { className: 'flex-1 text-left' },
+          createElement('div', { className: 'font-semibold' }, activeGroup.title),
+          createElement('div', { className: 'text-xs text-muted-foreground' }, activeGroup.description),
+        ),
+        createElement('svg', {
+          className: cn('size-4 text-muted-foreground transition-transform duration-200', open && 'rotate-180'),
+          viewBox: '0 0 24 24',
+          fill: 'none',
+          stroke: 'currentColor',
+          'stroke-width': '2',
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+        }, createElement('path', { d: 'M6 9l6 6 6-6' })),
+      ),
+
+      // Dropdown
+      open
+        ? createElement('div', {
+            className: 'absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border bg-popover p-1 shadow-md',
+          },
+            ...NAV.map((group) =>
+              createElement(Link, {
+                key: group.title,
+                to: group.basePath,
+                onClick: () => this.setState({ open: false }),
+                className: cn(
+                  'flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors',
+                  activeGroup.title === group.title
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
+                ),
+              },
+                createElement('span', { className: 'text-base w-6 text-center' }, group.icon),
+                createElement('div', { className: 'flex-1' },
+                  createElement('div', { className: 'font-medium text-foreground' }, group.title),
+                  createElement('div', { className: 'text-xs text-muted-foreground' }, group.description),
+                ),
+              ),
+            ),
+          )
+        : null,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Sidebar
 // ---------------------------------------------------------------------------
 
 function DocsSidebar({ currentPath }: { currentPath: string }) {
-  // Determine which group is active
   const activeGroup = NAV.find((g) => currentPath.startsWith(g.basePath)) || NAV[0];
 
   return createElement('aside', {
@@ -234,23 +342,7 @@ function DocsSidebar({ currentPath }: { currentPath: string }) {
     createElement('div', {
       className: 'sticky top-[72px] space-y-1 max-h-[calc(100vh-100px)] overflow-y-auto pr-2 pb-8',
     },
-      // Project selector links
-      createElement('div', { className: 'flex flex-wrap gap-1.5 mb-4' },
-        ...NAV.map((group) =>
-          createElement(Link, {
-            key: group.title,
-            to: group.basePath,
-            className: cn(
-              'inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium transition-colors',
-              activeGroup.title === group.title
-                ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:text-foreground hover:bg-accent',
-            ),
-          }, group.icon, ' ', group.title),
-        ),
-      ),
-
-      createElement(Separator, { className: 'mb-3' }),
+      createElement(ProjectSwitcher, { activeGroup, currentPath }),
 
       // Active group sections
       ...activeGroup.sections.map((section) =>

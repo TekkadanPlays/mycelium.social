@@ -36,55 +36,79 @@ export function NavigationMenuList({ className, children }: NavigationMenuListPr
 
 // ---------------------------------------------------------------------------
 // NavigationMenuItem — wraps trigger + content, manages open state
+// Coordinates with siblings so hovering switches when one is already open.
 // ---------------------------------------------------------------------------
+
+// Shared state for NavigationMenu coordination
+let _navMenuOpenId: string | null = null;
+const _navMenuListeners: Set<() => void> = new Set();
+function navMenuSetOpen(id: string | null) {
+  _navMenuOpenId = id;
+  _navMenuListeners.forEach((fn) => fn());
+}
+function navMenuSubscribe(fn: () => void) { _navMenuListeners.add(fn); return () => { _navMenuListeners.delete(fn); }; }
+
+let _navMenuIdCounter = 0;
 
 interface NavigationMenuItemProps {
   className?: string;
   children?: any;
 }
 
-interface NavigationMenuItemState {
-  open: boolean;
-}
-
-export class NavigationMenuItem extends Component<NavigationMenuItemProps, NavigationMenuItemState> {
-  declare state: NavigationMenuItemState;
+export class NavigationMenuItem extends Component<NavigationMenuItemProps> {
+  private id = `nmi-${++_navMenuIdCounter}`;
+  private unsub: (() => void) | null = null;
   private ref: HTMLElement | null = null;
 
-  constructor(props: NavigationMenuItemProps) {
-    super(props);
-    this.state = { open: false };
-  }
-
   private handleOutside = (e: MouseEvent) => {
-    if (this.state.open && this.ref && !this.ref.contains(e.target as Node)) {
-      this.setState({ open: false });
+    if (_navMenuOpenId === this.id && this.ref && !this.ref.contains(e.target as Node)) {
+      navMenuSetOpen(null);
     }
   };
 
+  private handleKey = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && _navMenuOpenId) navMenuSetOpen(null);
+  };
+
   componentDidMount() {
+    this.unsub = navMenuSubscribe(() => this.forceUpdate());
     document.addEventListener('mousedown', this.handleOutside);
+    document.addEventListener('keydown', this.handleKey);
   }
 
   componentWillUnmount() {
+    this.unsub?.();
     document.removeEventListener('mousedown', this.handleOutside);
+    document.removeEventListener('keydown', this.handleKey);
+    if (_navMenuOpenId === this.id) navMenuSetOpen(null);
   }
+
+  private handleClick = () => {
+    navMenuSetOpen(_navMenuOpenId === this.id ? null : this.id);
+  };
+
+  private handleMouseEnter = () => {
+    if (_navMenuOpenId && _navMenuOpenId !== this.id) {
+      navMenuSetOpen(this.id);
+    }
+  };
 
   render() {
     const { className, children } = this.props;
-    const { open } = this.state;
+    const open = _navMenuOpenId === this.id;
 
     return createElement('li', {
       'data-slot': 'navigation-menu-item',
       ref: (el: HTMLElement | null) => { this.ref = el; },
       className: cn('relative', className),
+      onmouseenter: this.handleMouseEnter,
     },
       ...(Array.isArray(children) ? children : [children]).map((child: any) => {
         if (!child?.props) return child;
         if (child.type === NavigationMenuTrigger) {
           return createElement(NavigationMenuTrigger, {
             ...child.props,
-            onClick: () => this.setState((s: NavigationMenuItemState) => ({ open: !s.open })),
+            onClick: this.handleClick,
             'data-state': open ? 'open' : 'closed',
           }, child.children || child.props.children);
         }
