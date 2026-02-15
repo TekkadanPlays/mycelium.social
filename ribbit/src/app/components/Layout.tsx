@@ -299,11 +299,13 @@ export class Sidebar extends Component {
 
 export class MainLayout extends Component<{ children: any }> {
   render() {
+    const hideSidebar = typeof window !== 'undefined' && window.location.pathname === '/docs';
+
     return createElement('div', { className: 'min-h-screen bg-background' },
       createElement(Header, null),
       createElement('div', { className: 'mx-auto max-w-6xl px-5 sm:px-6 lg:px-8 py-8' },
         createElement('div', { className: 'flex gap-8' },
-          createElement(Sidebar, null),
+          !hideSidebar ? createElement(Sidebar, null) : null,
           createElement('main', { className: 'flex-1 min-w-0' },
             this.props.children,
           ),

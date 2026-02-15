@@ -34,9 +34,10 @@ import { ThemeToggle } from '../ui/ThemeToggle';
 // ---------------------------------------------------------------------------
 
 function SectionHeading({ id, children }: { id: string; children?: any }) {
-  return createElement('div', { id, className: 'scroll-mt-20' },
-    createElement('h2', { className: 'text-xl font-bold tracking-tight mb-1' }, children),
-    createElement(Separator, { className: 'mb-6' }),
+  return createElement('div', { id, className: 'scroll-mt-20 mb-6' },
+    createElement('h2', {
+      className: 'text-xl font-bold tracking-tight pb-1 border-b border-border w-fit',
+    }, children),
   );
 }
 
@@ -574,8 +575,8 @@ export class Docs extends Component<{}, DocsState> {
           createElement('p', { className: 'text-sm text-muted-foreground' },
             'Use to show a placeholder while content is loading.',
           ),
-          createElement(DemoBox, { className: 'block' },
-            createElement('div', { className: 'space-y-3 max-w-sm mx-auto' },
+          createElement(DemoBox, { className: 'flex-col' },
+            createElement('div', { className: 'space-y-3 w-full max-w-sm' },
               createElement('div', { className: 'flex items-center gap-3' },
                 createElement(Skeleton, { className: 'size-10 rounded-full' }),
                 createElement('div', { className: 'space-y-2 flex-1' },
