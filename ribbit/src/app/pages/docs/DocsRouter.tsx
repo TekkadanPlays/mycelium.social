@@ -44,6 +44,10 @@ import { ToggleGroupPage } from './blazecn/ToggleGroupPage';
 import { BreadcrumbPage_ } from './blazecn/BreadcrumbPage';
 import { PaginationPage_ } from './blazecn/PaginationPage';
 import { HoverCardPage } from './blazecn/HoverCardPage';
+import { AlertDialogPage } from './blazecn/AlertDialogPage';
+import { CommandPage } from './blazecn/CommandPage';
+import { InputOTPPage } from './blazecn/InputOTPPage';
+import { CarouselPage } from './blazecn/CarouselPage';
 
 // Kaji module pages
 import { KajiEventPage } from './kaji/EventPage';
@@ -113,6 +117,10 @@ const ROUTES: Record<string, any> = {
   '/docs/blazecn/breadcrumb': BreadcrumbPage_,
   '/docs/blazecn/pagination': PaginationPage_,
   '/docs/blazecn/hover-card': HoverCardPage,
+  '/docs/blazecn/alert-dialog': AlertDialogPage,
+  '/docs/blazecn/command': CommandPage,
+  '/docs/blazecn/input-otp': InputOTPPage,
+  '/docs/blazecn/carousel': CarouselPage,
 
   // Kaji modules
   '/docs/kaji': KajiIntro,

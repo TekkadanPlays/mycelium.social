@@ -14,6 +14,7 @@ export { Checkbox } from './Checkbox';
 export { RadioGroup, RadioGroupItem } from './RadioGroup';
 export { Select, SelectTrigger, SelectValue, SelectContent, SelectItem, SelectSeparator } from './Select';
 export { Slider } from './Slider';
+export { InputOTP, InputOTPGroup, InputOTPSeparator } from './InputOTP';
 
 // Data Display
 export { Avatar, AvatarImage, AvatarFallback } from './Avatar';
@@ -33,9 +34,12 @@ export { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from './
 export { Collapsible, CollapsibleTrigger, CollapsibleContent } from './Collapsible';
 export { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator, BreadcrumbEllipsis } from './Breadcrumb';
 export { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationPrevious, PaginationNext, PaginationEllipsis } from './Pagination';
+export { Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem, CommandSeparator, CommandShortcut, CommandDialog } from './Command';
+export { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from './Carousel';
 
 // Overlay
 export { Dialog, DialogContent, DialogOverlay, DialogHeader, DialogFooter, DialogTitle, DialogDescription } from './Dialog';
+export { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogFooter, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogCancel } from './AlertDialog';
 export { Sheet, SheetContent, SheetOverlay, SheetHeader, SheetFooter, SheetTitle, SheetDescription, type SheetSide } from './Sheet';
 export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuGroup } from './DropdownMenu';
 export { Popover, PopoverTrigger, PopoverContent } from './Popover';

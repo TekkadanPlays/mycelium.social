@@ -77,7 +77,7 @@ export function BlazecnIntro() {
           { label: 'Toggle', path: '/docs/blazecn/toggle' },
           { label: 'Dialog', path: '/docs/blazecn/dialog' },
           { label: 'Tooltip', path: '/docs/blazecn/tooltip' },
-          { label: 'Toast', path: '/docs/blazecn/toast' },
+          { label: 'Sonner', path: '/docs/blazecn/toast' },
           { label: 'Accordion', path: '/docs/blazecn/accordion' },
           { label: 'Table', path: '/docs/blazecn/table' },
           { label: 'Theme Toggle', path: '/docs/blazecn/theme-toggle' },
@@ -89,6 +89,10 @@ export function BlazecnIntro() {
           { label: 'Breadcrumb', path: '/docs/blazecn/breadcrumb' },
           { label: 'Pagination', path: '/docs/blazecn/pagination' },
           { label: 'Hover Card', path: '/docs/blazecn/hover-card' },
+          { label: 'Alert Dialog', path: '/docs/blazecn/alert-dialog' },
+          { label: 'Command', path: '/docs/blazecn/command' },
+          { label: 'Input OTP', path: '/docs/blazecn/input-otp' },
+          { label: 'Carousel', path: '/docs/blazecn/carousel' },
         ].map((item) =>
           createElement(Link, {
             key: item.label,
