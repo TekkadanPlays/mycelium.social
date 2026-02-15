@@ -66,3 +66,4 @@ export { AspectRatio } from './AspectRatio';
 // Theme
 export { ThemeToggle } from './ThemeToggle';
 export { ThemePicker } from './ThemePicker';
+export { ThemeSelector } from './ThemeSelector';
