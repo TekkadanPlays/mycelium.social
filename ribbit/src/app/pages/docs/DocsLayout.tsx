@@ -181,6 +181,7 @@ const NAV: NavGroup[] = [
         heading: 'Overview',
         items: [
           { path: '/docs/nos2x-frog', label: 'Introduction' },
+          { path: '/docs/nos2x-frog/bugs-fixed', label: 'Bugs Fixed from nos2x-fox' },
         ],
       },
     ],

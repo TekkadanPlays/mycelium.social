@@ -76,6 +76,7 @@ import { KajiUtilsPage } from './kaji/UtilsPage';
 import { RibbitIntro } from './ribbit/index';
 import { KajiIntro } from './kaji/index';
 import { Nos2xFrogIntro } from './nos2x-frog/index';
+import { BugsFixedPage } from './nos2x-frog/BugsFixedPage';
 import { RibbitAndroidIndex } from './ribbit-android/index';
 import { NipsIntro } from './nips/index';
 
@@ -160,6 +161,7 @@ const ROUTES: Record<string, any> = {
   '/docs/ribbit': RibbitIntro,
   '/docs/ribbit-android': RibbitAndroidIndex,
   '/docs/nos2x-frog': Nos2xFrogIntro,
+  '/docs/nos2x-frog/bugs-fixed': BugsFixedPage,
   '/docs/nips': NipsIntro,
 };
 
