@@ -42,3 +42,6 @@ export { toast, dismissToast, Toaster, type ToastData } from './Toast';
 // Layout
 export { ScrollArea } from './ScrollArea';
 export { AspectRatio } from './AspectRatio';
+
+// Theme
+export { ThemeToggle } from './ThemeToggle';

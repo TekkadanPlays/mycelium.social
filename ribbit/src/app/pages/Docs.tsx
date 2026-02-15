@@ -27,6 +27,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import { ScrollArea } from '../ui/ScrollArea';
 import { AspectRatio } from '../ui/AspectRatio';
 import { toast, Toaster } from '../ui/Toast';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -244,7 +245,7 @@ export class Docs extends Component<{}, DocsState> {
             createElement(Badge, { variant: 'secondary' }, 'class-variance-authority'),
             createElement(Badge, { variant: 'outline' }, 'MIT License'),
           ),
-          createElement('div', { className: 'flex gap-3' },
+          createElement('div', { className: 'flex items-center gap-3' },
             createElement('a', {
               href: 'https://github.com/TekkadanPlays/blazecn',
               target: '_blank',
@@ -255,6 +256,7 @@ export class Docs extends Component<{}, DocsState> {
               to: '/',
               className: 'inline-flex items-center gap-2 rounded-md border border-input px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
             }, '\u2190 Back to ribbit'),
+            createElement(ThemeToggle, null),
           ),
         ),
 

@@ -11,6 +11,10 @@
   <link rel="stylesheet" href="/assets/main.css" />
 </head>
 <body>
+  <script>
+    // Prevent flash of wrong theme — runs before first paint
+    (function(){var t=localStorage.getItem('theme');if(t==='dark'||(t!=='light'&&matchMedia('(prefers-color-scheme:dark)').matches))document.documentElement.classList.add('dark')})();
+  </script>
   <div id="app"></div>
   <script type="module" src="__BUNDLE_PATH__"></script>
 </body>

@@ -57,8 +57,8 @@ export function TabsTrigger(props: TabsTriggerProps) {
       "disabled:pointer-events-none disabled:opacity-50",
       "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
       active
-        ? 'bg-background text-foreground shadow-sm dark:bg-muted-foreground/15 dark:text-foreground'
-        : 'text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10',
+        ? 'bg-background text-foreground shadow-sm'
+        : 'text-muted-foreground hover:text-foreground hover:bg-accent',
       className,
     ),
   }, children);

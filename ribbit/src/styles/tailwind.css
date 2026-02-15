@@ -4,71 +4,195 @@
 /*
  * Ribbit design tokens — shadcn/ui naming convention
  * All colors use oklch for perceptual uniformity.
- * Semantic pairs: --color-X + --color-X-foreground
+ * Semantic pairs: --X + --X-foreground
+ *
+ * Light theme in :root, dark theme in .dark
+ * Bridged to Tailwind via @theme inline { --color-X: var(--X) }
  */
-@theme {
+
+/* ===== LIGHT THEME (default) ===== */
+:root {
+  --radius: 0.625rem;
+
   /* Surfaces */
-  --color-background: oklch(0.145 0.014 260);
-  --color-foreground: oklch(0.90 0.008 260);
+  --background: oklch(0.985 0.002 260);
+  --foreground: oklch(0.145 0.014 260);
 
-  /* Cards & raised surfaces */
-  --color-card: oklch(0.17 0.014 260);
-  --color-card-foreground: oklch(0.90 0.008 260);
+  /* Cards */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0.014 260);
 
-  /* Popover (dropdowns, tooltips) */
-  --color-popover: oklch(0.17 0.014 260);
-  --color-popover-foreground: oklch(0.90 0.008 260);
+  /* Popover */
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0.014 260);
 
   /* Primary — green (ribbit frog identity) */
-  --color-primary: oklch(0.68 0.19 150);
-  --color-primary-foreground: oklch(0.13 0.02 150);
+  --primary: oklch(0.55 0.19 150);
+  --primary-foreground: oklch(0.98 0.01 150);
 
-  /* Secondary — blue-violet */
-  --color-secondary: oklch(0.20 0.012 260);
-  --color-secondary-foreground: oklch(0.90 0.008 260);
+  /* Secondary */
+  --secondary: oklch(0.96 0.005 260);
+  --secondary-foreground: oklch(0.205 0.014 260);
 
-  /* Muted — subdued backgrounds & text */
-  --color-muted: oklch(0.20 0.012 260);
-  --color-muted-foreground: oklch(0.55 0.01 260);
+  /* Muted */
+  --muted: oklch(0.96 0.005 260);
+  --muted-foreground: oklch(0.50 0.01 260);
 
-  /* Accent — hover/active backgrounds */
-  --color-accent: oklch(0.22 0.014 260);
-  --color-accent-foreground: oklch(0.90 0.008 260);
+  /* Accent */
+  --accent: oklch(0.96 0.005 260);
+  --accent-foreground: oklch(0.205 0.014 260);
 
-  /* Destructive — errors, danger */
-  --color-destructive: oklch(0.62 0.20 25);
-  --color-destructive-foreground: oklch(0.97 0.01 17);
+  /* Destructive */
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
 
-  /* Borders & inputs */
-  --color-border: oklch(1 0 0 / 10%);
-  --color-input: oklch(1 0 0 / 15%);
-  --color-ring: oklch(0.68 0.19 150);
+  /* Borders & inputs — opaque for light theme */
+  --border: oklch(0.90 0.005 260);
+  --input: oklch(0.90 0.005 260);
+  --ring: oklch(0.55 0.19 150);
 
   /* Semantic status */
-  --color-success: oklch(0.65 0.17 150);
-  --color-warning: oklch(0.72 0.15 70);
-  --color-info: oklch(0.65 0.17 240);
+  --success: oklch(0.55 0.17 150);
+  --warning: oklch(0.72 0.15 70);
+  --info: oklch(0.55 0.17 240);
 
   /* Voting */
-  --color-upvote: oklch(0.68 0.19 150);
-  --color-downvote: oklch(0.62 0.20 25);
+  --upvote: oklch(0.55 0.19 150);
+  --downvote: oklch(0.577 0.245 27.325);
 
-  /* Chart colors */
-  --color-chart-1: oklch(0.68 0.19 150);
-  --color-chart-2: oklch(0.68 0.19 265);
-  --color-chart-3: oklch(0.72 0.13 50);
-  --color-chart-4: oklch(0.65 0.17 240);
-  --color-chart-5: oklch(0.62 0.20 25);
+  /* Chart */
+  --chart-1: oklch(0.55 0.19 150);
+  --chart-2: oklch(0.55 0.19 265);
+  --chart-3: oklch(0.60 0.13 50);
+  --chart-4: oklch(0.55 0.17 240);
+  --chart-5: oklch(0.577 0.245 27.325);
+
+  /* Sidebar */
+  --sidebar: oklch(0.985 0.002 260);
+  --sidebar-foreground: oklch(0.145 0.014 260);
+  --sidebar-primary: oklch(0.55 0.19 150);
+  --sidebar-primary-foreground: oklch(0.98 0.01 150);
+  --sidebar-accent: oklch(0.96 0.005 260);
+  --sidebar-accent-foreground: oklch(0.205 0.014 260);
+  --sidebar-border: oklch(0.90 0.005 260);
+  --sidebar-ring: oklch(0.55 0.19 150);
+}
+
+/* ===== DARK THEME ===== */
+.dark {
+  --background: oklch(0.145 0.014 260);
+  --foreground: oklch(0.93 0.005 260);
+
+  --card: oklch(0.185 0.014 260);
+  --card-foreground: oklch(0.93 0.005 260);
+
+  --popover: oklch(0.205 0.014 260);
+  --popover-foreground: oklch(0.93 0.005 260);
+
+  --primary: oklch(0.68 0.19 150);
+  --primary-foreground: oklch(0.13 0.02 150);
+
+  --secondary: oklch(0.22 0.012 260);
+  --secondary-foreground: oklch(0.93 0.005 260);
+
+  --muted: oklch(0.22 0.012 260);
+  --muted-foreground: oklch(0.65 0.01 260);
+
+  --accent: oklch(0.26 0.014 260);
+  --accent-foreground: oklch(0.93 0.005 260);
+
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+
+  /* Opaque borders for dark theme — NOT transparent white */
+  --border: oklch(0.30 0.012 260);
+  --input: oklch(0.30 0.012 260);
+  --ring: oklch(0.68 0.19 150);
+
+  --success: oklch(0.65 0.17 150);
+  --warning: oklch(0.72 0.15 70);
+  --info: oklch(0.65 0.17 240);
+
+  --upvote: oklch(0.68 0.19 150);
+  --downvote: oklch(0.704 0.191 22.216);
+
+  --chart-1: oklch(0.68 0.19 150);
+  --chart-2: oklch(0.68 0.19 265);
+  --chart-3: oklch(0.72 0.13 50);
+  --chart-4: oklch(0.65 0.17 240);
+  --chart-5: oklch(0.704 0.191 22.216);
+
+  --sidebar: oklch(0.185 0.014 260);
+  --sidebar-foreground: oklch(0.93 0.005 260);
+  --sidebar-primary: oklch(0.68 0.19 150);
+  --sidebar-primary-foreground: oklch(0.13 0.02 150);
+  --sidebar-accent: oklch(0.22 0.012 260);
+  --sidebar-accent-foreground: oklch(0.93 0.005 260);
+  --sidebar-border: oklch(0.30 0.012 260);
+  --sidebar-ring: oklch(0.68 0.19 150);
+}
+
+/* ===== Bridge CSS vars → Tailwind v4 ===== */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+
+  --color-upvote: var(--upvote);
+  --color-downvote: var(--downvote);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 
   /* Typography — matches shadcn (Geist family) */
   --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', monospace;
 
-  /* Radii — shadcn convention: derive from single --radius */
-  --radius-sm: calc(0.625rem - 4px);
-  --radius-md: calc(0.625rem - 2px);
-  --radius-lg: 0.625rem;
-  --radius-xl: calc(0.625rem + 4px);
+  /* Radii — shadcn convention */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
 @layer base {

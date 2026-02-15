@@ -17,10 +17,10 @@ export function Switch({ className, checked = false, disabled = false, onChange 
     disabled,
     onClick: () => onChange?.(!checked),
     className: cn(
-      'peer inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 shadow-xs transition-all outline-none cursor-pointer',
+      'peer inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 border-transparent shadow-xs transition-all outline-none cursor-pointer',
       'focus-visible:ring-ring/50 focus-visible:ring-[3px]',
       'disabled:cursor-not-allowed disabled:opacity-50',
-      checked ? 'bg-primary border-primary' : 'bg-muted-foreground/25 border-muted-foreground/40',
+      checked ? 'bg-primary' : 'bg-input',
       className,
     ),
   },
