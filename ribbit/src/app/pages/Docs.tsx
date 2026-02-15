@@ -51,7 +51,7 @@ function ExampleRow({ label, children }: { label: string; children?: any }) {
 function DemoBox({ children, className }: { children?: any; className?: string }) {
   return createElement('div', {
     className: cn(
-      'flex items-center justify-center rounded-lg border border-border bg-card/50 p-8',
+      'flex items-center justify-center rounded-lg border border-border bg-muted/50 p-8',
       className,
     ),
   }, children);
@@ -678,8 +678,8 @@ export class Docs extends Component<{}, DocsState> {
           createElement('p', { className: 'text-sm text-muted-foreground' },
             'An input where the user selects a value from within a given range by dragging.',
           ),
-          createElement(DemoBox, { className: 'block' },
-            createElement('div', { className: 'max-w-sm mx-auto space-y-2' },
+          createElement(DemoBox, { className: 'flex-col' },
+            createElement('div', { className: 'w-full space-y-2' },
               createElement(Slider, {
                 value: this.state.sliderValue,
                 min: 0,
@@ -773,8 +773,8 @@ export class Docs extends Component<{}, DocsState> {
           createElement('p', { className: 'text-sm text-muted-foreground' },
             'Displays an indicator showing the completion progress of a task.',
           ),
-          createElement(DemoBox, { className: 'block' },
-            createElement('div', { className: 'max-w-sm mx-auto space-y-4' },
+          createElement(DemoBox, { className: 'flex-col' },
+            createElement('div', { className: 'w-full space-y-4' },
               createElement(Progress, { value: this.state.progressValue }),
               createElement('div', { className: 'flex gap-2 justify-center' },
                 createElement(Button, { size: 'xs', variant: 'outline', onClick: () => this.setState({ progressValue: Math.max(0, this.state.progressValue - 10) }) }, '-10'),

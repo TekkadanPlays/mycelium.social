@@ -42,7 +42,7 @@ export function RadioGroupItem(props: RadioGroupItemProps) {
     disabled,
     onClick,
     className: cn(
-      'aspect-square size-4 shrink-0 rounded-full border shadow-xs transition-all outline-none cursor-pointer',
+      'aspect-square size-4 shrink-0 rounded-full border-2 shadow-xs transition-all outline-none cursor-pointer',
       'focus-visible:ring-ring/50 focus-visible:ring-[3px]',
       'disabled:cursor-not-allowed disabled:opacity-50',
       checked ? 'border-primary' : 'border-input',

@@ -20,7 +20,7 @@ export function Switch({ className, checked = false, disabled = false, onChange 
       'peer inline-flex h-5 w-9 shrink-0 items-center rounded-full border-2 border-transparent shadow-xs transition-all outline-none cursor-pointer',
       'focus-visible:ring-ring/50 focus-visible:ring-[3px]',
       'disabled:cursor-not-allowed disabled:opacity-50',
-      checked ? 'bg-primary' : 'bg-input',
+      checked ? 'bg-primary' : 'bg-muted-foreground/40',
       className,
     ),
   },
