@@ -153,24 +153,35 @@ export class Toaster extends Component<{}, ToasterState> {
     const { toasts } = this.state;
     if (toasts.length === 0) return null;
 
-    const maxVisible = 3;
+    const maxVisible = 5;
     const visible = toasts.slice(-maxVisible);
-    const hiddenCount = toasts.length - visible.length;
+    const count = visible.length;
 
     return createElement('div', {
       'data-slot': 'toaster',
-      className: 'fixed bottom-4 right-4 z-[100] flex flex-col gap-2 w-full max-w-sm pointer-events-none',
+      className: 'fixed bottom-4 right-4 z-[100] w-full max-w-sm pointer-events-none',
     },
-      hiddenCount > 0
-        ? createElement('div', {
-            className: 'text-center text-xs text-muted-foreground py-1',
-          }, `+${hiddenCount} more`)
-        : null,
-      ...visible.map((t) =>
-        createElement(ToastItem, {
-          key: t.id,
-          data: t,
-          onDismiss: dismissToast,
+      createElement('div', { className: 'relative', style: { height: `${56 + (count - 1) * 16}px` } },
+        ...visible.map((t, i) => {
+          const fromTop = count - 1 - i;
+          const scale = 1 - fromTop * 0.05;
+          const translateY = fromTop * -12;
+          const opacity = 1 - fromTop * 0.15;
+
+          return createElement('div', {
+            key: t.id,
+            className: 'absolute bottom-0 left-0 right-0 transition-all duration-300 ease-out',
+            style: {
+              transform: `translateY(${translateY}px) scale(${scale})`,
+              opacity: Math.max(0.4, opacity),
+              zIndex: i,
+            },
+          },
+            createElement(ToastItem, {
+              data: t,
+              onDismiss: dismissToast,
+            }),
+          );
         }),
       ),
     );
