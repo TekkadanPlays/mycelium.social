@@ -3,6 +3,7 @@ import { serveStatic } from 'hono/bun';
 import { logger } from 'hono/logger';
 import { nip05Route } from './routes/nip05';
 import { healthRoute } from './routes/health';
+import { relaysRoute } from './routes/relays';
 
 const app = new Hono();
 
@@ -28,6 +29,11 @@ app.use('*', async (c, next) => {
 // API routes
 app.route('/api', healthRoute);
 app.route('/.well-known', nip05Route);
+
+// Relay discovery API (NIP-66 rstate proxy)
+// HAProxy sends /api/* to relaycreator, not ribbit — so relay endpoints
+// live at /relays/* which HAProxy routes to ribbit's Hono server.
+app.route('/', relaysRoute);
 
 // Serve static assets from dist/public
 app.use('/assets/*', serveStatic({ root: './dist/public' }));
