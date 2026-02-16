@@ -23,26 +23,13 @@ export function KajiIntro() {
       title: 'Kaji',
       description: 'InfernoJS-native Nostr protocol library. Zero framework dependencies \u2014 works anywhere.',
     }),
-    createElement('div', { className: 'flex flex-wrap gap-2' },
+    createElement('div', { className: 'flex flex-wrap gap-2 mb-4' },
       createElement(Badge, null, 'Nostr'),
       createElement(Badge, { variant: 'secondary' }, 'TypeScript'),
       createElement(Badge, { variant: 'secondary' }, '11 modules'),
       createElement(Badge, { variant: 'secondary' }, '~2.5 KB gzipped'),
       createElement(Badge, { variant: 'outline' }, 'v0.1.0'),
     ),
-    createElement('div', { className: 'flex gap-3' },
-      createElement('a', {
-        href: 'https://github.com/TekkadanPlays/kaji',
-        target: '_blank',
-        rel: 'noopener',
-        className: 'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors',
-      }, 'GitHub \u2192'),
-      createElement(Link, {
-        to: '/docs',
-        className: 'inline-flex items-center gap-2 rounded-md border border-input px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
-      }, '\u2190 All docs'),
-    ),
-
     // Quick start
     createElement('div', { className: 'space-y-3' },
       createElement('h2', { className: 'text-lg font-bold tracking-tight' }, 'Quick Start'),

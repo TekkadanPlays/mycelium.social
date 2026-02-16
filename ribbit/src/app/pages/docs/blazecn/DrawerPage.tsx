@@ -35,10 +35,8 @@ export class DrawerPage extends Component<{}, DrawerPageState> {
           variant: 'outline',
           onClick: () => this.setState({ open: true }),
         }, 'Open Drawer'),
-        createElement(Drawer, { open },
-          createElement(DrawerContent, {
-            onClose: () => this.setState({ open: false }),
-          },
+        createElement(Drawer, { open, onOpenChange: (v: boolean) => this.setState({ open: v }) },
+          createElement(DrawerContent, null,
             createElement(DrawerHeader, null,
               createElement(DrawerTitle, null, 'Move Goal'),
               createElement(DrawerDescription, null, 'Set your daily activity goal.'),

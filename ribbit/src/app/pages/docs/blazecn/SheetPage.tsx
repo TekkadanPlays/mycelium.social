@@ -42,10 +42,9 @@ export class SheetPage extends Component<{}, SheetPageState> {
       ),
 
       // Right sheet
-      createElement(Sheet, { open: openRight },
+      createElement(Sheet, { open: openRight, onOpenChange: (v: boolean) => this.setState({ openRight: v }) },
         createElement(SheetContent, {
           side: 'right',
-          onClose: () => this.setState({ openRight: false }),
         },
           createElement(SheetHeader, null,
             createElement(SheetTitle, null, 'Edit Profile'),
@@ -63,10 +62,9 @@ export class SheetPage extends Component<{}, SheetPageState> {
       ),
 
       // Left sheet
-      createElement(Sheet, { open: openLeft },
+      createElement(Sheet, { open: openLeft, onOpenChange: (v: boolean) => this.setState({ openLeft: v }) },
         createElement(SheetContent, {
           side: 'left',
-          onClose: () => this.setState({ openLeft: false }),
         },
           createElement(SheetHeader, null,
             createElement(SheetTitle, null, 'Navigation'),

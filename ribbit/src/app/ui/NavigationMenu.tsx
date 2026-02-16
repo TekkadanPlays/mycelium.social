@@ -55,10 +55,20 @@ interface NavigationMenuItemProps {
   children?: any;
 }
 
-export class NavigationMenuItem extends Component<NavigationMenuItemProps> {
+interface NavigationMenuItemState {
+  open: boolean;
+}
+
+export class NavigationMenuItem extends Component<NavigationMenuItemProps, NavigationMenuItemState> {
   private id = `nmi-${++_navMenuIdCounter}`;
   private unsub: (() => void) | null = null;
   private ref: HTMLElement | null = null;
+  declare state: NavigationMenuItemState;
+
+  constructor(props: NavigationMenuItemProps) {
+    super(props);
+    this.state = { open: false };
+  }
 
   private handleOutside = (e: MouseEvent) => {
     if (_navMenuOpenId === this.id && this.ref && !this.ref.contains(e.target as Node)) {
@@ -71,7 +81,10 @@ export class NavigationMenuItem extends Component<NavigationMenuItemProps> {
   };
 
   componentDidMount() {
-    this.unsub = navMenuSubscribe(() => this.forceUpdate());
+    this.unsub = navMenuSubscribe(() => {
+      const open = _navMenuOpenId === this.id;
+      if (this.state.open !== open) this.setState({ open });
+    });
     document.addEventListener('mousedown', this.handleOutside);
     document.addEventListener('keydown', this.handleKey);
   }
@@ -95,7 +108,7 @@ export class NavigationMenuItem extends Component<NavigationMenuItemProps> {
 
   render() {
     const { className, children } = this.props;
-    const open = _navMenuOpenId === this.id;
+    const { open } = this.state;
     const kids = Array.isArray(children) ? children : [children];
 
     let triggerChild: any = null;
@@ -152,7 +165,7 @@ export function NavigationMenuTrigger(props: NavigationMenuTriggerProps) {
     className: cn(
       'group inline-flex h-9 w-max items-center justify-center rounded-md bg-background px-4 py-2 text-sm font-medium transition-colors',
       'hover:bg-accent hover:text-accent-foreground',
-      'focus:bg-accent focus:text-accent-foreground focus:outline-none',
+      'focus-visible:outline-none',
       'data-[state=open]:bg-accent/50',
       className,
     ),
@@ -185,7 +198,7 @@ export function NavigationMenuContent({ className, children }: NavigationMenuCon
     'data-slot': 'navigation-menu-content',
     className: cn(
       'absolute left-0 top-full w-full md:w-auto',
-      'mt-1.5 min-w-[220px] rounded-md border bg-popover p-4 text-popover-foreground shadow-lg',
+      'mt-1.5 min-w-[400px] md:min-w-[500px] lg:min-w-[600px] rounded-md border bg-popover p-4 text-popover-foreground shadow-lg',
       'animate-in fade-in-0 zoom-in-95',
       className,
     ),

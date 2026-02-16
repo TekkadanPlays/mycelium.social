@@ -1,5 +1,4 @@
 import { createElement } from 'inferno-create-element';
-import { Link } from 'inferno-router';
 import { Badge } from '../../../ui/Badge';
 import { PageHeader, CodeBlock } from '../_helpers';
 
@@ -153,32 +152,13 @@ export function NipsIntro() {
       title: 'NIPs',
       description: 'Categorical reorganization of the Nostr Implementation Possibilities specification.',
     }),
-    createElement('div', { className: 'flex flex-wrap gap-2' },
+    createElement('div', { className: 'flex flex-wrap gap-2 mb-4' },
       createElement(Badge, null, 'Nostr'),
       createElement(Badge, { variant: 'secondary' }, 'Protocol'),
       createElement(Badge, { variant: 'secondary' }, totalNips + ' NIPs'),
       createElement(Badge, { variant: 'secondary' }, '9 Categories'),
       createElement(Badge, { variant: 'outline' }, 'Fork'),
     ),
-    createElement('div', { className: 'flex gap-3' },
-      createElement('a', {
-        href: 'https://github.com/TekkadanPlays/nips',
-        target: '_blank',
-        rel: 'noopener',
-        className: 'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors',
-      }, 'GitHub \u2192'),
-      createElement('a', {
-        href: 'https://github.com/vitorpamplona/nips',
-        target: '_blank',
-        rel: 'noopener',
-        className: 'inline-flex items-center gap-2 rounded-md border border-input px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
-      }, 'Upstream (vitorpamplona) \u2192'),
-      createElement(Link, {
-        to: '/docs',
-        className: 'inline-flex items-center gap-2 rounded-md border border-input px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
-      }, '\u2190 All docs'),
-    ),
-
     // What is this?
     createElement('div', { className: 'space-y-3' },
       createElement('h2', { className: 'text-lg font-bold tracking-tight' }, 'What is this?'),

@@ -2,6 +2,7 @@ import { Component } from 'inferno';
 import { createElement } from 'inferno-create-element';
 import { getAuthState, subscribeAuth, login } from '../store/auth';
 import { hasNip07 } from '../../nostr/nip07';
+import { isAndroid } from '../../nostr/nip55';
 import { Button } from '../ui/Button';
 
 interface LoginState {
@@ -29,7 +30,7 @@ export class Login extends Component<{}, LoginState> {
     });
     // Check for extension after a short delay (extensions inject async)
     setTimeout(() => {
-      const has = hasNip07();
+      const has = hasNip07() || isAndroid();
       this.setState({ ...this.state, hasExtension: has, showHelp: !has });
     }, 500);
   }
@@ -49,8 +50,8 @@ export class Login extends Component<{}, LoginState> {
       { platform: 'iOS', app: 'Nostore', links: [
         { label: 'Install', href: 'https://apps.apple.com/us/app/nostore/id1666553677' },
       ]},
-      { platform: 'Android', app: 'Kiwi Browser + nos2x', links: [
-        { label: 'Install', href: 'https://play.google.com/store/apps/details?id=com.kiwibrowser.browser' },
+      { platform: 'Android', app: 'Amber (NIP-55 signer)', links: [
+        { label: 'Install', href: 'https://play.google.com/store/apps/details?id=com.greenart7c3.nostrsigner' },
       ]},
     ];
 
@@ -66,7 +67,7 @@ export class Login extends Component<{}, LoginState> {
         ),
         createElement('p', {
           className: 'text-sm text-muted-foreground max-w-lg mx-auto mb-6',
-        }, 'The social platform for OpenClaw lobsters. No algorithms, no censorship. Just conversations.'),
+        }, 'A decentralized Nostr social platform. No algorithms, no censorship. Just conversations.'),
         createElement('div', { className: 'flex items-center justify-center gap-3' },
           createElement(Button, {
             onClick: login,

@@ -32,7 +32,7 @@ export function AccordionItem({ className, value, children }: AccordionItemProps
   return createElement('div', {
     'data-slot': 'accordion-item',
     'data-value': value,
-    className: cn('border-b border-border last:border-b-0', className),
+    className: cn('border-b border-border last:border-b-0 overflow-hidden', className),
   }, children);
 }
 
@@ -91,9 +91,9 @@ export function AccordionContent({ className, open = false, children }: Accordio
     'data-slot': 'accordion-content',
     'data-state': open ? 'open' : 'closed',
     className: cn(
-      'overflow-hidden text-sm',
-      'transition-[grid-template-rows,opacity] duration-300 ease-in-out',
-      open ? 'grid grid-rows-[1fr] opacity-100' : 'grid grid-rows-[0fr] opacity-0',
+      'overflow-hidden text-sm will-change-[grid-template-rows,opacity]',
+      'grid transition-[grid-template-rows,opacity] duration-300 ease-in-out',
+      open ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0',
       className,
     ),
   },

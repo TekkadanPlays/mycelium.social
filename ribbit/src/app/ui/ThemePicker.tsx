@@ -64,17 +64,15 @@ export class ThemePicker extends Component<ThemePickerProps, ThemePickerState> {
             className: cn('size-4 rounded-full border border-border shrink-0', t.swatch),
           }),
           t.label,
-          active === t.id
-            ? createElement('svg', {
-                className: 'size-3.5 ml-auto text-primary',
-                viewBox: '0 0 24 24',
-                fill: 'none',
-                stroke: 'currentColor',
-                'stroke-width': '3',
-                'stroke-linecap': 'round',
-                'stroke-linejoin': 'round',
-              }, createElement('path', { d: 'M20 6L9 17l-5-5' }))
-            : null,
+          createElement('svg', {
+            className: 'size-3.5 ml-auto' + (active === t.id ? ' text-primary' : ' invisible'),
+            viewBox: '0 0 24 24',
+            fill: 'none',
+            stroke: 'currentColor',
+            'stroke-width': '3',
+            'stroke-linecap': 'round',
+            'stroke-linejoin': 'round',
+          }, createElement('path', { d: 'M20 6L9 17l-5-5' })),
         ),
       ),
     );

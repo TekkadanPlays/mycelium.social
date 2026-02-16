@@ -1,4 +1,5 @@
 import { hasNip07, getNip07PublicKey } from '../../nostr/nip07';
+import { isAndroid, requestPublicKey as nip55RequestPubkey, parseNip55Callback, clearNip55Callback } from '../../nostr/nip55';
 
 export interface AuthState {
   pubkey: string | null;
@@ -30,24 +31,36 @@ export function subscribeAuth(listener: Listener): () => void {
 }
 
 export async function login(): Promise<void> {
-  if (!hasNip07()) {
-    state = { ...state, error: 'No Nostr extension found. Install Alby or nos2x.' };
+  // Try NIP-07 first (desktop browser extensions)
+  if (hasNip07()) {
+    state = { ...state, isLoading: true, error: null };
+    notify();
+    try {
+      const pubkey = await getNip07PublicKey();
+      state = { pubkey, isLoading: false, error: null };
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('ribbit_pubkey', pubkey);
+      }
+    } catch (err) {
+      state = { ...state, isLoading: false, error: String(err) };
+    }
     notify();
     return;
   }
 
-  state = { ...state, isLoading: true, error: null };
-  notify();
-
-  try {
-    const pubkey = await getNip07PublicKey();
-    state = { pubkey, isLoading: false, error: null };
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem('ribbit_pubkey', pubkey);
-    }
-  } catch (err) {
-    state = { ...state, isLoading: false, error: String(err) };
+  // Try NIP-55 on Android (Amber / external signer via intent)
+  if (isAndroid()) {
+    // Navigate to nostrsigner: URI — the signer app will handle it
+    // and redirect back with the pubkey via the callback URL.
+    // We set isLoading so the UI shows a loading state before navigation.
+    state = { ...state, isLoading: true, error: null };
+    notify();
+    nip55RequestPubkey();
+    return;
   }
+
+  // No signing method available
+  state = { ...state, error: 'No Nostr signer found. Install a NIP-07 extension (desktop) or Amber (Android).' };
   notify();
 }
 
@@ -59,13 +72,25 @@ export function logout() {
   notify();
 }
 
-// Restore session from localStorage
+// Restore session from localStorage, then check for NIP-55 callback
 export function restoreSession() {
-  if (typeof localStorage !== 'undefined') {
-    const saved = localStorage.getItem('ribbit_pubkey');
-    if (saved) {
-      state = { pubkey: saved, isLoading: false, error: null };
-      notify();
-    }
+  if (typeof localStorage === 'undefined') return;
+
+  // Check for NIP-55 callback result first (Android signer redirect)
+  const nip55 = parseNip55Callback();
+  if (nip55 && nip55.action === 'get_public_key' && nip55.result) {
+    const pubkey = nip55.result;
+    localStorage.setItem('ribbit_pubkey', pubkey);
+    state = { pubkey, isLoading: false, error: null };
+    clearNip55Callback();
+    notify();
+    return;
+  }
+
+  // Normal session restore from localStorage
+  const saved = localStorage.getItem('ribbit_pubkey');
+  if (saved) {
+    state = { pubkey: saved, isLoading: false, error: null };
+    notify();
   }
 }

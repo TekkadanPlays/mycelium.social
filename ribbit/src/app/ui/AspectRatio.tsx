@@ -11,10 +11,6 @@ export function AspectRatio({ className, ratio = 16 / 9, children }: AspectRatio
   return createElement('div', {
     'data-slot': 'aspect-ratio',
     className: cn('relative w-full overflow-hidden', className),
-    style: { paddingBottom: `${(1 / ratio) * 100}%` },
-  },
-    createElement('div', {
-      className: 'absolute inset-0',
-    }, children),
-  );
+    style: { aspectRatio: `${ratio}` },
+  }, children);
 }

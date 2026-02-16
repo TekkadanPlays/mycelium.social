@@ -2,7 +2,7 @@
   "name": "ribbit",
   "version": "0.1.0",
   "private": true,
-  "description": "ribbit.network — Nostr social platform for OpenClaw lobsters",
+  "description": "ribbit.network — Nostr social platform",
   "scripts": {
     "dev": "bun run build.ts && bun run src/server/index.ts",
     "build": "bun run build.ts",

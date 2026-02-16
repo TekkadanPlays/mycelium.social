@@ -1,5 +1,4 @@
 import { createElement } from 'inferno-create-element';
-import { Link } from 'inferno-router';
 import { Badge } from '../../../ui/Badge';
 import { PageHeader } from '../_helpers';
 
@@ -9,26 +8,13 @@ export function Nos2xFrogIntro() {
       title: 'nos2x-frog',
       description: 'A Nostr signer browser extension. NIP-07 compatible, built with InfernoJS.',
     }),
-    createElement('div', { className: 'flex flex-wrap gap-2 mb-6' },
+    createElement('div', { className: 'flex flex-wrap gap-2 mb-4' },
       createElement(Badge, null, 'Nostr'),
       createElement(Badge, { variant: 'secondary' }, 'NIP-07'),
       createElement(Badge, { variant: 'secondary' }, 'InfernoJS'),
       createElement(Badge, { variant: 'secondary' }, 'Browser Extension'),
       createElement(Badge, { variant: 'outline' }, 'Stable'),
     ),
-    createElement('div', { className: 'flex gap-3 mb-8' },
-      createElement('a', {
-        href: 'https://github.com/TekkadanPlays/nos2x-frog',
-        target: '_blank',
-        rel: 'noopener',
-        className: 'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors',
-      }, 'GitHub \u2192'),
-      createElement(Link, {
-        to: '/docs',
-        className: 'inline-flex items-center gap-2 rounded-md border border-input px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
-      }, '\u2190 All docs'),
-    ),
-
     createElement('div', { className: 'space-y-4' },
       createElement('h2', { className: 'text-xl font-bold tracking-tight' }, 'Overview'),
       createElement('div', { className: 'grid grid-cols-1 sm:grid-cols-2 gap-3' },

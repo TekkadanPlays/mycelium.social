@@ -181,23 +181,5 @@ cd ribbit-android
       ),
     ),
 
-    // Links
-    createElement('section', { className: 'space-y-3' },
-      createElement('h2', { className: 'text-lg font-bold tracking-tight' }, 'Links'),
-      createElement('div', { className: 'flex flex-wrap gap-2' },
-        createElement('a', {
-          href: 'https://github.com/TekkadanPlays/ribbit-android',
-          target: '_blank',
-          rel: 'noopener',
-          className: 'inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors',
-        }, 'GitHub \u2192'),
-        createElement('a', {
-          href: 'https://github.com/TekkadanPlays/ribbit-android/releases',
-          target: '_blank',
-          rel: 'noopener',
-          className: 'inline-flex items-center gap-1.5 rounded-md border border-input px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
-        }, 'Releases'),
-      ),
-    ),
   );
 }

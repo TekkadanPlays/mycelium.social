@@ -1,9 +1,28 @@
+import { Component } from 'inferno';
 import { createElement } from 'inferno-create-element';
 import { Link } from 'inferno-router';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Separator } from '../ui/Separator';
+import { toast } from '../ui/Toast';
 import { login } from '../store/auth';
+
+let _glowDocs = false;
+let _glowTimer: ReturnType<typeof setTimeout> | null = null;
+let _glowListeners: Set<() => void> = new Set();
+function setGlowDocs(v: boolean) { _glowDocs = v; _glowListeners.forEach(fn => fn()); }
+function subscribeGlow(fn: () => void) { _glowListeners.add(fn); return () => { _glowListeners.delete(fn); }; }
+
+function handleFeedClick(e: Event) {
+  e.preventDefault();
+  toast.error('Feed currently unavailable', {
+    description: 'Check out the docs to explore the ribbit.network ecosystem.',
+  });
+  // Always extend the glow timer on repeated clicks
+  if (_glowTimer) clearTimeout(_glowTimer);
+  if (!_glowDocs) setGlowDocs(true);
+  _glowTimer = setTimeout(() => { _glowTimer = null; setGlowDocs(false); }, 4000);
+}
 
 // ---------------------------------------------------------------------------
 // Data
@@ -98,6 +117,38 @@ const STATS = [
 // Components
 // ---------------------------------------------------------------------------
 
+// Inject the glow keyframes once
+if (typeof document !== 'undefined' && !document.getElementById('glow-docs-style')) {
+  const style = document.createElement('style');
+  style.id = 'glow-docs-style';
+  style.textContent = `
+    @keyframes docs-glow {
+      0%, 100% { box-shadow: 0 0 8px var(--primary), 0 0 20px color-mix(in oklch, var(--primary) 40%, transparent); opacity: 1; }
+      50% { box-shadow: 0 0 16px var(--primary), 0 0 36px color-mix(in oklch, var(--primary) 60%, transparent); opacity: 0.85; }
+    }
+    .glow-docs-active {
+      animation: docs-glow 1.5s ease-in-out infinite;
+      ring: 2px var(--primary);
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+class GlowDocsButton extends Component<{ className?: string; label?: string }, { glow: boolean }> {
+  declare state: { glow: boolean };
+  private unsub: (() => void) | null = null;
+  constructor(props: any) { super(props); this.state = { glow: _glowDocs }; }
+  componentDidMount() { this.unsub = subscribeGlow(() => this.setState({ glow: _glowDocs })); }
+  componentWillUnmount() { this.unsub?.(); }
+  render() {
+    const base = 'inline-flex items-center gap-2 rounded-lg border px-6 py-3 text-sm font-semibold transition-all duration-500';
+    const glowCls = this.state.glow
+      ? base + ' border-primary text-foreground glow-docs-active ring-2 ring-primary ring-offset-2 ring-offset-background'
+      : base + ' border-input text-foreground hover:bg-accent';
+    return createElement(Link, { to: '/docs', className: glowCls }, this.props.label || 'Read the Docs');
+  }
+}
+
 function HeroSection() {
   return createElement('section', { className: 'relative overflow-hidden' },
     // Gradient background orbs
@@ -135,14 +186,12 @@ function HeroSection() {
 
       // CTAs
       createElement('div', { className: 'flex flex-wrap justify-center gap-3' },
-        createElement(Link, {
-          to: '/feed',
-          className: 'inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20',
+        createElement('a', {
+          href: '/feed',
+          onClick: handleFeedClick,
+          className: 'inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 cursor-pointer',
         }, 'Open Feed \u2192'),
-        createElement(Link, {
-          to: '/docs',
-          className: 'inline-flex items-center gap-2 rounded-lg border border-input px-6 py-3 text-sm font-semibold text-foreground hover:bg-accent transition-colors',
-        }, 'Read the Docs'),
+        createElement(GlowDocsButton, { label: 'Read the Docs' }),
         createElement('a', {
           href: 'https://github.com/TekkadanPlays',
           target: '_blank',
@@ -327,14 +376,12 @@ function CTASection() {
       'Jump into the feed, explore the docs, or start building with Kaji. No sign-up required \u2014 just a Nostr key.',
     ),
     createElement('div', { className: 'flex flex-wrap justify-center gap-3' },
-      createElement(Link, {
-        to: '/feed',
-        className: 'inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20',
+      createElement('a', {
+        href: '/feed',
+        onClick: handleFeedClick,
+        className: 'inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20 cursor-pointer',
       }, 'Open Feed'),
-      createElement(Link, {
-        to: '/docs',
-        className: 'inline-flex items-center gap-2 rounded-lg border border-input px-6 py-3 text-sm font-semibold text-foreground hover:bg-accent transition-colors',
-      }, 'Documentation'),
+      createElement(GlowDocsButton, { label: 'Documentation' }),
     ),
   );
 }

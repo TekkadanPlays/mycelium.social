@@ -76,18 +76,6 @@ export function DocsIndex() {
       createElement('p', { className: 'text-muted-foreground max-w-2xl text-lg' },
         'Documentation for the ribbit.network stack. Explore the tools, libraries, and protocols that power a decentralized social experience.',
       ),
-      createElement('div', { className: 'flex flex-wrap gap-2 mt-4' },
-        createElement('a', {
-          href: 'https://github.com/TekkadanPlays',
-          target: '_blank',
-          rel: 'noopener',
-          className: 'inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors',
-        }, 'GitHub \u2192'),
-        createElement(Link, {
-          to: '/feed',
-          className: 'inline-flex items-center gap-2 rounded-md border border-input px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
-        }, '\u2190 Back to ribbit'),
-      ),
     ),
 
     // Project grid
