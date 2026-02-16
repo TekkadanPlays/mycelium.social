@@ -11,4 +11,6 @@ export * from './nip07';
 export * from './nip10';
 export * from './nip25';
 export * from './nip29';
+export * from './nip55';
+export * from './nip66';
 export * from './utils';
