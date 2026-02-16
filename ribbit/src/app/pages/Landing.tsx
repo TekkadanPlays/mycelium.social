@@ -370,7 +370,7 @@ function CTASection() {
   return createElement('section', { className: 'max-w-3xl mx-auto px-4 py-20 text-center' },
     createElement('div', { className: 'text-4xl mb-4' }, '\uD83D\uDC38'),
     createElement('h2', { className: 'text-2xl sm:text-3xl font-bold tracking-tight mb-3' },
-      'Ready to croak?',
+      'Ready to Ribbit?',
     ),
     createElement('p', { className: 'text-muted-foreground max-w-md mx-auto mb-8' },
       'Jump into the feed, explore the docs, or start building with Kaji. No sign-up required \u2014 just a Nostr key.',
