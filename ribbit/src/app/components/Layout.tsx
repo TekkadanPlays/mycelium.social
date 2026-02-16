@@ -10,6 +10,19 @@ import { ThemeToggle } from '../ui/ThemeToggle';
 import { ThemeSelector } from '../ui/ThemeSelector';
 
 // ---------------------------------------------------------------------------
+// Docs project data for the NavigationMenu dropdown
+// ---------------------------------------------------------------------------
+
+const DOCS_PROJECTS = [
+  { icon: '\u26A1', title: 'Blazecn', desc: 'UI component library', path: '/docs/blazecn' },
+  { icon: '\uD83D\uDC38', title: 'Ribbit', desc: 'Nostr social client', path: '/docs/ribbit' },
+  { icon: '\uD83D\uDD25', title: 'Kaji', desc: 'Nostr protocol library', path: '/docs/kaji' },
+  { icon: '\uD83D\uDCF1', title: 'Ribbit Android', desc: 'Native Android app', path: '/docs/ribbit-android' },
+  { icon: '\uD83D\uDD10', title: 'nos2x-frog', desc: 'Browser signer extension', path: '/docs/nos2x-frog' },
+  { icon: '\uD83D\uDCDC', title: 'NIPs', desc: 'Nostr protocol specs', path: '/docs/nips' },
+];
+
+// ---------------------------------------------------------------------------
 // Header
 // ---------------------------------------------------------------------------
 
@@ -19,12 +32,14 @@ interface HeaderState {
   profilePicture: string;
   mobileOpen: boolean;
   dropdownOpen: boolean;
+  docsOpen: boolean;
 }
 
 export class Header extends Component<{}, HeaderState> {
   private unsubAuth: (() => void) | null = null;
   private unsubProfiles: (() => void) | null = null;
   private outsideClickHandler: ((e: Event) => void) | null = null;
+  private headerRef: HTMLElement | null = null;
   declare state: HeaderState;
 
   constructor(props: {}) {
@@ -35,6 +50,7 @@ export class Header extends Component<{}, HeaderState> {
       profilePicture: '',
       mobileOpen: false,
       dropdownOpen: false,
+      docsOpen: false,
     };
   }
 
@@ -49,8 +65,11 @@ export class Header extends Component<{}, HeaderState> {
     });
     this.updateProfile(this.state.auth.pubkey);
 
-    this.outsideClickHandler = () => {
+    this.outsideClickHandler = (e: Event) => {
       if (this.state.dropdownOpen) this.setState({ ...this.state, dropdownOpen: false });
+      if (this.state.docsOpen && this.headerRef && !this.headerRef.contains(e.target as Node)) {
+        this.setState({ ...this.state, docsOpen: false });
+      }
     };
     document.addEventListener('click', this.outsideClickHandler);
   }
@@ -72,47 +91,103 @@ export class Header extends Component<{}, HeaderState> {
   }
 
   render() {
-    const { auth, profileName, profilePicture, mobileOpen, dropdownOpen } = this.state;
+    const { auth, profileName, profilePicture, mobileOpen, dropdownOpen, docsOpen } = this.state;
     const initials = (profileName || '??').substring(0, 2).toUpperCase();
 
-    const navLinks = [
-      { to: '/feed', label: 'Feed' },
-      { to: '/docs', label: 'Docs' },
-    ];
+    // Chevron SVG for the Docs trigger
+    const chevron = createElement('svg', {
+      className: 'relative top-px ml-1 size-3 transition-transform duration-200' + (docsOpen ? ' rotate-180' : ''),
+      viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor',
+      'stroke-width': '2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+    }, createElement('path', { d: 'M6 9l6 6 6-6' }));
 
     return createElement('nav', {
+      ref: (el: HTMLElement | null) => { this.headerRef = el; },
       className: 'sticky top-0 z-50 border-b border-border bg-background/90 backdrop-blur-md',
     },
       createElement('div', { className: 'mx-auto max-w-6xl px-5 sm:px-6 lg:px-8' },
-        createElement('div', { className: 'flex h-16 items-center justify-between' },
-          // Left: Logo
-          createElement(Link, { to: '/', className: 'flex items-center gap-2.5 group shrink-0' },
-            createElement('span', { className: 'text-2xl' }, '\u{1F438}'),
-            createElement('span', { className: 'font-extrabold text-lg tracking-tight' }, 'ribbit'),
-          ),
+        createElement('div', { className: 'flex h-14 items-center justify-between' },
 
-          // Right: Nav links + actions
-          createElement('div', { className: 'flex items-center gap-2' },
-            // Nav links (desktop)
-            createElement('div', { className: 'hidden md:flex items-center gap-1 mr-2' },
-              ...navLinks.map((link) =>
-                createElement(Link, {
-                  key: link.label,
-                  to: link.to,
-                  className: 'px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-accent/50',
-                }, link.label),
-              ),
+          // ── Left: Logo + Navigation ──
+          createElement('div', { className: 'flex items-center gap-1' },
+            // Logo
+            createElement(Link, { to: '/', className: 'flex items-center gap-2 shrink-0 mr-4' },
+              createElement('span', { className: 'text-xl' }, '\u{1F438}'),
+              createElement('span', { className: 'font-extrabold text-base tracking-tight' }, 'ribbit'),
             ),
 
-            // Theme controls
+            // Desktop nav
+            createElement('div', { className: 'hidden md:flex items-center gap-0.5' },
+
+              // ── Docs dropdown trigger ──
+              createElement('div', { className: 'relative' },
+                createElement('button', {
+                  type: 'button',
+                  onClick: (e: Event) => { e.stopPropagation(); this.setState({ ...this.state, docsOpen: !docsOpen, dropdownOpen: false }); },
+                  className: 'inline-flex h-9 items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors'
+                    + ' hover:bg-accent hover:text-accent-foreground'
+                    + (docsOpen ? ' bg-accent/50' : ''),
+                }, 'Docs', chevron),
+
+                // ── Docs dropdown panel ──
+                docsOpen
+                  ? createElement('div', {
+                      className: 'absolute left-0 top-full mt-1.5 w-[480px] rounded-lg border bg-popover p-4 shadow-lg z-50',
+                    },
+                      // Header row
+                      createElement('div', { className: 'flex items-center justify-between mb-3' },
+                        createElement('p', { className: 'text-xs font-semibold tracking-wider uppercase text-muted-foreground' }, 'Projects'),
+                        createElement(Link, {
+                          to: '/docs',
+                          onClick: () => this.setState({ ...this.state, docsOpen: false }),
+                          className: 'text-xs text-primary hover:underline',
+                        }, 'View all \u2192'),
+                      ),
+                      // Project grid
+                      createElement('div', { className: 'grid grid-cols-2 gap-1' },
+                        ...DOCS_PROJECTS.map((p) =>
+                          createElement(Link, {
+                            key: p.title,
+                            to: p.path,
+                            onClick: () => this.setState({ ...this.state, docsOpen: false }),
+                            className: 'flex items-start gap-3 rounded-md p-3 transition-colors hover:bg-accent',
+                          },
+                            createElement('span', { className: 'text-lg mt-0.5 shrink-0' }, p.icon),
+                            createElement('div', null,
+                              createElement('div', { className: 'text-sm font-semibold leading-tight' }, p.title),
+                              createElement('p', { className: 'text-xs text-muted-foreground mt-0.5 leading-snug' }, p.desc),
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  : null,
+              ),
+            ),
+          ),
+
+          // ── Right: GitHub + Theme controls + Auth ──
+          createElement('div', { className: 'flex items-center gap-1.5' },
+            createElement('a', {
+              href: 'https://github.com/TekkadanPlays',
+              target: '_blank',
+              rel: 'noopener',
+              className: 'hidden sm:inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
+            },
+              createElement('svg', {
+                className: 'size-4',
+                viewBox: '0 0 24 24',
+                fill: 'currentColor',
+              }, createElement('path', { d: 'M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z' })),
+              'GitHub',
+            ),
             createElement(ThemeSelector, { className: 'size-8' }),
             createElement(ThemeToggle, { className: 'size-8' }),
 
             auth.pubkey
               ? createElement('div', { className: 'relative hidden md:block' },
-                  // User dropdown trigger
                   createElement('button', {
-                    onClick: (e: Event) => { e.stopPropagation(); this.setState({ ...this.state, dropdownOpen: !dropdownOpen }); },
+                    onClick: (e: Event) => { e.stopPropagation(); this.setState({ ...this.state, dropdownOpen: !dropdownOpen, docsOpen: false }); },
                     className: 'flex items-center gap-2 rounded-full border border-border px-1 py-1 pr-3 hover:bg-accent/50 transition-colors',
                   },
                     createElement(Avatar, { className: 'size-7' },
@@ -124,33 +199,16 @@ export class Header extends Component<{}, HeaderState> {
                     createElement('span', { className: 'text-sm font-medium max-w-[120px] truncate' }, profileName),
                     createElement('span', { className: 'text-xs opacity-40' }, '\u25BE'),
                   ),
-
-                  // Dropdown menu
                   dropdownOpen
                     ? createElement('div', {
-                        className: 'absolute right-0 top-full mt-2 w-56 bg-popover border border-border rounded-xl shadow-lg py-1.5 z-50',
+                        className: 'absolute right-0 top-full mt-2 w-52 bg-popover border border-border rounded-lg shadow-lg py-1 z-50',
                       },
-                        createElement(Link, {
-                          to: `/u/${auth.pubkey}`,
-                          className: 'flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
-                        }, 'Profile'),
-                        createElement(Link, {
-                          to: '/notifications',
-                          className: 'flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
-                        }, 'Notifications'),
-                        createElement(Link, {
-                          to: '/settings',
-                          className: 'flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
-                        }, 'Settings'),
-                        createElement(Link, {
-                          to: '/settings/relays',
-                          className: 'flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors',
-                        }, 'Relay Manager'),
-                        createElement('div', { className: 'border-t border-border my-1.5' }),
-                        createElement('button', {
-                          onClick: logout,
-                          className: 'flex items-center gap-2.5 px-4 py-2.5 w-full text-sm text-destructive/70 hover:text-destructive hover:bg-destructive/5 transition-colors',
-                        }, 'Sign Out'),
+                        createElement(Link, { to: `/u/${auth.pubkey}`, className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Profile'),
+                        createElement(Link, { to: '/notifications', className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Notifications'),
+                        createElement(Link, { to: '/settings', className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Settings'),
+                        createElement(Link, { to: '/settings/relays', className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Relay Manager'),
+                        createElement('div', { className: 'border-t border-border my-1' }),
+                        createElement('button', { onClick: logout, className: 'flex items-center gap-2 px-3 py-2 w-full text-sm text-destructive/70 hover:text-destructive hover:bg-destructive/5 transition-colors' }, 'Sign Out'),
                       )
                     : null,
                 )
@@ -170,40 +228,36 @@ export class Header extends Component<{}, HeaderState> {
         ),
       ),
 
-      // Mobile menu
+      // ── Mobile menu ──
       mobileOpen
         ? createElement('div', { className: 'md:hidden border-t border-border bg-background' },
             createElement('div', { className: 'mx-auto max-w-6xl px-5 sm:px-6 py-3 space-y-0.5' },
-              ...navLinks.map((link) =>
+              // Docs section
+              createElement('p', { className: 'px-3 pt-1 pb-1.5 text-[10px] font-semibold tracking-wider uppercase text-muted-foreground/60' }, 'Documentation'),
+              ...DOCS_PROJECTS.map((p) =>
                 createElement(Link, {
-                  key: link.label,
-                  to: link.to,
-                  className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
+                  key: p.title,
+                  to: p.path,
+                  className: 'flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
                   onClick: () => this.setState({ ...this.state, mobileOpen: false }),
-                }, link.label),
+                },
+                  createElement('span', { className: 'text-sm' }, p.icon),
+                  p.title,
+                ),
               ),
+              createElement(Link, {
+                to: '/docs',
+                className: 'block px-3 py-2 text-xs text-primary hover:underline',
+                onClick: () => this.setState({ ...this.state, mobileOpen: false }),
+              }, 'View all docs \u2192'),
+
+              // Auth section
               auth.pubkey
                 ? createElement('div', { className: 'space-y-0.5 border-t border-border mt-2 pt-2' },
-                    createElement(Link, {
-                      to: `/u/${auth.pubkey}`,
-                      className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
-                      onClick: () => this.setState({ ...this.state, mobileOpen: false }),
-                    }, 'Profile'),
-                    createElement(Link, {
-                      to: '/notifications',
-                      className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
-                      onClick: () => this.setState({ ...this.state, mobileOpen: false }),
-                    }, 'Notifications'),
-                    createElement(Link, {
-                      to: '/settings',
-                      className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
-                      onClick: () => this.setState({ ...this.state, mobileOpen: false }),
-                    }, 'Settings'),
-                    createElement(Link, {
-                      to: '/settings/relays',
-                      className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
-                      onClick: () => this.setState({ ...this.state, mobileOpen: false }),
-                    }, 'Relay Manager'),
+                    createElement(Link, { to: `/u/${auth.pubkey}`, className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Profile'),
+                    createElement(Link, { to: '/notifications', className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Notifications'),
+                    createElement(Link, { to: '/settings', className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Settings'),
+                    createElement(Link, { to: '/settings/relays', className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Relay Manager'),
                     createElement('button', {
                       onClick: () => { logout(); this.setState({ ...this.state, mobileOpen: false }); },
                       className: 'flex items-center px-3 py-2.5 w-full text-sm text-destructive/70 hover:text-destructive rounded-md transition-colors',

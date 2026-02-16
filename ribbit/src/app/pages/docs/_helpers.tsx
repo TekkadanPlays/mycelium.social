@@ -350,7 +350,7 @@ export class PageCopyButton extends Component<{ title: string; description: stri
               type: 'button',
               onClick: this.copyMarkdown,
               className: 'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer',
-            }, clipIcon, 'Copy page as Markdown for LLMs'),
+            }, clipIcon, 'Copy as Markdown'),
             // Separator
             createElement('div', { className: 'my-1 h-px bg-border' }),
             // View as Markdown
@@ -364,7 +364,7 @@ export class PageCopyButton extends Component<{ title: string; description: stri
               type: 'button',
               onClick: this.viewPlainText,
               className: 'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer',
-            }, extIcon, 'View this page as plain text'),
+            }, extIcon, 'View as plain text'),
           )
         : null,
     );

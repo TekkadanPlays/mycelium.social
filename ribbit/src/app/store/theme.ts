@@ -18,7 +18,7 @@ export function subscribeTheme(fn: ThemeListener): () => void {
 }
 
 export function getBaseTheme(): BaseTheme {
-  return (localStorage.getItem(THEME_KEY) as BaseTheme) || 'neutral';
+  return (localStorage.getItem(THEME_KEY) as BaseTheme) || 'ribbit';
 }
 
 export function setBaseTheme(theme: BaseTheme) {

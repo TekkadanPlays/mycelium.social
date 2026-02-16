@@ -10,13 +10,14 @@ interface DialogPageState {
   basic: boolean;
   profile: boolean;
   confirm: boolean;
+  checked: Record<string, boolean>;
 }
 
 export class DialogPage extends Component<{}, DialogPageState> {
   declare state: DialogPageState;
   constructor(props: {}) {
     super(props);
-    this.state = { basic: false, profile: false, confirm: false };
+    this.state = { basic: false, profile: false, confirm: false, checked: { 'Push notifications': true, 'Email digests': true, 'Marketing emails': true } };
   }
   render() {
     const s = this.state;
@@ -103,19 +104,27 @@ export class DialogPage extends Component<{}, DialogPageState> {
               { label: 'Push notifications', desc: 'Receive push notifications on your device.' },
               { label: 'Email digests', desc: 'Get a weekly summary of activity.' },
               { label: 'Marketing emails', desc: 'Receive emails about new features.' },
-            ].map((item) =>
-              createElement('div', { key: item.label, className: 'flex items-center gap-3 rounded-md border p-3' },
-                createElement('div', { className: 'size-4 shrink-0 rounded border border-primary bg-primary flex items-center justify-center' },
-                  createElement('svg', { className: 'size-3 text-primary-foreground', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
+            ].map((item) => {
+              const on = !!s.checked[item.label];
+              return createElement('div', {
+                key: item.label,
+                className: 'flex items-center gap-3 rounded-md border p-3 cursor-pointer hover:bg-accent/50 transition-colors',
+                onClick: () => this.setState({ checked: { ...s.checked, [item.label]: !on } }),
+              },
+                createElement('div', { className: on
+                  ? 'size-4 shrink-0 rounded border border-primary bg-primary flex items-center justify-center'
+                  : 'size-4 shrink-0 rounded border border-input bg-background',
+                },
+                  on ? createElement('svg', { className: 'size-3 text-primary-foreground', viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', 'stroke-width': '3', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' },
                     createElement('path', { d: 'M20 6L9 17l-5-5' }),
-                  ),
+                  ) : null,
                 ),
                 createElement('div', null,
                   createElement('div', { className: 'text-sm font-medium' }, item.label),
                   createElement('div', { className: 'text-xs text-muted-foreground' }, item.desc),
                 ),
-              ),
-            ),
+              );
+            }),
           ),
           createElement(DialogFooter, null,
             createElement(Button, { variant: 'outline', onClick: () => this.setState({ confirm: false }) }, 'Cancel'),

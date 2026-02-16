@@ -68,12 +68,25 @@ interface MenubarMenuProps {
   children?: any;
 }
 
-export class MenubarMenu extends Component<MenubarMenuProps> {
+interface MenubarMenuState {
+  open: boolean;
+}
+
+export class MenubarMenu extends Component<MenubarMenuProps, MenubarMenuState> {
   private id = `mbm-${++_menuIdCounter}`;
   private unsub: (() => void) | null = null;
+  declare state: MenubarMenuState;
+
+  constructor(props: MenubarMenuProps) {
+    super(props);
+    this.state = { open: false };
+  }
 
   componentDidMount() {
-    this.unsub = menubarSubscribe(() => this.forceUpdate());
+    this.unsub = menubarSubscribe(() => {
+      const open = _menubarOpenId === this.id;
+      if (this.state.open !== open) this.setState({ open });
+    });
   }
 
   componentWillUnmount() {
@@ -93,7 +106,7 @@ export class MenubarMenu extends Component<MenubarMenuProps> {
 
   render() {
     const { children } = this.props;
-    const open = _menubarOpenId === this.id;
+    const { open } = this.state;
     const kids = Array.isArray(children) ? children : [children];
 
     // Separate trigger and content from children
@@ -103,7 +116,6 @@ export class MenubarMenu extends Component<MenubarMenuProps> {
 
     for (const child of kids) {
       if (!child) continue;
-      // In Inferno, VNode flags or type can identify the component
       if (child.type === MenubarTrigger || (child.props && child.props['data-slot'] === 'menubar-trigger')) {
         triggerChild = child;
       } else if (child.type === MenubarContent || (child.props && child.props['data-slot'] === 'menubar-content')) {
@@ -118,7 +130,6 @@ export class MenubarMenu extends Component<MenubarMenuProps> {
       className: 'relative',
       onmouseenter: this.handleMouseEnter,
     },
-      // Always re-create trigger with current state
       triggerChild
         ? createElement(MenubarTrigger, {
             ...(triggerChild.props || {}),
@@ -126,7 +137,6 @@ export class MenubarMenu extends Component<MenubarMenuProps> {
             'data-state': open ? 'open' : 'closed',
           }, triggerChild.children != null ? triggerChild.children : (triggerChild.props && triggerChild.props.children))
         : null,
-      // Only show content when open
       open && contentChild ? contentChild : null,
       ...others,
     );
@@ -153,7 +163,7 @@ export function MenubarTrigger(props: MenubarTriggerProps) {
     className: cn(
       'flex cursor-default select-none items-center rounded-sm px-3 py-1 text-sm font-medium outline-none',
       'hover:bg-accent hover:text-accent-foreground',
-      'focus:bg-accent focus:text-accent-foreground',
+      'focus-visible:outline-none',
       'data-[state=open]:bg-accent data-[state=open]:text-accent-foreground',
       className,
     ),

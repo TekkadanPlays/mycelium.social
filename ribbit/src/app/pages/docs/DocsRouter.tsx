@@ -1,6 +1,5 @@
 import { Component } from 'inferno';
 import { createElement } from 'inferno-create-element';
-import { Toaster } from '../../ui/Toast';
 import { DocsLayout } from './DocsLayout';
 import { DocsIndex } from './DocsIndex';
 
@@ -230,7 +229,6 @@ export class Docs extends Component<DocsProps, DocsState> {
     if (pathname === '/docs') {
       return createElement('div', null,
         createElement(DocsIndex, null),
-        createElement(Toaster, null),
       );
     }
 
@@ -243,7 +241,6 @@ export class Docs extends Component<DocsProps, DocsState> {
               createElement('p', { className: 'text-muted-foreground' }, 'Page not found.'),
             ),
       ),
-      createElement(Toaster, null),
     );
   }
 }

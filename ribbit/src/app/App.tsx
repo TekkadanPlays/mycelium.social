@@ -14,6 +14,7 @@ import { RelayDiscovery } from './pages/RelayDiscovery';
 import { Notifications } from './pages/Notifications';
 import { HashtagFeed } from './pages/HashtagFeed';
 import { Docs } from './pages/docs/DocsRouter';
+import { Toaster } from './ui/Toast';
 import { getAuthState, subscribeAuth, restoreSession } from './store/auth';
 import { connectRelays, getPool } from './store/relay';
 import { loadContacts } from './store/contacts';
@@ -88,6 +89,7 @@ export class App extends Component<{}, AppState> {
 
   render() {
     return createElement(MainLayout, null,
+      createElement(Toaster, { position: 'top-center' }),
       createElement(Switch, null,
         createElement(Route, { exact: true, path: '/', component: Landing }),
         createElement(Route, { exact: true, path: '/feed', component: Home }),

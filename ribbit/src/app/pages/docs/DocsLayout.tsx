@@ -316,7 +316,7 @@ function DocsSidebar({ currentPath }: { currentPath: string }) {
     className: 'hidden lg:block w-56 shrink-0',
   },
     createElement('div', {
-      className: 'sticky top-[72px] flex flex-col max-h-[calc(100vh-100px)]',
+      className: 'sticky top-[64px] flex flex-col max-h-[calc(100vh-80px)]',
     },
       // Project switcher sits above the scrollable area so its dropdown isn't clipped
       createElement('div', { className: 'relative z-20 shrink-0 mb-1' },

@@ -32,17 +32,17 @@ interface AvatarImageProps {
   onError?: (e: Event) => void;
 }
 
-export class AvatarImage extends Component<AvatarImageProps, { failed: boolean }> {
-  declare state: { failed: boolean };
+export class AvatarImage extends Component<AvatarImageProps, { failed: boolean; loaded: boolean }> {
+  declare state: { failed: boolean; loaded: boolean };
 
   constructor(props: AvatarImageProps) {
     super(props);
-    this.state = { failed: false };
+    this.state = { failed: false, loaded: false };
   }
 
   componentDidUpdate(prevProps: AvatarImageProps) {
     if (prevProps.src !== this.props.src) {
-      this.setState({ failed: false });
+      this.setState({ failed: false, loaded: false });
     }
   }
 
@@ -53,11 +53,16 @@ export class AvatarImage extends Component<AvatarImageProps, { failed: boolean }
       'data-slot': 'avatar-image',
       src: this.props.src,
       alt: this.props.alt || '',
+      onLoad: () => this.setState({ loaded: true }),
       onError: (e: Event) => {
         this.setState({ failed: true });
         this.props.onError?.(e);
       },
-      className: cn('aspect-square size-full object-cover', this.props.className),
+      className: cn(
+        'aspect-square size-full object-cover absolute inset-0 z-10',
+        !this.state.loaded && 'opacity-0',
+        this.props.className,
+      ),
     });
   }
 }

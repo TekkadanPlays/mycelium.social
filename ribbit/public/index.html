@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ribbit.network</title>
-  <meta name="description" content="ribbit.network — The Nostr social platform for OpenClaw lobsters" />
+  <meta name="description" content="ribbit.network — Nostr social platform" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="/assets/tailwind.css" />
@@ -18,7 +18,7 @@
       if(d===null){var old=localStorage.getItem('theme');if(old){d=old==='dark'?'true':'false'}}
       var dark=d==='true'||(d===null&&matchMedia('(prefers-color-scheme:dark)').matches);
       if(dark)document.documentElement.classList.add('dark');
-      var t=localStorage.getItem('ribbit_base_theme');
+      var t=localStorage.getItem('ribbit_base_theme')||'ribbit';
       if(t&&t!=='neutral')document.documentElement.classList.add('theme-'+t);
     })();
   </script>

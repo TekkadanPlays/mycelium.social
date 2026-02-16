@@ -1,10 +1,11 @@
 import { Component } from 'inferno';
 import { createElement } from 'inferno-create-element';
-import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from './utils';
 
 // ---------------------------------------------------------------------------
 // Sheet (slide-over panel)
+// Uses inline styles for transform so Inferno can transition smoothly
+// between mounted-hidden → visible → hidden → unmounted.
 // ---------------------------------------------------------------------------
 
 interface SheetProps {
@@ -13,61 +14,104 @@ interface SheetProps {
   children?: any;
 }
 
-export function Sheet({ open, children }: SheetProps) {
-  if (!open) return null;
-
-  return createElement('div', {
-    'data-slot': 'sheet',
-    'data-state': 'open',
-  }, children);
+interface SheetState {
+  mounted: boolean;
+  visible: boolean;
 }
 
-// ---------------------------------------------------------------------------
-// SheetOverlay
-// ---------------------------------------------------------------------------
+export class Sheet extends Component<SheetProps, SheetState> {
+  declare state: SheetState;
+  private raf: number | null = null;
+  private timer: ReturnType<typeof setTimeout> | null = null;
 
-interface SheetOverlayProps {
-  className?: string;
-  onClick?: (e: Event) => void;
-}
-
-export function SheetOverlay({ className, onClick }: SheetOverlayProps) {
-  return createElement('div', {
-    'data-slot': 'sheet-overlay',
-    className: cn('fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px]', className),
-    onClick: (e: Event) => {
-      if (e.target === e.currentTarget) onClick?.(e);
-    },
-  });
-}
-
-// ---------------------------------------------------------------------------
-// SheetContent
-// ---------------------------------------------------------------------------
-
-const sheetContentVariants = cva(
-  'bg-background fixed z-50 flex flex-col gap-4 shadow-lg transition-transform duration-300 ease-in-out border',
-  {
-    variants: {
-      side: {
-        top: 'inset-x-0 top-0 border-b',
-        bottom: 'inset-x-0 bottom-0 border-t',
-        left: 'inset-y-0 left-0 w-3/4 border-r sm:max-w-sm',
-        right: 'inset-y-0 right-0 w-3/4 border-l sm:max-w-sm',
-      },
-    },
-    defaultVariants: {
-      side: 'right',
-    },
+  constructor(props: SheetProps) {
+    super(props);
+    this.state = { mounted: props.open, visible: false };
   }
-);
 
-export type SheetSide = NonNullable<VariantProps<typeof sheetContentVariants>['side']>;
+  componentDidMount() {
+    if (this.props.open) {
+      this.raf = requestAnimationFrame(() => {
+        this.raf = requestAnimationFrame(() => {
+          this.setState({ visible: true });
+        });
+      });
+    }
+  }
 
-interface SheetContentProps extends VariantProps<typeof sheetContentVariants> {
+  componentDidUpdate(prevProps: SheetProps) {
+    if (!prevProps.open && this.props.open) {
+      this.clearTimers();
+      this.setState({ mounted: true, visible: false }, () => {
+        this.raf = requestAnimationFrame(() => {
+          this.raf = requestAnimationFrame(() => {
+            this.setState({ visible: true });
+          });
+        });
+      });
+    } else if (prevProps.open && !this.props.open) {
+      this.setState({ visible: false });
+      this.timer = setTimeout(() => this.setState({ mounted: false }), 300);
+    }
+  }
+
+  componentWillUnmount() {
+    this.clearTimers();
+  }
+
+  private clearTimers() {
+    if (this.raf) { cancelAnimationFrame(this.raf); this.raf = null; }
+    if (this.timer) { clearTimeout(this.timer); this.timer = null; }
+  }
+
+  render() {
+    if (!this.state.mounted) return null;
+    const { visible } = this.state;
+    const { onOpenChange, children } = this.props;
+    const onClose = () => onOpenChange?.(false);
+
+    // Clone children to inject visible prop into SheetContent
+    const kids = Array.isArray(children) ? children : [children];
+    const enhanced = kids.map((child: any) => {
+      if (child && child.type === SheetContent) {
+        return createElement(SheetContent, { ...child.props, _visible: visible, onClose }, child.children || child.props?.children);
+      }
+      return child;
+    });
+
+    return createElement('div', { 'data-slot': 'sheet' }, ...enhanced);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// SheetContent — renders overlay + sliding panel with inline style transitions
+// ---------------------------------------------------------------------------
+
+export type SheetSide = 'top' | 'bottom' | 'left' | 'right';
+
+interface SheetContentProps {
+  side?: SheetSide;
   className?: string;
   children?: any;
   onClose?: () => void;
+  _visible?: boolean;
+}
+
+const sideClasses: Record<SheetSide, string> = {
+  top: 'inset-x-0 top-0 border-b',
+  bottom: 'inset-x-0 bottom-0 border-t',
+  left: 'inset-y-0 left-0 w-3/4 border-r sm:max-w-sm',
+  right: 'inset-y-0 right-0 w-3/4 border-l sm:max-w-sm',
+};
+
+function getSlideTransform(side: SheetSide, visible: boolean): string {
+  if (visible) return 'translate3d(0,0,0)';
+  switch (side) {
+    case 'right': return 'translate3d(100%,0,0)';
+    case 'left': return 'translate3d(-100%,0,0)';
+    case 'top': return 'translate3d(0,-100%,0)';
+    case 'bottom': return 'translate3d(0,100%,0)';
+  }
 }
 
 export class SheetContent extends Component<SheetContentProps> {
@@ -86,18 +130,36 @@ export class SheetContent extends Component<SheetContentProps> {
   }
 
   render() {
-    const { side, className, children, onClose } = this.props;
+    const { side = 'right', className, children, onClose, _visible: visible = true } = this.props;
 
     return createElement('div', {
       'data-slot': 'sheet-portal',
       className: 'fixed inset-0 z-50',
     },
-      createElement(SheetOverlay, { onClick: onClose }),
+      // Overlay
+      createElement('div', {
+        'data-slot': 'sheet-overlay',
+        className: 'fixed inset-0 bg-black/50',
+        style: {
+          opacity: visible ? 1 : 0,
+          transition: 'opacity 300ms cubic-bezier(0.4,0,0.2,1)',
+        },
+        onClick: (e: Event) => { if (e.target === e.currentTarget) onClose?.(); },
+      }),
+      // Panel
       createElement('div', {
         'data-slot': 'sheet-content',
         role: 'dialog',
         'aria-modal': true,
-        className: cn(sheetContentVariants({ side }), 'p-6', className),
+        className: cn(
+          'bg-background fixed z-50 flex flex-col gap-4 shadow-lg border p-6',
+          sideClasses[side],
+          className,
+        ),
+        style: {
+          transform: getSlideTransform(side, visible),
+          transition: 'transform 300ms cubic-bezier(0.32,0.72,0,1)',
+        },
       },
         children,
         createElement('button', {
@@ -124,6 +186,9 @@ export class SheetContent extends Component<SheetContentProps> {
     );
   }
 }
+
+// SheetOverlay is no longer needed as a separate export but keep for API compat
+export function SheetOverlay() { return null; }
 
 // ---------------------------------------------------------------------------
 // SheetHeader / SheetFooter / SheetTitle / SheetDescription
