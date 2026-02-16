@@ -56,7 +56,7 @@ export { Sheet, SheetContent, SheetOverlay, SheetHeader, SheetFooter, SheetTitle
 export { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel, DropdownMenuGroup } from './DropdownMenu';
 export { Popover, PopoverTrigger, PopoverContent } from './Popover';
 export { Tooltip } from './Tooltip';
-export { toast, dismissToast, Toaster, type ToastData, type ToastType, type ToastAction, type ToasterPosition } from './Toast';
+export { toast, dismissToast, Toaster, type ToastT, type ToastType, type ToastAction, type ToasterPosition } from './Toast';
 
 // Layout
 export { ScrollArea } from './ScrollArea';
