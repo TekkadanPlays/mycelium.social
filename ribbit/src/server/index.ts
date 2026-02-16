@@ -8,6 +8,23 @@ const app = new Hono();
 
 app.use('*', logger());
 
+// Block sensitive file probes
+app.use('*', async (c, next) => {
+  const path = c.req.path;
+  if (
+    path.startsWith('/.env') ||
+    path.startsWith('/.git') ||
+    path.startsWith('/.svn') ||
+    path.startsWith('/.htaccess') ||
+    path.startsWith('/wp-') ||
+    path.endsWith('.php') ||
+    path.includes('..')
+  ) {
+    return c.text('Not Found', 404);
+  }
+  return next();
+});
+
 // API routes
 app.route('/api', healthRoute);
 app.route('/.well-known', nip05Route);
