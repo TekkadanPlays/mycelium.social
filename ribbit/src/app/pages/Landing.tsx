@@ -6,6 +6,7 @@ import { Button } from '../ui/Button';
 import { Separator } from '../ui/Separator';
 import { toast } from '../ui/Toast';
 import { login } from '../store/auth';
+import { CodeBlock } from './docs/_helpers';
 
 let _glowDocs = false;
 let _glowTimer: ReturnType<typeof setTimeout> | null = null;
@@ -357,11 +358,7 @@ await pool.publish(signed)`;
           }, 'Kaji Docs \u2192'),
         ),
       ),
-      createElement('div', {
-        className: 'rounded-xl border border-border bg-muted/50 p-4 overflow-x-auto',
-      },
-        createElement('pre', { className: 'text-xs font-mono leading-relaxed text-foreground whitespace-pre' }, code),
-      ),
+      createElement(CodeBlock, { code, lang: 'typescript' }),
     ),
   );
 }

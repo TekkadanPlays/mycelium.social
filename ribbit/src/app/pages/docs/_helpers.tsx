@@ -10,7 +10,7 @@ import { createHighlighter, type Highlighter } from 'shiki';
 let _highlighter: Highlighter | null = null;
 let _highlighterPromise: Promise<Highlighter> | null = null;
 
-function getHighlighter(): Promise<Highlighter> {
+export function getHighlighter(): Promise<Highlighter> {
   if (_highlighter) return Promise.resolve(_highlighter);
   if (!_highlighterPromise) {
     _highlighterPromise = createHighlighter({
@@ -115,10 +115,14 @@ export class CodeBlock extends Component<CodeBlockProps, CodeBlockState> {
       });
     }
 
-    // Fallback while Shiki loads
-    return createElement('pre', {
-      className: 'rounded-lg bg-muted/50 border border-border p-4 text-xs font-mono text-muted-foreground overflow-x-auto leading-relaxed',
-    }, createElement('code', null, code));
+    // Fallback while Shiki loads — styled to match highlighted output
+    return createElement('div', {
+      className: 'shiki-wrapper rounded-lg border border-border overflow-x-auto text-xs leading-relaxed',
+    },
+      createElement('pre', {
+        className: 'p-4 m-0 bg-muted/50 font-mono text-muted-foreground whitespace-pre',
+      }, createElement('code', null, code)),
+    );
   }
 }
 
