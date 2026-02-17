@@ -17,9 +17,10 @@ const VISIBLE_TOASTS = 3;
 const GAP = 14;
 const TIME_BEFORE_UNMOUNT = 200;
 const TOAST_WIDTH = 356;
-const VIEWPORT_OFFSET = 24;
+const VIEWPORT_OFFSET = 32;
 
 export type ToastType = 'default' | 'success' | 'error' | 'info' | 'warning' | 'loading';
+export type ToasterPosition = 'top-left' | 'top-right' | 'top-center' | 'bottom-left' | 'bottom-right' | 'bottom-center';
 
 export interface ToastAction {
   label: string;
@@ -36,6 +37,7 @@ export interface ToastT {
   duration?: number;
   delete?: boolean;
   dismissible?: boolean;
+  position?: ToasterPosition;
 }
 
 interface ToastToDismiss {
@@ -52,7 +54,6 @@ let toastsCounter = 1;
 class Observer {
   subscribers: Array<(toast: ToastT | ToastToDismiss) => void> = [];
   toasts: Array<ToastT> = [];
-  dismissedToasts: Set<string | number> = new Set();
 
   subscribe = (subscriber: (toast: ToastT | ToastToDismiss) => void) => {
     this.subscribers.push(subscriber);
@@ -77,10 +78,6 @@ class Observer {
     const alreadyExists = this.toasts.find((t) => t.id === id);
     const dismissible = data.dismissible ?? true;
 
-    if (this.dismissedToasts.has(id)) {
-      this.dismissedToasts.delete(id);
-    }
-
     if (alreadyExists) {
       this.toasts = this.toasts.map((t) => {
         if (t.id === id) {
@@ -99,14 +96,10 @@ class Observer {
 
   dismiss = (id?: string | number) => {
     if (id) {
-      this.dismissedToasts.add(id);
       this.toasts = this.toasts.filter((t) => t.id !== id);
-      requestAnimationFrame(() => this.publish({ id, dismiss: true }));
+      this.publish({ id, dismiss: true });
     } else {
-      this.toasts.forEach((t) => {
-        this.dismissedToasts.add(t.id);
-        this.publish({ id: t.id, dismiss: true });
-      });
+      this.toasts.forEach((t) => this.publish({ id: t.id, dismiss: true }));
       this.toasts = [];
     }
     return id;
@@ -147,6 +140,7 @@ interface ToastOptions {
   cancel?: ToastAction;
   duration?: number;
   id?: string | number;
+  position?: ToasterPosition;
 }
 
 function toastFn(title: string, opts?: ToastOptions): string | number {
@@ -168,14 +162,14 @@ export function dismissToast(id: string | number) {
 }
 
 // ---------------------------------------------------------------------------
-// Type icons (SVG)
+// Type icons (SVG) — wrapped in a 16×16 flex container matching real Sonner
 // ---------------------------------------------------------------------------
 
 function ToastIcon({ type }: { type: ToastType }) {
   if (type === 'default') return null;
 
   const svgBase = {
-    className: 'size-4 shrink-0',
+    className: 'size-4',
     viewBox: '0 0 24 24',
     fill: 'none',
     stroke: 'currentColor',
@@ -184,49 +178,44 @@ function ToastIcon({ type }: { type: ToastType }) {
     'stroke-linejoin': 'round',
   };
 
-  // Lucide Loader2Icon
+  let icon: any = null;
+
   if (type === 'loading') {
-    return createElement('svg', { ...svgBase, className: 'size-4 shrink-0 animate-spin' },
+    icon = createElement('svg', { ...svgBase, className: 'size-4 animate-spin' },
       createElement('path', { d: 'M21 12a9 9 0 1 1-6.219-8.56' }),
     );
-  }
-
-  // Lucide CircleCheckIcon
-  if (type === 'success') {
-    return createElement('svg', svgBase,
+  } else if (type === 'success') {
+    icon = createElement('svg', svgBase,
       createElement('circle', { cx: '12', cy: '12', r: '10' }),
       createElement('path', { d: 'm9 12 2 2 4-4' }),
     );
-  }
-
-  // Lucide OctagonXIcon
-  if (type === 'error') {
-    return createElement('svg', svgBase,
+  } else if (type === 'error') {
+    icon = createElement('svg', svgBase,
       createElement('path', { d: 'M2.586 16.726A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2h6.624a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586z' }),
       createElement('path', { d: 'm15 9-6 6' }),
       createElement('path', { d: 'm9 9 6 6' }),
     );
-  }
-
-  // Lucide InfoIcon
-  if (type === 'info') {
-    return createElement('svg', svgBase,
+  } else if (type === 'info') {
+    icon = createElement('svg', svgBase,
       createElement('circle', { cx: '12', cy: '12', r: '10' }),
       createElement('path', { d: 'M12 16v-4' }),
       createElement('path', { d: 'M12 8h.01' }),
     );
-  }
-
-  // Lucide TriangleAlertIcon
-  if (type === 'warning') {
-    return createElement('svg', svgBase,
+  } else if (type === 'warning') {
+    icon = createElement('svg', svgBase,
       createElement('path', { d: 'm21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' }),
       createElement('path', { d: 'M12 9v4' }),
       createElement('path', { d: 'M12 17h.01' }),
     );
   }
 
-  return null;
+  if (!icon) return null;
+
+  // Wrapper matches real Sonner's [data-icon] container: 16×16 flex, shrink-0
+  return createElement('div', {
+    className: 'flex items-center justify-center shrink-0',
+    style: { width: '16px', height: '16px' },
+  }, icon);
 }
 
 // ---------------------------------------------------------------------------
@@ -242,7 +231,7 @@ interface ToastItemProps {
   heights: Array<{ toastId: string | number; height: number }>;
   position: string;
   removeToast: (t: ToastT) => void;
-  setHeight: (id: string | number, height: number) => void;
+  setHeight: (id: string | number, height: number, position?: string) => void;
   removeHeight: (id: string | number) => void;
 }
 
@@ -260,6 +249,7 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
   private lastCloseTimerStart = 0;
   private remainingTime: number;
   private timeoutId: ReturnType<typeof setTimeout> | null = null;
+  private deleteInProgress = false;
 
   constructor(props: ToastItemProps) {
     super(props);
@@ -268,14 +258,12 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
   }
 
   componentDidMount() {
-    // Trigger enter animation on next frame
     requestAnimationFrame(() => this.setState({ mounted: true }));
 
-    // Measure height
     if (this.toastRef) {
       const h = this.toastRef.getBoundingClientRect().height;
       this.setState({ initialHeight: h });
-      this.props.setHeight(this.props.data.id, h);
+      this.props.setHeight(this.props.data.id, h, this.props.position);
     }
 
     this.startTimer();
@@ -287,16 +275,16 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
       if (this.toastRef) {
         const h = this.toastRef.getBoundingClientRect().height;
         this.setState({ initialHeight: h });
-        this.props.setHeight(this.props.data.id, h);
+        this.props.setHeight(this.props.data.id, h, this.props.position);
       }
     }
 
-    // Handle delete flag
-    if (this.props.data.delete && !prevProps.data.delete) {
+    // Handle delete flag — guard against double-fire
+    if (this.props.data.delete && !prevProps.data.delete && !this.deleteInProgress) {
       this.deleteToast();
     }
 
-    // Manage timer based on expanded/interaction state
+    // Manage timer based on expanded state
     if (prevProps.expanded !== this.props.expanded) {
       if (this.props.expanded) {
         this.pauseTimer();
@@ -314,11 +302,10 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
 
   componentWillUnmount() {
     if (this.timeoutId) clearTimeout(this.timeoutId);
-    this.props.removeHeight(this.props.data.id);
   }
 
   private startTimer() {
-    if (this.props.data.type === 'loading') return;
+    if (this.props.data.type === 'loading' || this.deleteInProgress) return;
     const dur = this.remainingTime;
     if (dur === Infinity || dur <= 0) return;
 
@@ -329,6 +316,7 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
 
   private pauseTimer() {
     if (this.timeoutId) clearTimeout(this.timeoutId);
+    this.timeoutId = null;
     if (this.lastCloseTimerStart < this.closeTimerStart) {
       const elapsed = Date.now() - this.closeTimerStart;
       this.remainingTime = Math.max(0, this.remainingTime - elapsed);
@@ -337,9 +325,15 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
   }
 
   private deleteToast() {
+    // Guard: only run once per toast
+    if (this.deleteInProgress) return;
+    this.deleteInProgress = true;
+
+    if (this.timeoutId) { clearTimeout(this.timeoutId); this.timeoutId = null; }
+
     this.setState({ removed: true, offsetBeforeRemove: this.getOffset() });
     this.props.removeHeight(this.props.data.id);
-    if (this.timeoutId) clearTimeout(this.timeoutId);
+
     setTimeout(() => this.props.removeToast(this.props.data), TIME_BEFORE_UNMOUNT);
   }
 
@@ -359,7 +353,6 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
     const heightIdx = heights.findIndex((h) => h.toastId === data.id);
     const toastsBeforeHeight = heights.slice(0, Math.max(0, heightIdx)).reduce((s, h) => s + h.height, 0);
     const offset = removed ? offsetBeforeRemove : (heightIdx >= 0 ? heightIdx * GAP + toastsBeforeHeight : 0);
-    const lift = isTop ? 1 : -1;
 
     return createElement('li', {
       ref: (el: HTMLLIElement | null) => { this.toastRef = el; },
@@ -387,7 +380,7 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
     },
       createElement('div', {
         className: cn(
-          'relative flex w-full items-center gap-1.5 overflow-hidden rounded-xl border p-4 shadow-lg',
+          'relative flex w-full items-center gap-2 overflow-hidden rounded-xl border p-4 shadow-lg',
         ),
         style: {
           background: 'var(--popover)',
@@ -400,12 +393,12 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
         createElement(ToastIcon, { type: data.type }),
 
         // Content
-        createElement('div', { className: 'flex flex-col gap-0.5 flex-1' },
+        createElement('div', { className: 'flex flex-col gap-0.5 flex-1 min-w-0' },
           data.title
             ? createElement('div', { className: 'font-medium leading-snug' }, data.title)
             : null,
           data.description
-            ? createElement('div', { className: 'leading-snug', style: { opacity: 0.65 } }, data.description)
+            ? createElement('div', { className: 'text-muted-foreground leading-snug', style: { fontSize: '12px' } }, data.description)
             : null,
           (data.action || data.cancel)
             ? createElement('div', { className: 'flex items-center gap-2 mt-1.5' },
@@ -463,15 +456,13 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
 // Toaster — mount once at root level, NEVER returns null
 // ---------------------------------------------------------------------------
 
-export type ToasterPosition = 'top-left' | 'top-right' | 'top-center' | 'bottom-left' | 'bottom-right' | 'bottom-center';
-
 interface ToasterProps {
   position?: ToasterPosition;
 }
 
 interface ToasterState {
   toasts: ToastT[];
-  heights: Array<{ toastId: string | number; height: number }>;
+  heights: Array<{ toastId: string | number; height: number; position?: string }>;
   expanded: boolean;
 }
 
@@ -487,24 +478,20 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
   componentDidMount() {
     this.unsub = ToastState.subscribe((incoming) => {
       if ('dismiss' in incoming && incoming.dismiss) {
-        // Mark toast for deletion — triggers exit animation
         this.setState((s) => ({
           toasts: s.toasts.map((t) => t.id === incoming.id ? { ...t, delete: true } : t),
         }));
         return;
       }
 
-      // Add or update toast
       const toast = incoming as ToastT;
       this.setState((s) => {
         const idx = s.toasts.findIndex((t) => t.id === toast.id);
         if (idx !== -1) {
-          // Update existing
           const updated = [...s.toasts];
           updated[idx] = { ...updated[idx], ...toast };
           return { toasts: updated };
         }
-        // Add new (prepend so newest is first / front)
         return { toasts: [toast, ...s.toasts] };
       });
     });
@@ -515,23 +502,25 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
   }
 
   private removeToast = (toastToRemove: ToastT) => {
-    this.setState((s) => {
-      // If the toast wasn't already dismissed via ToastState.dismiss(),
-      // clean up the Observer singleton now (matches real Sonner behavior)
-      if (!s.toasts.find((t) => t.id === toastToRemove.id)?.delete) {
-        ToastState.dismiss(toastToRemove.id);
-      }
-      return { toasts: s.toasts.filter((t) => t.id !== toastToRemove.id) };
-    });
+    // Clean up Observer if not already dismissed
+    const existing = this.state.toasts.find((t) => t.id === toastToRemove.id);
+    if (existing && !existing.delete) {
+      // Remove from observer without re-publishing dismiss
+      // (we're already removing — avoid circular loop)
+      ToastState.toasts = ToastState.toasts.filter((t) => t.id !== toastToRemove.id);
+    }
+    this.setState((s) => ({
+      toasts: s.toasts.filter((t) => t.id !== toastToRemove.id),
+    }));
   };
 
-  private setHeight = (id: string | number, height: number) => {
+  private setHeight = (id: string | number, height: number, position?: string) => {
     this.setState((s) => {
       const exists = s.heights.find((h) => h.toastId === id);
       if (exists) {
         return { heights: s.heights.map((h) => h.toastId === id ? { ...h, height } : h) };
       }
-      return { heights: [{ toastId: id, height }, ...s.heights] };
+      return { heights: [{ toastId: id, height, position }, ...s.heights] };
     });
   };
 
@@ -543,48 +532,68 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
 
   render() {
     const { toasts, heights, expanded } = this.state;
-    const position = this.props.position || 'top-center';
-    const [y, x] = position.split('-');
+    const defaultPosition = this.props.position || 'top-center';
 
-    // Always render the container — never return null
+    // Collect all unique positions (default + any per-toast overrides)
+    const positionSet = new Set<string>([defaultPosition]);
+    toasts.forEach((t) => { if (t.position) positionSet.add(t.position); });
+    const positions = Array.from(positionSet);
+
     return createElement('section', {
       'aria-label': 'Notifications',
       tabIndex: -1,
       'aria-live': 'polite',
       'aria-atomic': 'false',
     },
-      createElement('ol', {
-        'data-sonner-toaster': '',
-        'data-y-position': y,
-        'data-x-position': x,
-        style: {
-          '--front-toast-height': `${heights[0]?.height || 0}px`,
-          '--width': `${TOAST_WIDTH}px`,
-          '--gap': `${GAP}px`,
-          '--offset-top': `${VIEWPORT_OFFSET}px`,
-          '--offset-bottom': `${VIEWPORT_OFFSET}px`,
-          '--offset-left': `${VIEWPORT_OFFSET}px`,
-          '--offset-right': `${VIEWPORT_OFFSET}px`,
-        } as any,
-        onMouseEnter: () => this.setState({ expanded: true }),
-        onMouseLeave: () => this.setState({ expanded: false }),
-      },
-        ...toasts.map((t, index) =>
-          createElement(ToastItem, {
-            key: t.id,
-            data: t,
-            index,
-            front: index === 0,
-            visible: index < VISIBLE_TOASTS,
-            expanded,
-            heights,
-            position,
-            removeToast: this.removeToast,
-            setHeight: this.setHeight,
-            removeHeight: this.removeHeight,
-          }),
-        ),
-      ),
+      ...positions.map((pos) => {
+        const [y, x] = pos.split('-');
+        // Filter toasts for this position group
+        const groupToasts = toasts.filter((t) =>
+          t.position ? t.position === pos : pos === defaultPosition,
+        );
+        const groupHeights = heights.filter((h) =>
+          h.position ? h.position === pos : pos === defaultPosition,
+        );
+
+        if (groupToasts.length === 0) return null;
+
+        const frontId = groupToasts[0]?.id;
+        const frontHeight = groupHeights.find((h) => h.toastId === frontId)?.height || 0;
+
+        return createElement('ol', {
+          key: pos,
+          'data-sonner-toaster': '',
+          'data-y-position': y,
+          'data-x-position': x,
+          style: {
+            '--front-toast-height': `${frontHeight}px`,
+            '--width': `${TOAST_WIDTH}px`,
+            '--gap': `${GAP}px`,
+            '--offset-top': `${VIEWPORT_OFFSET}px`,
+            '--offset-bottom': `${VIEWPORT_OFFSET}px`,
+            '--offset-left': `${VIEWPORT_OFFSET}px`,
+            '--offset-right': `${VIEWPORT_OFFSET}px`,
+          } as any,
+          onMouseEnter: () => this.setState({ expanded: true }),
+          onMouseLeave: () => this.setState({ expanded: false }),
+        },
+          ...groupToasts.map((t, index) =>
+            createElement(ToastItem, {
+              key: t.id,
+              data: t,
+              index,
+              front: index === 0,
+              visible: index < VISIBLE_TOASTS,
+              expanded,
+              heights: groupHeights,
+              position: pos,
+              removeToast: this.removeToast,
+              setHeight: this.setHeight,
+              removeHeight: this.removeHeight,
+            }),
+          ),
+        );
+      }),
     );
   }
 }
