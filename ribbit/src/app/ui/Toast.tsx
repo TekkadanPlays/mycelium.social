@@ -313,8 +313,12 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
 
   componentWillUnmount() {
     if (this.timeoutId) clearTimeout(this.timeoutId);
-    // Safety net: clean up height on unmount (matches real Sonner useEffect cleanup return)
-    this.props.setHeights((prev) => prev.filter((h) => h.toastId !== this.props.data.id));
+    // Safety net: clean up height on unmount ONLY if deleteToast didn't already handle it.
+    // Without this guard, the second removal triggers an extra Toaster re-render that
+    // causes remaining toasts to briefly recalculate with stale data.
+    if (!this.deleteInProgress) {
+      this.props.setHeights((prev) => prev.filter((h) => h.toastId !== this.props.data.id));
+    }
   }
 
   // Unified timer sync — mirrors real Sonner's effect that runs on
@@ -355,22 +359,23 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
 
     if (this.timeoutId) { clearTimeout(this.timeoutId); this.timeoutId = null; }
 
-    // Capture offset before removing height
-    const currentOffset = this.computeOffset();
-    // Remove height immediately (matches real Sonner deleteToast)
-    this.props.setHeights((prev) => prev.filter((h) => h.toastId !== this.props.data.id));
-    this.setState({ removed: true, offsetBeforeRemove: currentOffset });
+    // Remove height and compute offset atomically inside the functional updater.
+    // This ensures we read the CURRENT heights state (not stale props) even when
+    // multiple toasts are being closed rapidly in the same event loop tick.
+    let capturedOffset = 0;
+    this.props.setHeights((prev) => {
+      const id = this.props.data.id;
+      const idx = prev.findIndex((h) => h.toastId === id);
+      if (idx >= 0) {
+        let sum = 0;
+        for (let i = 0; i < idx; i++) sum += prev[i].height;
+        capturedOffset = idx * this.props.gap + sum;
+      }
+      return prev.filter((h) => h.toastId !== id);
+    });
+    this.setState({ removed: true, offsetBeforeRemove: capturedOffset });
 
     setTimeout(() => this.props.removeToast(this.props.data), TIME_BEFORE_UNMOUNT);
-  }
-
-  private computeOffset(): number {
-    const { heights, data, gap } = this.props;
-    const heightIdx = heights.findIndex((h) => h.toastId === data.id);
-    if (heightIdx < 0) return 0;
-    let sum = 0;
-    for (let i = 0; i < heightIdx; i++) sum += heights[i].height;
-    return heightIdx * gap + sum;
   }
 
   render() {
