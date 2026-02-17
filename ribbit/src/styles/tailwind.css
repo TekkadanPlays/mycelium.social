@@ -304,6 +304,7 @@
   list-style: none;
   outline: none;
   z-index: 999999999;
+  transition: transform 400ms ease;
 }
 
 [data-sonner-toaster][data-x-position='right'] { right: var(--offset-right); }
@@ -314,14 +315,14 @@
 
 [data-sonner-toast] {
   --y: translateY(100%);
-  --lift: -1;
   --lift-amount: calc(var(--lift) * var(--gap));
   z-index: var(--z-index);
   position: absolute;
   opacity: 0;
   transform: var(--y);
   width: var(--width);
-  transition: transform 400ms, opacity 400ms, height 400ms;
+  touch-action: none;
+  transition: transform 400ms, opacity 400ms, height 400ms, box-shadow 200ms;
   box-sizing: border-box;
   outline: none;
   overflow-wrap: anywhere;

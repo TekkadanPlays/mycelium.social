@@ -227,8 +227,6 @@ interface ToastItemProps {
   index: number;
   toastCount: number;
   expanded: boolean;
-  front: boolean;
-  visible: boolean;
   heights: Array<{ toastId: string | number; height: number }>;
   position: string;
   removeToast: (t: ToastT) => void;
@@ -348,7 +346,7 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
   }
 
   render() {
-    const { data, index, toastCount, front, visible, expanded, heights, position } = this.props;
+    const { data, index, toastCount, expanded, heights, position } = this.props;
     const { mounted, removed, offsetBeforeRemove, initialHeight } = this.state;
     const isTop = position.startsWith('top');
     const heightIdx = heights.findIndex((h) => h.toastId === data.id);
@@ -359,14 +357,16 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
     // removed (heights are cleaned up in deleteToast), unlike the toast array
     // index which is stale during the 200ms exit animation.
     const toastsBefore = removed ? index : (heightIdx >= 0 ? heightIdx : index);
+    const isFront = removed ? false : heightIdx === 0;
+    const isVisible = removed ? false : (heightIdx >= 0 ? heightIdx < VISIBLE_TOASTS : index < VISIBLE_TOASTS);
 
     return createElement('li', {
       ref: (el: HTMLLIElement | null) => { this.toastRef = el; },
       'data-sonner-toast': '',
       'data-mounted': mounted,
       'data-removed': removed,
-      'data-visible': removed ? false : (heightIdx >= 0 ? heightIdx < VISIBLE_TOASTS : visible),
-      'data-front': removed ? false : front,
+      'data-visible': isVisible,
+      'data-front': isFront,
       'data-expanded': expanded,
       'data-type': data.type,
       'data-y-position': isTop ? 'top' : 'bottom',
@@ -595,8 +595,6 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
               data: t,
               index,
               toastCount: groupToasts.length,
-              front: index === 0,
-              visible: index < VISIBLE_TOASTS,
               expanded,
               heights: groupHeights,
               position: pos,
