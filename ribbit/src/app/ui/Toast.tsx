@@ -470,6 +470,7 @@ interface ToasterState {
   toasts: ToastT[];
   heights: Array<{ toastId: string | number; height: number; position?: string }>;
   expanded: boolean;
+  interacting: boolean;
 }
 
 export class Toaster extends Component<ToasterProps, ToasterState> {
@@ -478,7 +479,7 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
 
   constructor(props: ToasterProps) {
     super(props);
-    this.state = { toasts: [], heights: [], expanded: false };
+    this.state = { toasts: [], heights: [], expanded: false, interacting: false };
   }
 
   componentDidMount() {
@@ -581,7 +582,12 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
             '--offset-right': `${VIEWPORT_OFFSET}px`,
           } as any,
           onMouseEnter: () => this.setState({ expanded: true }),
-          onMouseLeave: () => this.setState({ expanded: false }),
+          onMouseMove: () => this.setState({ expanded: true }),
+          onMouseLeave: () => {
+            if (!this.state.interacting) this.setState({ expanded: false });
+          },
+          onPointerDown: () => this.setState({ interacting: true }),
+          onPointerUp: () => this.setState({ interacting: false }),
         },
           ...groupToasts.map((t, index) =>
             createElement(ToastItem, {
