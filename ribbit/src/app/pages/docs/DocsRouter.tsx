@@ -57,6 +57,7 @@ import { KbdPage } from './blazecn/KbdPage';
 import { TypographyPage } from './blazecn/TypographyPage';
 import { EmptyPage } from './blazecn/EmptyPage';
 import { ButtonGroupPage } from './blazecn/ButtonGroupPage';
+import { BlocksPage } from './blazecn/BlocksPage';
 
 // Kaji module pages
 import { KajiEventPage } from './kaji/EventPage';
@@ -141,6 +142,7 @@ const ROUTES: Record<string, any> = {
   '/docs/blazecn/typography': TypographyPage,
   '/docs/blazecn/empty': EmptyPage,
   '/docs/blazecn/button-group': ButtonGroupPage,
+  '/docs/blazecn/blocks': BlocksPage,
 
   // Kaji modules
   '/docs/kaji': KajiIntro,
@@ -201,7 +203,7 @@ export class Docs extends Component<DocsProps, DocsState> {
 
     // Monkey-patch pushState to detect <Link> navigation
     const origPush = history.pushState.bind(history);
-    history.pushState = function(data: any, unused: string, url?: string | URL | null) {
+    history.pushState = function (data: any, unused: string, url?: string | URL | null) {
       origPush(data, unused, url);
       onNav();
     };
@@ -238,8 +240,8 @@ export class Docs extends Component<DocsProps, DocsState> {
         PageComponent
           ? createElement(PageComponent, null)
           : createElement('div', { className: 'py-16 text-center' },
-              createElement('p', { className: 'text-muted-foreground' }, 'Page not found.'),
-            ),
+            createElement('p', { className: 'text-muted-foreground' }, 'Page not found.'),
+          ),
       ),
     );
   }
