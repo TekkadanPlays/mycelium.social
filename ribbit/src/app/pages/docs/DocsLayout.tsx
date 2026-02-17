@@ -96,6 +96,13 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/typography', label: 'Typography' },
         ],
       },
+      {
+        heading: 'Blocks',
+        items: [
+          { path: '/docs/blazecn/blocks', label: 'Authentication' },
+          { path: '/docs/blazecn/blocks#dashboard', label: 'Dashboard' },
+        ],
+      },
     ],
   },
   {
@@ -278,28 +285,28 @@ class ProjectSwitcher extends Component<{ activeGroup: NavGroup; currentPath: st
       // Dropdown
       open
         ? createElement('div', {
-            className: 'absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border bg-popover p-1 shadow-md',
-          },
-            ...NAV.map((group) =>
-              createElement(Link, {
-                key: group.title,
-                to: group.basePath,
-                onClick: () => this.setState({ open: false }),
-                className: cn(
-                  'flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors',
-                  activeGroup.title === group.title
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
-                ),
-              },
-                createElement('span', { className: 'text-base w-6 text-center' }, group.icon),
-                createElement('div', { className: 'flex-1' },
-                  createElement('div', { className: 'font-medium text-foreground' }, group.title),
-                  createElement('div', { className: 'text-xs text-muted-foreground' }, group.description),
-                ),
+          className: 'absolute left-0 right-0 top-full z-50 mt-1 rounded-lg border bg-popover p-1 shadow-md',
+        },
+          ...NAV.map((group) =>
+            createElement(Link, {
+              key: group.title,
+              to: group.basePath,
+              onClick: () => this.setState({ open: false }),
+              className: cn(
+                'flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-colors',
+                activeGroup.title === group.title
+                  ? 'bg-accent text-accent-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/50',
+              ),
+            },
+              createElement('span', { className: 'text-base w-6 text-center' }, group.icon),
+              createElement('div', { className: 'flex-1' },
+                createElement('div', { className: 'font-medium text-foreground' }, group.title),
+                createElement('div', { className: 'text-xs text-muted-foreground' }, group.description),
               ),
             ),
-          )
+          ),
+        )
         : null,
     );
   }
@@ -310,9 +317,7 @@ class ProjectSwitcher extends Component<{ activeGroup: NavGroup; currentPath: st
 // ---------------------------------------------------------------------------
 
 function DocsSidebar({ currentPath }: { currentPath: string }) {
-  // Sort by basePath length descending so /docs/ribbit-android matches before /docs/ribbit
-  const activeGroup = [...NAV].sort((a, b) => b.basePath.length - a.basePath.length)
-    .find((g) => currentPath.startsWith(g.basePath)) || NAV[0];
+  const activeGroup = [...NAV].sort((a, b) => b.basePath.length - a.basePath.length).find((g) => currentPath.startsWith(g.basePath)) || NAV[0];
 
   return createElement('aside', {
     className: 'hidden lg:block w-56 shrink-0',

@@ -380,6 +380,25 @@
   pointer-events: none;
 }
 
+/* Removed (front) — slide out */
+[data-sonner-toast][data-removed='true'][data-front='true'] {
+  --y: translateY(calc(var(--lift) * -100%));
+  opacity: 0;
+}
+
+/* Removed (non-front, expanded) */
+[data-sonner-toast][data-removed='true'][data-front='false'][data-expanded='true'] {
+  --y: translateY(calc(var(--lift) * var(--offset) + var(--lift) * -100%));
+  opacity: 0;
+}
+
+/* Removed (non-front, collapsed) */
+[data-sonner-toast][data-removed='true'][data-front='false'][data-expanded='false'] {
+  --y: translateY(40%);
+  opacity: 0;
+  transition: transform 500ms, opacity 200ms;
+}
+
 /* Hover gap target for expanded toasts */
 [data-sonner-toast][data-expanded='true']::after {
   content: '';
