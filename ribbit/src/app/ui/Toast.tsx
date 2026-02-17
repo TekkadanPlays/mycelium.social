@@ -368,6 +368,7 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
       'data-expanded': expanded,
       'data-type': data.type,
       'data-y-position': isTop ? 'top' : 'bottom',
+      'data-x-position': position.split('-')[1],
       role: 'alert',
       tabIndex: 0,
       className: 'group',
@@ -383,7 +384,7 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
     },
       createElement('div', {
         className: cn(
-          'pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden border p-4 shadow-lg',
+          'relative flex w-full items-start gap-3 overflow-hidden border p-4 shadow-lg',
         ),
         style: {
           background: 'var(--popover)',
