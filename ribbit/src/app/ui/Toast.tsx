@@ -171,52 +171,59 @@ export function dismissToast(id: string | number) {
 function ToastIcon({ type }: { type: ToastType }) {
   if (type === 'default') return null;
 
-  if (type === 'loading') {
-    return createElement('div', { className: 'size-5 shrink-0 relative' },
-      createElement('svg', {
-        className: 'size-5 animate-spin text-muted-foreground',
-        viewBox: '0 0 24 24',
-        fill: 'none',
-      },
-        createElement('circle', { cx: '12', cy: '12', r: '10', stroke: 'currentColor', 'stroke-width': '2', opacity: '0.25' }),
-        createElement('path', { d: 'M4 12a8 8 0 018-8', stroke: 'currentColor', 'stroke-width': '2', 'stroke-linecap': 'round' }),
-      ),
-    );
-  }
-
-  const iconMap: Record<string, { path: string; color: string }> = {
-    success: {
-      path: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
-      color: 'text-green-500',
-    },
-    error: {
-      path: 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z',
-      color: 'text-red-500',
-    },
-    info: {
-      path: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
-      color: 'text-blue-500',
-    },
-    warning: {
-      path: 'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z',
-      color: 'text-yellow-500',
-    },
-  };
-
-  const icon = iconMap[type];
-  if (!icon) return null;
-
-  return createElement('svg', {
-    className: cn('size-5 shrink-0', icon.color),
+  const svgBase = {
+    className: 'size-4 shrink-0',
     viewBox: '0 0 24 24',
     fill: 'none',
     stroke: 'currentColor',
     'stroke-width': '2',
     'stroke-linecap': 'round',
     'stroke-linejoin': 'round',
-  },
-    createElement('path', { d: icon.path }),
-  );
+  };
+
+  // Lucide Loader2Icon
+  if (type === 'loading') {
+    return createElement('svg', { ...svgBase, className: 'size-4 shrink-0 animate-spin' },
+      createElement('path', { d: 'M21 12a9 9 0 1 1-6.219-8.56' }),
+    );
+  }
+
+  // Lucide CircleCheckIcon
+  if (type === 'success') {
+    return createElement('svg', svgBase,
+      createElement('circle', { cx: '12', cy: '12', r: '10' }),
+      createElement('path', { d: 'm9 12 2 2 4-4' }),
+    );
+  }
+
+  // Lucide OctagonXIcon
+  if (type === 'error') {
+    return createElement('svg', svgBase,
+      createElement('path', { d: 'M2.586 16.726A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2h6.624a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586z' }),
+      createElement('path', { d: 'm15 9-6 6' }),
+      createElement('path', { d: 'm9 9 6 6' }),
+    );
+  }
+
+  // Lucide InfoIcon
+  if (type === 'info') {
+    return createElement('svg', svgBase,
+      createElement('circle', { cx: '12', cy: '12', r: '10' }),
+      createElement('path', { d: 'M12 16v-4' }),
+      createElement('path', { d: 'M12 8h.01' }),
+    );
+  }
+
+  // Lucide TriangleAlertIcon
+  if (type === 'warning') {
+    return createElement('svg', svgBase,
+      createElement('path', { d: 'm21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3' }),
+      createElement('path', { d: 'M12 9v4' }),
+      createElement('path', { d: 'M12 17h.01' }),
+    );
+  }
+
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -376,8 +383,14 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
     },
       createElement('div', {
         className: cn(
-          'pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-lg border bg-background text-foreground border-border p-4 shadow-lg',
+          'pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden border p-4 shadow-lg',
         ),
+        style: {
+          background: 'var(--popover)',
+          color: 'var(--popover-foreground)',
+          borderColor: 'var(--border)',
+          borderRadius: 'var(--radius)',
+        },
       },
         // Icon
         createElement(ToastIcon, { type: data.type }),
@@ -396,14 +409,16 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
                   ? createElement('button', {
                       type: 'button',
                       onClick: () => { data.action!.onClick(); this.deleteToast(); },
-                      className: 'inline-flex items-center justify-center rounded-md text-xs font-medium h-7 px-3 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors',
+                      className: 'inline-flex items-center justify-center text-xs font-medium h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors',
+                      style: { borderRadius: 'calc(var(--radius) - 4px)' },
                     }, data.action.label)
                   : null,
                 data.cancel
                   ? createElement('button', {
                       type: 'button',
                       onClick: () => { data.cancel!.onClick(); this.deleteToast(); },
-                      className: 'inline-flex items-center justify-center rounded-md text-xs font-medium h-7 px-3 border border-border bg-background hover:bg-accent transition-colors',
+                      className: 'inline-flex items-center justify-center text-xs font-medium h-8 px-3 border hover:bg-accent transition-colors',
+                      style: { borderColor: 'var(--border)', background: 'var(--popover)', borderRadius: 'calc(var(--radius) - 4px)' },
                     }, data.cancel.label)
                   : null,
               )
