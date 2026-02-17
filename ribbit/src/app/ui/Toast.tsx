@@ -220,18 +220,26 @@ function ToastIcon({ type }: { type: ToastType }) {
 
 // ---------------------------------------------------------------------------
 // ToastItem — individual toast with height measurement and timer management
+//
+// Matches real Sonner's Toast component architecture:
+// - isFront/isVisible derived from `index` (toast array position)
+// - heightIndex only used for offset calculation (updates faster than array)
+// - Timer controlled by expanded/interacting props from Toaster (not per-toast mouse)
+// - Height registered on mount, cleaned up in deleteToast + unmount safety net
+// - --toasts-before and --z-index use `index` and `toasts.length`
 // ---------------------------------------------------------------------------
 
 interface ToastItemProps {
   data: ToastT;
   index: number;
-  toastCount: number;
+  toasts: ToastT[];
   expanded: boolean;
-  heights: Array<{ toastId: string | number; height: number }>;
+  interacting: boolean;
+  heights: Array<{ toastId: string | number; height: number; position?: string }>;
   position: string;
+  gap: number;
   removeToast: (t: ToastT) => void;
-  setHeight: (id: string | number, height: number, position?: string) => void;
-  removeHeight: (id: string | number) => void;
+  setHeights: (fn: (h: Array<{ toastId: string | number; height: number; position?: string }>) => Array<{ toastId: string | number; height: number; position?: string }>) => void;
 }
 
 interface ToastItemState {
@@ -244,8 +252,8 @@ interface ToastItemState {
 class ToastItem extends Component<ToastItemProps, ToastItemState> {
   declare state: ToastItemState;
   private toastRef: HTMLLIElement | null = null;
-  private closeTimerStart = 0;
-  private lastCloseTimerStart = 0;
+  private closeTimerStartRef = 0;
+  private lastCloseTimerStartRef = 0;
   private remainingTime: number;
   private timeoutId: ReturnType<typeof setTimeout> | null = null;
   private deleteInProgress = false;
@@ -257,108 +265,127 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
   }
 
   componentDidMount() {
+    // Trigger enter animation (matches real Sonner: setMounted(true) in useEffect([]))
     requestAnimationFrame(() => this.setState({ mounted: true }));
 
+    // Register height (matches real Sonner: setHeights in useEffect with cleanup)
     if (this.toastRef) {
       const h = this.toastRef.getBoundingClientRect().height;
       this.setState({ initialHeight: h });
-      this.props.setHeight(this.props.data.id, h, this.props.position);
+      this.props.setHeights((prev) => [{ toastId: this.props.data.id, height: h, position: this.props.data.position || this.props.position }, ...prev]);
     }
 
-    this.startTimer();
+    // Start timer if not paused
+    this.syncTimer();
   }
 
   componentDidUpdate(prevProps: ToastItemProps) {
-    // Re-measure if content changed
+    // Re-measure height if content changed (matches real Sonner useLayoutEffect)
     if (prevProps.data.title !== this.props.data.title || prevProps.data.description !== this.props.data.description) {
       if (this.toastRef) {
         const h = this.toastRef.getBoundingClientRect().height;
         this.setState({ initialHeight: h });
-        this.props.setHeight(this.props.data.id, h, this.props.position);
+        this.props.setHeights((prev) => {
+          const exists = prev.find((x) => x.toastId === this.props.data.id);
+          if (exists) return prev.map((x) => x.toastId === this.props.data.id ? { ...x, height: h } : x);
+          return [{ toastId: this.props.data.id, height: h, position: this.props.data.position || this.props.position }, ...prev];
+        });
       }
     }
 
-    // Handle delete flag — guard against double-fire
+    // Handle delete flag (matches real Sonner: useEffect on toast.delete)
     if (this.props.data.delete && !prevProps.data.delete && !this.deleteInProgress) {
       this.deleteToast();
     }
 
-    // Manage timer based on expanded state
-    if (prevProps.expanded !== this.props.expanded) {
-      if (this.props.expanded) {
-        this.pauseTimer();
-      } else {
-        this.startTimer();
-      }
+    // Sync timer when expanded or interacting changes
+    // (matches real Sonner: useEffect([expanded, interacting, ...]))
+    if (prevProps.expanded !== this.props.expanded || prevProps.interacting !== this.props.interacting) {
+      this.syncTimer();
     }
 
-    // If type changed from loading, restart timer
+    // If type changed from loading, reset remaining time and sync
     if (prevProps.data.type === 'loading' && this.props.data.type !== 'loading') {
       this.remainingTime = this.props.data.duration ?? TOAST_LIFETIME;
-      this.startTimer();
+      this.syncTimer();
     }
   }
 
   componentWillUnmount() {
     if (this.timeoutId) clearTimeout(this.timeoutId);
+    // Safety net: clean up height on unmount (matches real Sonner useEffect cleanup return)
+    this.props.setHeights((prev) => prev.filter((h) => h.toastId !== this.props.data.id));
+  }
+
+  // Unified timer sync — mirrors real Sonner's effect that runs on
+  // [expanded, interacting] and either pauses or starts the timer.
+  private syncTimer() {
+    if (this.deleteInProgress) return;
+    if (this.props.data.type === 'loading' || this.props.data.duration === Infinity) return;
+    if (this.remainingTime === Infinity) return;
+
+    if (this.props.expanded || this.props.interacting) {
+      this.pauseTimer();
+    } else {
+      this.startTimer();
+    }
   }
 
   private startTimer() {
-    if (this.props.data.type === 'loading' || this.deleteInProgress) return;
-    const dur = this.remainingTime;
-    if (dur === Infinity || dur <= 0) return;
+    if (this.deleteInProgress) return;
+    if (this.remainingTime <= 0) return;
 
     if (this.timeoutId) clearTimeout(this.timeoutId);
-    this.closeTimerStart = Date.now();
-    this.timeoutId = setTimeout(() => this.deleteToast(), dur);
+    this.closeTimerStartRef = Date.now();
+    this.timeoutId = setTimeout(() => this.deleteToast(), this.remainingTime);
   }
 
   private pauseTimer() {
-    if (this.timeoutId) clearTimeout(this.timeoutId);
-    this.timeoutId = null;
-    if (this.lastCloseTimerStart < this.closeTimerStart) {
-      const elapsed = Date.now() - this.closeTimerStart;
+    if (this.timeoutId) { clearTimeout(this.timeoutId); this.timeoutId = null; }
+    if (this.lastCloseTimerStartRef < this.closeTimerStartRef) {
+      const elapsed = Date.now() - this.closeTimerStartRef;
       this.remainingTime = Math.max(0, this.remainingTime - elapsed);
     }
-    this.lastCloseTimerStart = Date.now();
+    this.lastCloseTimerStartRef = Date.now();
   }
 
   private deleteToast() {
-    // Guard: only run once per toast
     if (this.deleteInProgress) return;
     this.deleteInProgress = true;
 
     if (this.timeoutId) { clearTimeout(this.timeoutId); this.timeoutId = null; }
 
-    this.setState({ removed: true, offsetBeforeRemove: this.getOffset() });
-    this.props.removeHeight(this.props.data.id);
+    // Capture offset before removing height
+    const currentOffset = this.computeOffset();
+    // Remove height immediately (matches real Sonner deleteToast)
+    this.props.setHeights((prev) => prev.filter((h) => h.toastId !== this.props.data.id));
+    this.setState({ removed: true, offsetBeforeRemove: currentOffset });
 
     setTimeout(() => this.props.removeToast(this.props.data), TIME_BEFORE_UNMOUNT);
   }
 
-  private getOffset(): number {
-    const { heights, data } = this.props;
+  private computeOffset(): number {
+    const { heights, data, gap } = this.props;
     const heightIdx = heights.findIndex((h) => h.toastId === data.id);
     if (heightIdx < 0) return 0;
-    let offset = 0;
-    for (let i = 0; i < heightIdx; i++) offset += heights[i].height;
-    return heightIdx * GAP + offset;
+    let sum = 0;
+    for (let i = 0; i < heightIdx; i++) sum += heights[i].height;
+    return heightIdx * gap + sum;
   }
 
   render() {
-    const { data, index, toastCount, expanded, heights, position } = this.props;
+    const { data, index, toasts, expanded, heights, position, gap } = this.props;
     const { mounted, removed, offsetBeforeRemove, initialHeight } = this.state;
-    const isTop = position.startsWith('top');
-    const heightIdx = heights.findIndex((h) => h.toastId === data.id);
-    const toastsBeforeHeight = heights.slice(0, Math.max(0, heightIdx)).reduce((s, h) => s + h.height, 0);
-    const offset = removed ? offsetBeforeRemove : (heightIdx >= 0 ? heightIdx * GAP + toastsBeforeHeight : 0);
+    const [yPos, xPos] = position.split('-');
 
-    // Use heightIndex for stacking — it updates immediately when a toast is
-    // removed (heights are cleaned up in deleteToast), unlike the toast array
-    // index which is stale during the 200ms exit animation.
-    const toastsBefore = removed ? index : (heightIdx >= 0 ? heightIdx : index);
-    const isFront = removed ? false : heightIdx === 0;
-    const isVisible = removed ? false : (heightIdx >= 0 ? heightIdx < VISIBLE_TOASTS : index < VISIBLE_TOASTS);
+    // isFront and isVisible use index (toast array position) — matches real Sonner
+    const isFront = index === 0;
+    const isVisible = index + 1 <= VISIBLE_TOASTS;
+
+    // heightIndex only for offset calculation — updates faster than toast array
+    const heightIdx = heights.findIndex((h) => h.toastId === data.id);
+    const toastsHeightBefore = heights.reduce((prev, curr, i) => i >= heightIdx ? prev : prev + curr.height, 0);
+    const offset = removed ? offsetBeforeRemove : (heightIdx >= 0 ? heightIdx * gap + toastsHeightBefore : 0);
 
     return createElement('li', {
       ref: (el: HTMLLIElement | null) => { this.toastRef = el; },
@@ -367,22 +394,20 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
       'data-removed': removed,
       'data-visible': isVisible,
       'data-front': isFront,
-      'data-expanded': expanded,
+      'data-expanded': Boolean(expanded),
       'data-type': data.type,
-      'data-y-position': isTop ? 'top' : 'bottom',
-      'data-x-position': position.split('-')[1],
+      'data-y-position': yPos,
+      'data-x-position': xPos,
       role: 'alert',
       tabIndex: 0,
       className: 'group',
       style: {
         '--index': index,
-        '--toasts-before': toastsBefore,
-        '--z-index': toastCount - toastsBefore,
+        '--toasts-before': index,
+        '--z-index': toasts.length - index,
         '--offset': `${offset}px`,
         '--initial-height': `${initialHeight}px`,
       } as any,
-      onMouseEnter: () => this.pauseTimer(),
-      onMouseLeave: () => { if (!this.props.expanded) this.startTimer(); },
     },
       createElement('div', {
         className: cn(
@@ -460,7 +485,16 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
 
 // ---------------------------------------------------------------------------
 // Toaster — mount once at root level, NEVER returns null
+//
+// Matches real Sonner's Toaster architecture:
+// - expanded state managed here, flows down as prop
+// - interacting state (pointerDown/Up) prevents onMouseLeave from collapsing
+// - expanded resets to false when toasts.length <= 1
+// - heights managed via functional setHeights passed to ToastItem
+// - --front-toast-height uses heights[0] (newest = front)
 // ---------------------------------------------------------------------------
+
+type HeightEntry = { toastId: string | number; height: number; position?: string };
 
 interface ToasterProps {
   position?: ToasterPosition;
@@ -468,7 +502,7 @@ interface ToasterProps {
 
 interface ToasterState {
   toasts: ToastT[];
-  heights: Array<{ toastId: string | number; height: number; position?: string }>;
+  heights: HeightEntry[];
   expanded: boolean;
   interacting: boolean;
 }
@@ -504,41 +538,35 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
     });
   }
 
+  componentDidUpdate(_prevProps: ToasterProps, prevState: ToasterState) {
+    // Reset expanded when 0 or 1 toast left (matches real Sonner)
+    if (this.state.toasts.length <= 1 && prevState.toasts.length > 1) {
+      this.setState({ expanded: false });
+    }
+  }
+
   componentWillUnmount() {
     this.unsub?.();
   }
 
   private removeToast = (toastToRemove: ToastT) => {
-    // Clean up Observer if not already dismissed
-    const existing = this.state.toasts.find((t) => t.id === toastToRemove.id);
-    if (existing && !existing.delete) {
-      // Remove from observer without re-publishing dismiss
-      // (we're already removing — avoid circular loop)
-      ToastState.toasts = ToastState.toasts.filter((t) => t.id !== toastToRemove.id);
-    }
-    this.setState((s) => ({
-      toasts: s.toasts.filter((t) => t.id !== toastToRemove.id),
-    }));
-  };
-
-  private setHeight = (id: string | number, height: number, position?: string) => {
     this.setState((s) => {
-      const exists = s.heights.find((h) => h.toastId === id);
-      if (exists) {
-        return { heights: s.heights.map((h) => h.toastId === id ? { ...h, height } : h) };
+      const existing = s.toasts.find((t) => t.id === toastToRemove.id);
+      if (existing && !existing.delete) {
+        ToastState.toasts = ToastState.toasts.filter((t) => t.id !== toastToRemove.id);
       }
-      return { heights: [{ toastId: id, height, position }, ...s.heights] };
+      return { toasts: s.toasts.filter((t) => t.id !== toastToRemove.id) };
     });
   };
 
-  private removeHeight = (id: string | number) => {
-    this.setState((s) => ({
-      heights: s.heights.filter((h) => h.toastId !== id),
-    }));
+  // Functional setHeights — passed to ToastItem so it can do functional updates
+  // (matches real Sonner's setHeights pattern)
+  private setHeights = (fn: (prev: HeightEntry[]) => HeightEntry[]) => {
+    this.setState((s) => ({ heights: fn(s.heights) }));
   };
 
   render() {
-    const { toasts, heights, expanded } = this.state;
+    const { toasts, heights, expanded, interacting } = this.state;
     const defaultPosition = this.props.position || 'top-center';
 
     // Collect all unique positions (default + any per-toast overrides)
@@ -552,20 +580,20 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
       'aria-live': 'polite',
       'aria-atomic': 'false',
     },
-      ...positions.map((pos) => {
+      ...positions.map((pos, posIdx) => {
         const [y, x] = pos.split('-');
-        // Filter toasts for this position group
+        // Filter toasts for this position group (matches real Sonner line 849)
         const groupToasts = toasts.filter((t) =>
-          t.position ? t.position === pos : pos === defaultPosition,
+          (!t.position && posIdx === 0) || t.position === pos,
         );
         const groupHeights = heights.filter((h) =>
-          h.position ? h.position === pos : pos === defaultPosition,
+          (!h.position && posIdx === 0) || h.position === pos,
         );
 
         if (groupToasts.length === 0) return null;
 
-        const frontId = groupToasts[0]?.id;
-        const frontHeight = groupHeights.find((h) => h.toastId === frontId)?.height || 0;
+        // --front-toast-height uses heights[0] (matches real Sonner line 803)
+        const frontHeight = groupHeights[0]?.height || 0;
 
         return createElement('ol', {
           key: pos,
@@ -584,7 +612,7 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
           onMouseEnter: () => this.setState({ expanded: true }),
           onMouseMove: () => this.setState({ expanded: true }),
           onMouseLeave: () => {
-            if (!this.state.interacting) this.setState({ expanded: false });
+            if (!interacting) this.setState({ expanded: false });
           },
           onPointerDown: () => this.setState({ interacting: true }),
           onPointerUp: () => this.setState({ interacting: false }),
@@ -594,13 +622,14 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
               key: t.id,
               data: t,
               index,
-              toastCount: groupToasts.length,
+              toasts: groupToasts,
               expanded,
+              interacting,
               heights: groupHeights,
               position: pos,
+              gap: GAP,
               removeToast: this.removeToast,
-              setHeight: this.setHeight,
-              removeHeight: this.removeHeight,
+              setHeights: this.setHeights,
             }),
           ),
         );
