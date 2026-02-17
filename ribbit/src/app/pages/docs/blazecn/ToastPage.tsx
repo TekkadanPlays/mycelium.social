@@ -10,17 +10,11 @@ export function ToastPage() {
       description: 'An opinionated toast component for Inferno.',
     }),
 
-    // Hero demo — matches shadcn: description + action
+    // Hero demo
     createElement(DemoBox, { className: 'items-center justify-center' },
       createElement(Button, {
         variant: 'outline',
-        onClick: () => toast('Event has been created', {
-          description: 'Sunday, December 03, 2023 at 9:00 AM',
-          action: {
-            label: 'Undo',
-            onClick: () => console.log('Undo'),
-          },
-        }),
+        onClick: () => toast('Event has been created'),
       }, 'Show Toast'),
     ),
 

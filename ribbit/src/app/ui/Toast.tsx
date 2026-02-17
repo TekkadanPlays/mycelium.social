@@ -100,11 +100,14 @@ class Observer {
   dismiss = (id?: string | number) => {
     if (id) {
       this.dismissedToasts.add(id);
+      this.toasts = this.toasts.filter((t) => t.id !== id);
       requestAnimationFrame(() => this.publish({ id, dismiss: true }));
     } else {
       this.toasts.forEach((t) => {
+        this.dismissedToasts.add(t.id);
         this.publish({ id: t.id, dismiss: true });
       });
+      this.toasts = [];
     }
     return id;
   };
@@ -384,42 +387,41 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
     },
       createElement('div', {
         className: cn(
-          'relative flex w-full items-start gap-3 overflow-hidden border p-4 shadow-lg',
+          'relative flex w-full items-center gap-1.5 overflow-hidden rounded-xl border p-4 shadow-lg',
         ),
         style: {
           background: 'var(--popover)',
           color: 'var(--popover-foreground)',
           borderColor: 'var(--border)',
-          borderRadius: 'var(--radius)',
+          fontSize: '13px',
         },
       },
         // Icon
         createElement(ToastIcon, { type: data.type }),
 
         // Content
-        createElement('div', { className: 'flex-1 grid gap-1' },
+        createElement('div', { className: 'flex flex-col gap-0.5 flex-1' },
           data.title
-            ? createElement('div', { className: 'text-sm font-semibold' }, data.title)
+            ? createElement('div', { className: 'font-medium leading-snug' }, data.title)
             : null,
           data.description
-            ? createElement('div', { className: 'text-sm text-muted-foreground' }, data.description)
+            ? createElement('div', { className: 'leading-snug', style: { opacity: 0.65 } }, data.description)
             : null,
           (data.action || data.cancel)
-            ? createElement('div', { className: 'flex items-center gap-2 mt-2' },
+            ? createElement('div', { className: 'flex items-center gap-2 mt-1.5' },
                 data.action
                   ? createElement('button', {
                       type: 'button',
                       onClick: () => { data.action!.onClick(); this.deleteToast(); },
-                      className: 'inline-flex items-center justify-center text-xs font-medium h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors',
-                      style: { borderRadius: 'calc(var(--radius) - 4px)' },
+                      className: 'inline-flex items-center justify-center rounded-md text-xs font-medium h-6 px-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors',
                     }, data.action.label)
                   : null,
                 data.cancel
                   ? createElement('button', {
                       type: 'button',
                       onClick: () => { data.cancel!.onClick(); this.deleteToast(); },
-                      className: 'inline-flex items-center justify-center text-xs font-medium h-8 px-3 border hover:bg-accent transition-colors',
-                      style: { borderColor: 'var(--border)', background: 'var(--popover)', borderRadius: 'calc(var(--radius) - 4px)' },
+                      className: 'inline-flex items-center justify-center rounded-md text-xs font-medium h-6 px-2 border hover:bg-accent transition-colors',
+                      style: { borderColor: 'var(--border)', background: 'var(--popover)' },
                     }, data.cancel.label)
                   : null,
               )
@@ -432,18 +434,18 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
               type: 'button',
               onClick: () => this.deleteToast(),
               className: cn(
-                'absolute top-2 right-2 rounded-md p-1 opacity-0 transition-opacity group-hover:opacity-100',
+                'absolute top-1.5 right-1.5 rounded-full p-0.5 opacity-0 transition-opacity group-hover:opacity-100',
                 'outline-none focus-visible:opacity-100 focus-visible:ring-ring/50 focus-visible:ring-[3px]',
-                'hover:text-foreground text-muted-foreground',
+                'hover:text-foreground text-muted-foreground/60',
               ),
               'aria-label': 'Dismiss',
             },
               createElement('svg', {
-                className: 'size-4',
+                className: 'size-3.5',
                 viewBox: '0 0 24 24',
                 fill: 'none',
                 stroke: 'currentColor',
-                'stroke-width': '2',
+                'stroke-width': '2.5',
                 'stroke-linecap': 'round',
                 'stroke-linejoin': 'round',
               },
@@ -513,9 +515,14 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
   }
 
   private removeToast = (toastToRemove: ToastT) => {
-    this.setState((s) => ({
-      toasts: s.toasts.filter((t) => t.id !== toastToRemove.id),
-    }));
+    this.setState((s) => {
+      // If the toast wasn't already dismissed via ToastState.dismiss(),
+      // clean up the Observer singleton now (matches real Sonner behavior)
+      if (!s.toasts.find((t) => t.id === toastToRemove.id)?.delete) {
+        ToastState.dismiss(toastToRemove.id);
+      }
+      return { toasts: s.toasts.filter((t) => t.id !== toastToRemove.id) };
+    });
   };
 
   private setHeight = (id: string | number, height: number) => {
