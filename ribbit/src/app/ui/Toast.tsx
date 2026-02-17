@@ -347,10 +347,8 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
 
     if (this.timeoutId) { clearTimeout(this.timeoutId); this.timeoutId = null; }
 
-    // Remove height and toast immediately — no delayed removal.
-    // This eliminates all stacking/index desync bugs that occurred during
-    // the previous 200ms exit animation window.
-    this.props.setHeights((prev) => prev.filter((h) => h.toastId !== this.props.data.id));
+    // Single atomic call: removeToast removes both the toast and its height
+    // in one setState to prevent intermediate renders with stale data.
     this.props.removeToast(this.props.data);
   }
 
@@ -528,12 +526,17 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
   }
 
   private removeToast = (toastToRemove: ToastT) => {
+    // Atomic: remove toast AND its height in a single setState to prevent
+    // intermediate renders where toasts and heights are out of sync.
     this.setState((s) => {
       const existing = s.toasts.find((t) => t.id === toastToRemove.id);
       if (existing && !existing.delete) {
         ToastState.toasts = ToastState.toasts.filter((t) => t.id !== toastToRemove.id);
       }
-      return { toasts: s.toasts.filter((t) => t.id !== toastToRemove.id) };
+      return {
+        toasts: s.toasts.filter((t) => t.id !== toastToRemove.id),
+        heights: s.heights.filter((h) => h.toastId !== toastToRemove.id),
+      };
     });
   };
 
