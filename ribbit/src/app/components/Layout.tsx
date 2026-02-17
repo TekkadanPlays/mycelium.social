@@ -132,37 +132,49 @@ export class Header extends Component<{}, HeaderState> {
                 // ── Docs dropdown panel ──
                 docsOpen
                   ? createElement('div', {
-                      className: 'absolute left-0 top-full mt-1.5 w-[480px] rounded-lg border bg-popover p-4 shadow-lg z-50',
-                    },
-                      // Header row
-                      createElement('div', { className: 'flex items-center justify-between mb-3' },
-                        createElement('p', { className: 'text-xs font-semibold tracking-wider uppercase text-muted-foreground' }, 'Projects'),
+                    className: 'absolute left-0 top-full mt-1.5 w-[480px] rounded-lg border bg-popover p-4 shadow-lg z-50',
+                  },
+                    // Header row
+                    createElement('div', { className: 'flex items-center justify-between mb-3' },
+                      createElement('p', { className: 'text-xs font-semibold tracking-wider uppercase text-muted-foreground' }, 'Projects'),
+                      createElement(Link, {
+                        to: '/docs',
+                        onClick: () => this.setState({ ...this.state, docsOpen: false }),
+                        className: 'text-xs text-primary hover:underline',
+                      }, 'View all \u2192'),
+                    ),
+                    // Project grid
+                    createElement('div', { className: 'grid grid-cols-2 gap-1' },
+                      ...DOCS_PROJECTS.map((p) =>
                         createElement(Link, {
-                          to: '/docs',
+                          key: p.title,
+                          to: p.path,
                           onClick: () => this.setState({ ...this.state, docsOpen: false }),
-                          className: 'text-xs text-primary hover:underline',
-                        }, 'View all \u2192'),
-                      ),
-                      // Project grid
-                      createElement('div', { className: 'grid grid-cols-2 gap-1' },
-                        ...DOCS_PROJECTS.map((p) =>
-                          createElement(Link, {
-                            key: p.title,
-                            to: p.path,
-                            onClick: () => this.setState({ ...this.state, docsOpen: false }),
-                            className: 'flex items-start gap-3 rounded-md p-3 transition-colors hover:bg-accent',
-                          },
-                            createElement('span', { className: 'text-lg mt-0.5 shrink-0' }, p.icon),
-                            createElement('div', null,
-                              createElement('div', { className: 'text-sm font-semibold leading-tight' }, p.title),
-                              createElement('p', { className: 'text-xs text-muted-foreground mt-0.5 leading-snug' }, p.desc),
-                            ),
+                          className: 'flex items-start gap-3 rounded-md p-3 transition-colors hover:bg-accent',
+                        },
+                          createElement('span', { className: 'text-lg mt-0.5 shrink-0' }, p.icon),
+                          createElement('div', null,
+                            createElement('div', { className: 'text-sm font-semibold leading-tight' }, p.title),
+                            createElement('p', { className: 'text-xs text-muted-foreground mt-0.5 leading-snug' }, p.desc),
                           ),
                         ),
                       ),
-                    )
+                    ),
+                  )
                   : null,
               ),
+              // Examples link
+              createElement(Link, {
+                to: '/examples',
+                className: 'inline-flex h-9 items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors'
+                  + ' hover:bg-accent hover:text-accent-foreground',
+              }, 'Examples'),
+              // Blocks link
+              createElement(Link, {
+                to: '/blocks',
+                className: 'inline-flex h-9 items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors'
+                  + ' hover:bg-accent hover:text-accent-foreground',
+              }, 'Blocks'),
             ),
           ),
 
@@ -186,38 +198,38 @@ export class Header extends Component<{}, HeaderState> {
 
             auth.pubkey
               ? createElement('div', { className: 'relative hidden md:block' },
-                  createElement('button', {
-                    onClick: (e: Event) => { e.stopPropagation(); this.setState({ ...this.state, dropdownOpen: !dropdownOpen, docsOpen: false }); },
-                    className: 'flex items-center gap-2 rounded-full border border-border px-1 py-1 pr-3 hover:bg-accent/50 transition-colors',
-                  },
-                    createElement(Avatar, { className: 'size-7' },
-                      profilePicture
-                        ? createElement(AvatarImage, { src: profilePicture, alt: profileName })
-                        : null,
-                      createElement(AvatarFallback, { className: 'text-[10px]' }, initials),
-                    ),
-                    createElement('span', { className: 'text-sm font-medium max-w-[120px] truncate' }, profileName),
-                    createElement('span', { className: 'text-xs opacity-40' }, '\u25BE'),
+                createElement('button', {
+                  onClick: (e: Event) => { e.stopPropagation(); this.setState({ ...this.state, dropdownOpen: !dropdownOpen, docsOpen: false }); },
+                  className: 'flex items-center gap-2 rounded-full border border-border px-1 py-1 pr-3 hover:bg-accent/50 transition-colors',
+                },
+                  createElement(Avatar, { className: 'size-7' },
+                    profilePicture
+                      ? createElement(AvatarImage, { src: profilePicture, alt: profileName })
+                      : null,
+                    createElement(AvatarFallback, { className: 'text-[10px]' }, initials),
                   ),
-                  dropdownOpen
-                    ? createElement('div', {
-                        className: 'absolute right-0 top-full mt-2 w-52 bg-popover border border-border rounded-lg shadow-lg py-1 z-50',
-                      },
-                        createElement(Link, { to: `/u/${auth.pubkey}`, className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Profile'),
-                        createElement(Link, { to: '/notifications', className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Notifications'),
-                        createElement(Link, { to: '/settings', className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Settings'),
-                        createElement(Link, { to: '/settings/relays', className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Relay Manager'),
-                        createElement('div', { className: 'border-t border-border my-1' }),
-                        createElement('button', { onClick: logout, className: 'flex items-center gap-2 px-3 py-2 w-full text-sm text-destructive/70 hover:text-destructive hover:bg-destructive/5 transition-colors' }, 'Sign Out'),
-                      )
-                    : null,
-                )
+                  createElement('span', { className: 'text-sm font-medium max-w-[120px] truncate' }, profileName),
+                  createElement('span', { className: 'text-xs opacity-40' }, '\u25BE'),
+                ),
+                dropdownOpen
+                  ? createElement('div', {
+                    className: 'absolute right-0 top-full mt-2 w-52 bg-popover border border-border rounded-lg shadow-lg py-1 z-50',
+                  },
+                    createElement(Link, { to: `/u/${auth.pubkey}`, className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Profile'),
+                    createElement(Link, { to: '/notifications', className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Notifications'),
+                    createElement(Link, { to: '/settings', className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Settings'),
+                    createElement(Link, { to: '/settings/relays', className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Relay Manager'),
+                    createElement('div', { className: 'border-t border-border my-1' }),
+                    createElement('button', { onClick: logout, className: 'flex items-center gap-2 px-3 py-2 w-full text-sm text-destructive/70 hover:text-destructive hover:bg-destructive/5 transition-colors' }, 'Sign Out'),
+                  )
+                  : null,
+              )
               : createElement(Button, {
-                  onClick: login,
-                  disabled: auth.isLoading,
-                  size: 'sm',
-                  className: 'hidden md:inline-flex',
-                }, auth.isLoading ? 'Connecting...' : 'Sign In'),
+                onClick: login,
+                disabled: auth.isLoading,
+                size: 'sm',
+                className: 'hidden md:inline-flex',
+              }, auth.isLoading ? 'Connecting...' : 'Sign In'),
 
             // Mobile menu button
             createElement('button', {
@@ -231,64 +243,84 @@ export class Header extends Component<{}, HeaderState> {
       // ── Mobile menu ──
       mobileOpen
         ? createElement('div', { className: 'md:hidden border-t border-border bg-background' },
-            createElement('div', { className: 'mx-auto max-w-6xl px-5 sm:px-6 py-3 space-y-0.5' },
-              // Docs section
-              createElement('p', { className: 'px-3 pt-1 pb-1.5 text-[10px] font-semibold tracking-wider uppercase text-muted-foreground/60' }, 'Documentation'),
-              ...DOCS_PROJECTS.map((p) =>
-                createElement(Link, {
-                  key: p.title,
-                  to: p.path,
-                  className: 'flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
-                  onClick: () => this.setState({ ...this.state, mobileOpen: false }),
-                },
-                  createElement('span', { className: 'text-sm' }, p.icon),
-                  p.title,
-                ),
-              ),
+          createElement('div', { className: 'mx-auto max-w-6xl px-5 sm:px-6 py-3 space-y-0.5' },
+            // Docs section
+            createElement('p', { className: 'px-3 pt-1 pb-1.5 text-[10px] font-semibold tracking-wider uppercase text-muted-foreground/60' }, 'Documentation'),
+            ...DOCS_PROJECTS.map((p) =>
               createElement(Link, {
-                to: '/docs',
-                className: 'block px-3 py-2 text-xs text-primary hover:underline',
+                key: p.title,
+                to: p.path,
+                className: 'flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
                 onClick: () => this.setState({ ...this.state, mobileOpen: false }),
-              }, 'View all docs \u2192'),
-
-              // GitHub link
-              createElement('div', { className: 'border-t border-border mt-2 pt-2' },
-                createElement('a', {
-                  href: 'https://github.com/TekkadanPlays',
-                  target: '_blank',
-                  rel: 'noopener',
-                  className: 'flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
-                },
-                  createElement('svg', {
-                    className: 'size-4',
-                    viewBox: '0 0 24 24',
-                    fill: 'currentColor',
-                  }, createElement('path', { d: 'M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z' })),
-                  'GitHub',
-                ),
+              },
+                createElement('span', { className: 'text-sm' }, p.icon),
+                p.title,
               ),
-
-              // Auth section
-              auth.pubkey
-                ? createElement('div', { className: 'space-y-0.5 border-t border-border mt-2 pt-2' },
-                    createElement(Link, { to: `/u/${auth.pubkey}`, className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Profile'),
-                    createElement(Link, { to: '/notifications', className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Notifications'),
-                    createElement(Link, { to: '/settings', className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Settings'),
-                    createElement(Link, { to: '/settings/relays', className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Relay Manager'),
-                    createElement('button', {
-                      onClick: () => { logout(); this.setState({ ...this.state, mobileOpen: false }); },
-                      className: 'flex items-center px-3 py-2.5 w-full text-sm text-destructive/70 hover:text-destructive rounded-md transition-colors',
-                    }, 'Sign Out'),
-                  )
-                : createElement('div', { className: 'border-t border-border mt-2 pt-3 px-3' },
-                    createElement(Button, {
-                      onClick: () => { login(); this.setState({ ...this.state, mobileOpen: false }); },
-                      className: 'w-full',
-                      size: 'sm',
-                    }, 'Sign In with Nostr'),
-                  ),
             ),
-          )
+            createElement(Link, {
+              to: '/docs',
+              className: 'block px-3 py-2 text-xs text-primary hover:underline',
+              onClick: () => this.setState({ ...this.state, mobileOpen: false }),
+            }, 'View all docs \u2192'),
+
+            // Examples link
+            createElement(Link, {
+              to: '/examples',
+              className: 'flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
+              onClick: () => this.setState({ ...this.state, mobileOpen: false }),
+            },
+              createElement('span', { className: 'text-sm' }, '\u{1F4CB}'),
+              'Examples',
+            ),
+
+            // Blocks link
+            createElement(Link, {
+              to: '/blocks',
+              className: 'flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
+              onClick: () => this.setState({ ...this.state, mobileOpen: false }),
+            },
+              createElement('span', { className: 'text-sm' }, '\u{1F9E9}'),
+              'Blocks',
+            ),
+
+            // GitHub link
+            createElement('div', { className: 'border-t border-border mt-2 pt-2' },
+              createElement('a', {
+                href: 'https://github.com/TekkadanPlays',
+                target: '_blank',
+                rel: 'noopener',
+                className: 'flex items-center gap-2.5 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors',
+              },
+                createElement('svg', {
+                  className: 'size-4',
+                  viewBox: '0 0 24 24',
+                  fill: 'currentColor',
+                }, createElement('path', { d: 'M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z' })),
+                'GitHub',
+              ),
+            ),
+
+            // Auth section
+            auth.pubkey
+              ? createElement('div', { className: 'space-y-0.5 border-t border-border mt-2 pt-2' },
+                createElement(Link, { to: `/u/${auth.pubkey}`, className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Profile'),
+                createElement(Link, { to: '/notifications', className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Notifications'),
+                createElement(Link, { to: '/settings', className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Settings'),
+                createElement(Link, { to: '/settings/relays', className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Relay Manager'),
+                createElement('button', {
+                  onClick: () => { logout(); this.setState({ ...this.state, mobileOpen: false }); },
+                  className: 'flex items-center px-3 py-2.5 w-full text-sm text-destructive/70 hover:text-destructive rounded-md transition-colors',
+                }, 'Sign Out'),
+              )
+              : createElement('div', { className: 'border-t border-border mt-2 pt-3 px-3' },
+                createElement(Button, {
+                  onClick: () => { login(); this.setState({ ...this.state, mobileOpen: false }); },
+                  className: 'w-full',
+                  size: 'sm',
+                }, 'Sign In with Nostr'),
+              ),
+          ),
+        )
         : null,
     );
   }
@@ -365,10 +397,10 @@ export class MainLayout extends Component<{ children: any }> {
   render() {
     const path = typeof window !== 'undefined' ? window.location.pathname : '/';
     const isLanding = path === '/';
-    const hideSidebar = isLanding || path.startsWith('/docs');
+    const hideSidebar = isLanding || path.startsWith('/docs') || path.startsWith('/blocks');
 
-    // Landing page gets full-width, no header chrome padding
-    if (isLanding) {
+    // Landing page and blocks page get full-width, no container constraints
+    if (isLanding || path.startsWith('/blocks') || path.startsWith('/examples')) {
       return createElement('div', { className: 'min-h-screen bg-background' },
         createElement(Header, null),
         createElement('main', null,

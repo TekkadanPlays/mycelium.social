@@ -14,6 +14,8 @@ import { RelayDiscovery } from './pages/RelayDiscovery';
 import { Notifications } from './pages/Notifications';
 import { HashtagFeed } from './pages/HashtagFeed';
 import { Docs } from './pages/docs/DocsRouter';
+import { BlocksShowcase } from './pages/BlocksShowcase';
+import { ExamplesPage } from './pages/ExamplesPage';
 import { Toaster } from './ui/Toast';
 import { getAuthState, subscribeAuth, restoreSession } from './store/auth';
 import { connectRelays, getPool } from './store/relay';
@@ -102,6 +104,8 @@ export class App extends Component<{}, AppState> {
         createElement(Route, { path: '/discover', component: RelayDiscovery }),
         createElement(Route, { path: '/t/:tag', component: HashtagFeed }),
         createElement(Route, { path: '/raw', component: RawEvents }),
+        createElement(Route, { path: '/blocks', component: BlocksShowcase }),
+        createElement(Route, { path: '/examples', component: ExamplesPage }),
         createElement(Route, { path: '/docs', component: Docs }),
         createElement(Route, { path: '/docs/:rest*', component: Docs }),
         createElement(Route, {
