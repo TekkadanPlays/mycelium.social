@@ -84,6 +84,37 @@ createElement(Toaster, null)`, lang: 'tsx' }),
       }, 'Show Toast'),
     ),
 
+    // Position
+    createElement('h3', { className: 'text-base font-semibold mb-3 mt-8' }, 'Position'),
+    createElement(DemoBox, { className: 'items-center justify-center' },
+      createElement('div', { className: 'flex flex-wrap justify-center gap-2' },
+        createElement(Button, {
+          variant: 'outline',
+          onClick: () => toast('Event has been created', { position: 'top-left' }),
+        }, 'Top Left'),
+        createElement(Button, {
+          variant: 'outline',
+          onClick: () => toast('Event has been created', { position: 'top-center' }),
+        }, 'Top Center'),
+        createElement(Button, {
+          variant: 'outline',
+          onClick: () => toast('Event has been created', { position: 'top-right' }),
+        }, 'Top Right'),
+        createElement(Button, {
+          variant: 'outline',
+          onClick: () => toast('Event has been created', { position: 'bottom-left' }),
+        }, 'Bottom Left'),
+        createElement(Button, {
+          variant: 'outline',
+          onClick: () => toast('Event has been created', { position: 'bottom-center' }),
+        }, 'Bottom Center'),
+        createElement(Button, {
+          variant: 'outline',
+          onClick: () => toast('Event has been created', { position: 'bottom-right' }),
+        }, 'Bottom Right'),
+      ),
+    ),
+
     // API Reference
     createElement(SectionHeading, { id: 'api-reference' }, 'API Reference'),
     createElement('p', { className: 'text-sm text-muted-foreground mb-4' },
