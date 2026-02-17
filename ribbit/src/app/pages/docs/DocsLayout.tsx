@@ -310,7 +310,9 @@ class ProjectSwitcher extends Component<{ activeGroup: NavGroup; currentPath: st
 // ---------------------------------------------------------------------------
 
 function DocsSidebar({ currentPath }: { currentPath: string }) {
-  const activeGroup = NAV.find((g) => currentPath.startsWith(g.basePath)) || NAV[0];
+  // Sort by basePath length descending so /docs/ribbit-android matches before /docs/ribbit
+  const activeGroup = [...NAV].sort((a, b) => b.basePath.length - a.basePath.length)
+    .find((g) => currentPath.startsWith(g.basePath)) || NAV[0];
 
   return createElement('aside', {
     className: 'hidden lg:block w-56 shrink-0',

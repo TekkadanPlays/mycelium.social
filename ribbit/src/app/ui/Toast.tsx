@@ -15,7 +15,6 @@ import { cn } from './utils';
 const TOAST_LIFETIME = 4000;
 const VISIBLE_TOASTS = 3;
 const GAP = 14;
-const TIME_BEFORE_UNMOUNT = 200;
 const TOAST_WIDTH = 356;
 const VIEWPORT_OFFSET = 32;
 
@@ -244,8 +243,6 @@ interface ToastItemProps {
 
 interface ToastItemState {
   mounted: boolean;
-  removed: boolean;
-  offsetBeforeRemove: number;
   initialHeight: number;
 }
 
@@ -256,12 +253,12 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
   private lastCloseTimerStartRef = 0;
   private remainingTime: number;
   private timeoutId: ReturnType<typeof setTimeout> | null = null;
-  private deleteInProgress = false;
+  private deleted = false;
 
   constructor(props: ToastItemProps) {
     super(props);
     this.remainingTime = props.data.duration ?? TOAST_LIFETIME;
-    this.state = { mounted: false, removed: false, offsetBeforeRemove: 0, initialHeight: 0 };
+    this.state = { mounted: false, initialHeight: 0 };
   }
 
   componentDidMount() {
@@ -280,7 +277,7 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
   }
 
   componentDidUpdate(prevProps: ToastItemProps) {
-    // Re-measure height if content changed (matches real Sonner useLayoutEffect)
+    // Re-measure height if content changed
     if (prevProps.data.title !== this.props.data.title || prevProps.data.description !== this.props.data.description) {
       if (this.toastRef) {
         const h = this.toastRef.getBoundingClientRect().height;
@@ -293,13 +290,12 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
       }
     }
 
-    // Handle delete flag (matches real Sonner: useEffect on toast.delete)
-    if (this.props.data.delete && !prevProps.data.delete && !this.deleteInProgress) {
+    // Handle delete flag from Observer.dismiss()
+    if (this.props.data.delete && !prevProps.data.delete && !this.deleted) {
       this.deleteToast();
     }
 
     // Sync timer when expanded or interacting changes
-    // (matches real Sonner: useEffect([expanded, interacting, ...]))
     if (prevProps.expanded !== this.props.expanded || prevProps.interacting !== this.props.interacting) {
       this.syncTimer();
     }
@@ -313,18 +309,10 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
 
   componentWillUnmount() {
     if (this.timeoutId) clearTimeout(this.timeoutId);
-    // Safety net: clean up height on unmount ONLY if deleteToast didn't already handle it.
-    // Without this guard, the second removal triggers an extra Toaster re-render that
-    // causes remaining toasts to briefly recalculate with stale data.
-    if (!this.deleteInProgress) {
-      this.props.setHeights((prev) => prev.filter((h) => h.toastId !== this.props.data.id));
-    }
   }
 
-  // Unified timer sync — mirrors real Sonner's effect that runs on
-  // [expanded, interacting] and either pauses or starts the timer.
   private syncTimer() {
-    if (this.deleteInProgress) return;
+    if (this.deleted) return;
     if (this.props.data.type === 'loading' || this.props.data.duration === Infinity) return;
     if (this.remainingTime === Infinity) return;
 
@@ -336,7 +324,7 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
   }
 
   private startTimer() {
-    if (this.deleteInProgress) return;
+    if (this.deleted) return;
     if (this.remainingTime <= 0) return;
 
     if (this.timeoutId) clearTimeout(this.timeoutId);
@@ -354,49 +342,34 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
   }
 
   private deleteToast() {
-    if (this.deleteInProgress) return;
-    this.deleteInProgress = true;
+    if (this.deleted) return;
+    this.deleted = true;
 
     if (this.timeoutId) { clearTimeout(this.timeoutId); this.timeoutId = null; }
 
-    // Remove height and compute offset atomically inside the functional updater.
-    // This ensures we read the CURRENT heights state (not stale props) even when
-    // multiple toasts are being closed rapidly in the same event loop tick.
-    let capturedOffset = 0;
-    this.props.setHeights((prev) => {
-      const id = this.props.data.id;
-      const idx = prev.findIndex((h) => h.toastId === id);
-      if (idx >= 0) {
-        let sum = 0;
-        for (let i = 0; i < idx; i++) sum += prev[i].height;
-        capturedOffset = idx * this.props.gap + sum;
-      }
-      return prev.filter((h) => h.toastId !== id);
-    });
-    this.setState({ removed: true, offsetBeforeRemove: capturedOffset });
-
-    setTimeout(() => this.props.removeToast(this.props.data), TIME_BEFORE_UNMOUNT);
+    // Remove height and toast immediately — no delayed removal.
+    // This eliminates all stacking/index desync bugs that occurred during
+    // the previous 200ms exit animation window.
+    this.props.setHeights((prev) => prev.filter((h) => h.toastId !== this.props.data.id));
+    this.props.removeToast(this.props.data);
   }
 
   render() {
     const { data, index, toasts, expanded, heights, position, gap } = this.props;
-    const { mounted, removed, offsetBeforeRemove, initialHeight } = this.state;
+    const { mounted, initialHeight } = this.state;
     const [yPos, xPos] = position.split('-');
 
-    // isFront and isVisible use index (toast array position) — matches real Sonner
     const isFront = index === 0;
     const isVisible = index + 1 <= VISIBLE_TOASTS;
 
-    // heightIndex only for offset calculation — updates faster than toast array
     const heightIdx = heights.findIndex((h) => h.toastId === data.id);
     const toastsHeightBefore = heights.reduce((prev, curr, i) => i >= heightIdx ? prev : prev + curr.height, 0);
-    const offset = removed ? offsetBeforeRemove : (heightIdx >= 0 ? heightIdx * gap + toastsHeightBefore : 0);
+    const offset = heightIdx >= 0 ? heightIdx * gap + toastsHeightBefore : 0;
 
     return createElement('li', {
       ref: (el: HTMLLIElement | null) => { this.toastRef = el; },
       'data-sonner-toast': '',
       'data-mounted': mounted,
-      'data-removed': removed,
       'data-visible': isVisible,
       'data-front': isFront,
       'data-expanded': Boolean(expanded),
