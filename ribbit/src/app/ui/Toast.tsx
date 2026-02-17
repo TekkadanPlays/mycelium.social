@@ -225,6 +225,7 @@ function ToastIcon({ type }: { type: ToastType }) {
 interface ToastItemProps {
   data: ToastT;
   index: number;
+  toastCount: number;
   expanded: boolean;
   front: boolean;
   visible: boolean;
@@ -347,20 +348,25 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
   }
 
   render() {
-    const { data, index, front, visible, expanded, heights, position } = this.props;
+    const { data, index, toastCount, front, visible, expanded, heights, position } = this.props;
     const { mounted, removed, offsetBeforeRemove, initialHeight } = this.state;
     const isTop = position.startsWith('top');
     const heightIdx = heights.findIndex((h) => h.toastId === data.id);
     const toastsBeforeHeight = heights.slice(0, Math.max(0, heightIdx)).reduce((s, h) => s + h.height, 0);
     const offset = removed ? offsetBeforeRemove : (heightIdx >= 0 ? heightIdx * GAP + toastsBeforeHeight : 0);
 
+    // Use heightIndex for stacking — it updates immediately when a toast is
+    // removed (heights are cleaned up in deleteToast), unlike the toast array
+    // index which is stale during the 200ms exit animation.
+    const toastsBefore = removed ? index : (heightIdx >= 0 ? heightIdx : index);
+
     return createElement('li', {
       ref: (el: HTMLLIElement | null) => { this.toastRef = el; },
       'data-sonner-toast': '',
       'data-mounted': mounted,
       'data-removed': removed,
-      'data-visible': visible,
-      'data-front': front,
+      'data-visible': removed ? false : (heightIdx >= 0 ? heightIdx < VISIBLE_TOASTS : visible),
+      'data-front': removed ? false : front,
       'data-expanded': expanded,
       'data-type': data.type,
       'data-y-position': isTop ? 'top' : 'bottom',
@@ -370,8 +376,8 @@ class ToastItem extends Component<ToastItemProps, ToastItemState> {
       className: 'group',
       style: {
         '--index': index,
-        '--toasts-before': index,
-        '--z-index': 100 - index,
+        '--toasts-before': toastsBefore,
+        '--z-index': toastCount - toastsBefore,
         '--offset': `${offset}px`,
         '--initial-height': `${initialHeight}px`,
       } as any,
@@ -582,6 +588,7 @@ export class Toaster extends Component<ToasterProps, ToasterState> {
               key: t.id,
               data: t,
               index,
+              toastCount: groupToasts.length,
               front: index === 0,
               visible: index < VISIBLE_TOASTS,
               expanded,
