@@ -173,6 +173,13 @@ const NAV: NavGroup[] = [
           { path: '/docs/mycelium-android', label: 'Introduction' },
         ],
       },
+      {
+        heading: 'Deep Dives',
+        items: [
+          { path: '/docs/mycelium-android/relay-system', label: 'Relay System' },
+          { path: '/docs/mycelium-android/screens', label: 'Screens & Components' },
+        ],
+      },
     ],
   },
   {

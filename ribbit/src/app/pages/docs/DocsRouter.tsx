@@ -84,6 +84,8 @@ import { FixingNos2xFoxPage } from './nos2x-frog/FixingNos2xFoxPage';
 import { UpgradingNos2xFoxPage } from './nos2x-frog/UpgradingNos2xFoxPage';
 import { BreakingNos2xFrogPage } from './nos2x-frog/BreakingNos2xFrogPage';
 import { MyceliumAndroidIndex } from './ribbit-android/index';
+import { RelaySystemPage } from './ribbit-android/RelaySystemPage';
+import { ScreensPage } from './ribbit-android/ScreensPage';
 import { NipsIntro } from './nips/index';
 import { Nips1xxPage, Nips2xxPage, Nips3xxPage, Nips4xxPage, Nips5xxPage, Nips6xxPage, Nips7xxPage, Nips8xxPage, Nips9xxPage } from './nips/CategoryPage';
 
@@ -171,6 +173,8 @@ const ROUTES: Record<string, any> = {
   // Other projects
   '/docs/mycelium': MyceliumIntro,
   '/docs/mycelium-android': MyceliumAndroidIndex,
+  '/docs/mycelium-android/relay-system': RelaySystemPage,
+  '/docs/mycelium-android/screens': ScreensPage,
   '/docs/nos2x-frog': Nos2xFrogIntro,
   '/docs/nos2x-frog/bugs-fixed': BugsFixedPage,
   '/docs/nos2x-frog/fixing-nos2x-fox': FixingNos2xFoxPage,
