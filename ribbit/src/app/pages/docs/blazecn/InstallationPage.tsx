@@ -5,7 +5,7 @@ export function InstallationPage() {
   return createElement('div', { className: 'space-y-8' },
     createElement(PageHeader, {
       title: 'Installation',
-      description: 'Blazecn follows the shadcn philosophy \u2014 you own the code. Copy the components you need into your project.',
+      description: 'Blazecn follows a simple philosophy \u2014 you own the code. Copy the components you need into your project.',
     }),
 
     createElement('div', { className: 'space-y-6' },
@@ -22,7 +22,7 @@ export function InstallationPage() {
       createElement('div', { className: 'space-y-2' },
         createElement('h3', { className: 'text-sm font-semibold' }, '3. Configure Tailwind CSS v4'),
         createElement('p', { className: 'text-sm text-muted-foreground' },
-          'Add the design tokens to your tailwind.css. Blazecn uses the same semantic token pairs as shadcn/ui.',
+          'Add the design tokens to your tailwind.css. Blazecn uses semantic token pairs as CSS custom properties.',
         ),
         createElement(CodeBlock, { code: "@import \"tailwindcss\";\n\n/* Use .dark class instead of prefers-color-scheme */\n@custom-variant dark (&:is(.dark *));\n\n:root {\n  --background: oklch(1 0 0);\n  --foreground: oklch(0.145 0 0);\n  --primary: oklch(0.45 0.10 150);\n  --primary-foreground: oklch(0.985 0.01 150);\n  /* ... see Design Tokens page for full list */\n}\n\n.dark {\n  --background: oklch(0.145 0 0);\n  --foreground: oklch(0.985 0 0);\n  /* ... */\n}\n\n@theme inline {\n  --color-background: var(--background);\n  --color-foreground: var(--foreground);\n  --color-primary: var(--primary);\n  /* ... bridge all tokens */\n}" }),
       ),

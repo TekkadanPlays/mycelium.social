@@ -3,6 +3,7 @@ import { Kind, createEvent } from '../../nostr/event';
 import { signWithExtension } from '../../nostr/nip07';
 import { getPool } from './relay';
 import { getAuthState } from './auth';
+import { cacheEvent } from '../api/cache';
 
 type Listener = () => void;
 
@@ -20,8 +21,14 @@ let state: ContactsState = {
 
 const listeners: Set<Listener> = new Set();
 
+let notifyScheduled = false;
 function notify() {
-  for (const fn of listeners) fn();
+  if (notifyScheduled) return;
+  notifyScheduled = true;
+  queueMicrotask(() => {
+    notifyScheduled = false;
+    for (const fn of listeners) fn();
+  });
 }
 
 export function getContactsState(): ContactsState {
@@ -37,8 +44,29 @@ export function isFollowing(pubkey: string): boolean {
   return state.following.has(pubkey);
 }
 
+/** Clear all contacts state. */
+export function resetContacts(): void {
+  state = { following: new Set(), isLoaded: false, contactEvent: null };
+  notify();
+}
+
 export function getFollowingList(): string[] {
   return Array.from(state.following);
+}
+
+// Apply a pre-fetched contacts event (from bootstrap indexer query)
+export function applyContactsEvent(event: NostrEvent) {
+  // Only accept if newer than what we have
+  if (state.contactEvent && state.contactEvent.created_at >= event.created_at) return;
+  const following = new Set<string>();
+  for (const tag of event.tags) {
+    if (tag[0] === 'p' && tag[1]) {
+      following.add(tag[1]);
+    }
+  }
+  state = { following, isLoaded: true, contactEvent: event };
+  cacheEvent(event);
+  notify();
 }
 
 export function loadContacts() {
@@ -58,17 +86,11 @@ export function loadContacts() {
     () => {
       sub.unsubscribe();
       if (latest) {
-        const following = new Set<string>();
-        for (const tag of latest.tags) {
-          if (tag[0] === 'p' && tag[1]) {
-            following.add(tag[1]);
-          }
-        }
-        state = { following, isLoaded: true, contactEvent: latest };
-      } else {
+        applyContactsEvent(latest);
+      } else if (!state.isLoaded) {
         state = { following: new Set(), isLoaded: true, contactEvent: null };
+        notify();
       }
-      notify();
     },
   );
 }

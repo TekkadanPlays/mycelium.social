@@ -20,7 +20,7 @@ export class AccordionPage extends Component<{}, { open: string }> {
         title: 'Accordion',
         description: 'A vertically stacked set of interactive headings that each reveal a section of content.',
       }),
-      createElement(DemoBox, { className: 'block min-h-[340px]' },
+      createElement(DemoBox, { className: 'block h-[340px] overflow-hidden' },
         createElement('div', { className: 'max-w-lg mx-auto px-6 py-12' },
           createElement(Accordion, null,
             ...items.map((item) =>

@@ -14,10 +14,13 @@ export function NavigationMenuPage() {
 
     // Demo
     createElement(SectionHeading, { id: 'demo' }, 'Demo'),
-    createElement(DemoBox, { className: 'block p-8' },
-      createElement(NavigationMenu, null,
+    createElement('p', { className: 'text-xs text-muted-foreground mb-3 sm:hidden' },
+      'Scroll horizontally to see the full navigation menu.',
+    ),
+    createElement(DemoBox, { className: 'block p-8 overflow-visible min-h-[320px] items-start' },
+      createElement(NavigationMenu, { className: 'min-w-[500px]' },
         createElement(NavigationMenuList, null,
-          // Getting Started — featured card layout like shadcn
+          // Getting Started — featured card layout
           createElement(NavigationMenuItem, null,
             createElement(NavigationMenuTrigger, null, 'Getting Started'),
             createElement(NavigationMenuContent, { className: 'w-[500px]' },

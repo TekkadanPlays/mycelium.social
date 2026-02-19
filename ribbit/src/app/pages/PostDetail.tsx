@@ -172,7 +172,7 @@ export class PostDetail extends Component<PostDetailProps, PostDetailState> {
     const userDisliked = summary.userReaction === '-';
     const initial = (authorName || '?')[0].toUpperCase();
 
-    return createElement('div', { className: 'space-y-4 max-w-2xl' },
+    return createElement('div', { className: 'mx-auto max-w-2xl px-4 sm:px-6 py-6 space-y-4' },
       // Back link
       createElement(Link, {
         to: '/feed',

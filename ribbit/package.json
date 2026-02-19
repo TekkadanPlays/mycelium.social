@@ -6,8 +6,11 @@
   "scripts": {
     "dev": "bun run build.ts && bun run src/server/index.ts",
     "build": "bun run build.ts",
+    "build:prod": "NODE_ENV=production bun run build.ts",
     "start": "NODE_ENV=production bun run src/server/index.ts",
-    "dev:watch": "bun run --watch src/server/index.ts"
+    "dev:watch": "bun run --watch src/server/index.ts",
+    "lint": "eslint src/",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@noble/curves": "^1.8.0",
@@ -26,13 +29,17 @@
   "devDependencies": {
     "@babel/core": "^7.26.0",
     "@babel/plugin-transform-typescript": "^7.28.6",
+    "@eslint/js": "^10.0.1",
     "@tailwindcss/postcss": "^4.1.18",
     "@types/babel__core": "^7.20.5",
     "@types/bun": "latest",
     "autoprefixer": "^10.4.24",
     "babel-plugin-inferno": "^6.8.5",
+    "cssnano": "^7.1.2",
+    "eslint": "^10.0.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.56.0"
   }
 }

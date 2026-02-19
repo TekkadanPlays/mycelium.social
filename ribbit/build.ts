@@ -1,11 +1,11 @@
 import { transformSync } from '@babel/core';
-import { readdir, readFile, writeFile, mkdir, copyFile } from 'fs/promises';
-import { join, relative, dirname, extname } from 'path';
+import { readdir, readFile, writeFile, mkdir, copyFile, rm } from 'fs/promises';
+import { join, relative, extname } from 'path';
 import postcss from 'postcss';
 import tailwindPostcss from '@tailwindcss/postcss';
 import autoprefixer from 'autoprefixer';
 
-const SRC_DIR = join(import.meta.dir, 'src', 'app');
+const IS_PROD = process.env.NODE_ENV === 'production';
 const PUBLIC_DIR = join(import.meta.dir, 'public');
 const OUT_DIR = join(import.meta.dir, 'dist', 'public');
 const ASSETS_DIR = join(OUT_DIR, 'assets');
@@ -14,52 +14,16 @@ async function ensureDir(dir: string) {
   await mkdir(dir, { recursive: true });
 }
 
-async function getAllFiles(dir: string, files: string[] = []): Promise<string[]> {
-  const entries = await readdir(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = join(dir, entry.name);
-    if (entry.isDirectory()) {
-      await getAllFiles(fullPath, files);
-    } else {
-      files.push(fullPath);
-    }
-  }
-  return files;
-}
-
-async function transformInfernoFile(filePath: string): Promise<string> {
-  const source = await readFile(filePath, 'utf-8');
-  const ext = extname(filePath);
-
-  if (ext !== '.tsx' && ext !== '.jsx') {
-    return source;
-  }
-
-  const result = transformSync(source, {
-    filename: filePath,
-    presets: [],
-    plugins: [
-      ['babel-plugin-inferno', { imports: true }],
-      ['@babel/plugin-transform-typescript', { isTSX: true, allExtensions: true, allowDeclareFields: true }],
-    ],
-    sourceMaps: false,
-  });
-
-  if (!result || !result.code) {
-    throw new Error(`Babel transform failed for ${filePath}`);
-  }
-
-  return result.code;
-}
-
 async function build() {
-  console.log('Building ribbit.network...');
+  console.log(`Building ribbit.network... (${IS_PROD ? 'production' : 'development'})`);
   const startTime = Date.now();
 
+  // Clean previous build
+  await rm(OUT_DIR, { recursive: true, force: true }).catch(() => {});
   await ensureDir(OUT_DIR);
   await ensureDir(ASSETS_DIR);
 
-  // Copy public files (index.html, etc.)
+  // ── 1. Copy public files ──────────────────────────────────────────────
   try {
     const publicFiles = await readdir(PUBLIC_DIR);
     for (const file of publicFiles) {
@@ -70,71 +34,35 @@ async function build() {
     console.warn('  No public directory found, skipping');
   }
 
-  // Collect all app source files
-  const appFiles = await getAllFiles(SRC_DIR).catch(() => [] as string[]);
-  const storeDir = join(import.meta.dir, 'src', 'app', 'store');
-  const hooksDir = join(import.meta.dir, 'src', 'app', 'hooks');
-  const componentsDir = join(import.meta.dir, 'src', 'app', 'components');
-  const pagesDir = join(import.meta.dir, 'src', 'app', 'pages');
-
-  // Process styles through PostCSS (Tailwind v4)
+  // ── 2. Process styles through PostCSS (Tailwind v4 + autoprefixer + cssnano) ─
   const stylesDir = join(import.meta.dir, 'src', 'styles');
   try {
     const tailwindInput = join(stylesDir, 'tailwind.css');
     const tailwindSrc = await readFile(tailwindInput, 'utf-8');
-    const processor = postcss([tailwindPostcss(), autoprefixer()]);
-    const tailwindResult = await processor.process(tailwindSrc, { from: tailwindInput, to: join(ASSETS_DIR, 'tailwind.css') });
-    await writeFile(join(ASSETS_DIR, 'tailwind.css'), tailwindResult.css);
-    console.log('  Processed tailwind.css through PostCSS');
 
-    // Copy main.css (base styles) as-is
+    const plugins: postcss.AcceptedPlugin[] = [tailwindPostcss(), autoprefixer()];
+    if (IS_PROD) {
+      const cssnano = (await import('cssnano')).default;
+      plugins.push(cssnano({ preset: 'default' }));
+    }
+
+    const processor = postcss(plugins);
+    const tailwindResult = await processor.process(tailwindSrc, {
+      from: tailwindInput,
+      to: join(ASSETS_DIR, 'tailwind.css'),
+      map: IS_PROD ? false : { inline: true },
+    });
+    await writeFile(join(ASSETS_DIR, 'tailwind.css'), tailwindResult.css);
+    console.log(`  Processed tailwind.css through PostCSS${IS_PROD ? ' (minified)' : ''}`);
+
+    // Copy main.css (base styles)
     await copyFile(join(stylesDir, 'main.css'), join(ASSETS_DIR, 'main.css'));
     console.log('  Copied main.css');
   } catch (err) {
     console.warn('  Style processing error:', err);
   }
 
-  // Use Bun.build for the main bundle (with external babel transform)
-  // First, transform all TSX/JSX files through babel-plugin-inferno
-  // Then bundle with Bun
-
-  // Create a temp directory for transformed files
-  const tmpDir = join(import.meta.dir, '.build-tmp');
-  await ensureDir(tmpDir);
-
-  // Transform all source files (app + nostr lib)
-  const allSrcDirs = [
-    join(import.meta.dir, 'src', 'app'),
-    join(import.meta.dir, 'src', 'nostr'),
-  ];
-
-  for (const srcDir of allSrcDirs) {
-    try {
-      const files = await getAllFiles(srcDir);
-      for (const file of files) {
-        const rel = relative(join(import.meta.dir, 'src'), file);
-        const outPath = join(tmpDir, rel).replace(/\.tsx?$/, '.js');
-        await ensureDir(dirname(outPath));
-
-        const ext = extname(file);
-        if (ext === '.tsx' || ext === '.jsx') {
-          const transformed = await transformInfernoFile(file);
-          await writeFile(outPath, transformed);
-        } else if (ext === '.ts') {
-          // Let Bun handle plain TS
-          const source = await readFile(file, 'utf-8');
-          await writeFile(outPath, source);
-        } else {
-          await copyFile(file, outPath);
-        }
-      }
-    } catch (err) {
-      console.warn(`  Skipping ${srcDir}:`, err);
-    }
-  }
-
-  // Bundle with Bun
-  const entryPoint = join(tmpDir, 'app', 'index.js');
+  // ── 3. Bundle with Bun (Babel plugin for Inferno JSX) ─────────────────
   try {
     const result = await Bun.build({
       entrypoints: [join(import.meta.dir, 'src', 'app', 'index.tsx')],
@@ -142,11 +70,13 @@ async function build() {
       target: 'browser',
       format: 'esm',
       splitting: false,
-      minify: process.env.NODE_ENV === 'production',
+      minify: IS_PROD,
+      sourcemap: IS_PROD ? 'none' : 'linked',
       naming: '[name].[hash].[ext]',
       define: {
-        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+        'process.env.NODE_ENV': JSON.stringify(IS_PROD ? 'production' : 'development'),
       },
+      drop: IS_PROD ? ['debugger'] : [],
       plugins: [
         {
           name: 'inferno-jsx',
@@ -158,9 +88,13 @@ async function build() {
                 presets: [],
                 plugins: [
                   ['babel-plugin-inferno', { imports: true }],
-                  ['@babel/plugin-transform-typescript', { isTSX: true, allExtensions: true, allowDeclareFields: true }],
+                  ['@babel/plugin-transform-typescript', {
+                    isTSX: true,
+                    allExtensions: true,
+                    allowDeclareFields: true,
+                  }],
                 ],
-                sourceMaps: false,
+                sourceMaps: IS_PROD ? false : 'inline',
               });
               return {
                 contents: result?.code || '',
@@ -180,7 +114,7 @@ async function build() {
       process.exit(1);
     }
 
-    // Write a manifest so index.html can reference the hashed filename
+    // Update index.html with the hashed bundle path
     const outputs = result.outputs.map((o) => ({
       path: relative(OUT_DIR, o.path),
       kind: o.kind,
@@ -188,8 +122,6 @@ async function build() {
 
     const jsOutput = outputs.find((o) => o.path.endsWith('.js'));
     if (jsOutput) {
-      // Update index.html with the correct script path
-      // Normalize Windows backslashes and ensure correct /assets/ prefix
       const bundlePath = '/' + jsOutput.path.replace(/\\/g, '/');
       const indexPath = join(OUT_DIR, 'index.html');
       let html = await readFile(indexPath, 'utf-8');
@@ -197,15 +129,12 @@ async function build() {
       await writeFile(indexPath, html);
     }
 
-    console.log(`  Bundled ${result.outputs.length} files`);
+    const totalSize = result.outputs.reduce((sum, o) => sum + o.size, 0);
+    console.log(`  Bundled ${result.outputs.length} file(s) — ${(totalSize / 1024).toFixed(1)} KB`);
   } catch (err) {
     console.error('Bundle error:', err);
     process.exit(1);
   }
-
-  // Clean up temp dir
-  const { rm } = await import('fs/promises');
-  await rm(tmpDir, { recursive: true, force: true }).catch(() => {});
 
   const elapsed = Date.now() - startTime;
   console.log(`Build complete in ${elapsed}ms`);

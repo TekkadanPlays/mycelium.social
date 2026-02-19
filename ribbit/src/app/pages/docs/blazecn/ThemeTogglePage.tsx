@@ -26,7 +26,7 @@ export function ThemeTogglePage() {
     // Base color theme
     createElement(SectionHeading, { id: 'base-theme' }, 'Base Color Theme'),
     createElement('p', { className: 'text-sm text-muted-foreground mb-3' },
-      'Choose a base color palette. Each theme adjusts the primary color (buttons, links, focus rings) while keeping neutral surfaces. Includes Ribbit green, Nostr purple, and Bitcoin orange.',
+      'Choose a base color palette. Each theme adjusts the primary color (buttons, links, focus rings) while keeping neutral surfaces.',
     ),
     createElement(DemoBox, { className: 'block p-6' },
       createElement(ThemePicker, null),
@@ -34,16 +34,34 @@ export function ThemeTogglePage() {
 
     // Available themes
     createElement(SectionHeading, { id: 'themes' }, 'Available Themes'),
-    createElement('div', { className: 'space-y-2' },
-      ...[
-        { name: 'Neutral', desc: 'Pure black/white with zero chroma. The shadcn default.' },
-        { name: 'Ribbit', desc: 'Muted green \u2014 the Ribbit frog identity.' },
-        { name: 'Nostr', desc: 'Purple accent based on #8e30eb.' },
-        { name: 'Bitcoin', desc: 'Orange accent based on #F7931A.' },
-      ].map((t) =>
-        createElement('div', { key: t.name, className: 'flex items-baseline gap-2' },
-          createElement('span', { className: 'text-sm font-semibold' }, t.name),
-          createElement('span', { className: 'text-sm text-muted-foreground' }, '\u2014 ' + t.desc),
+    createElement('p', { className: 'text-sm text-muted-foreground mb-3' },
+      '20 themes with full light/dark OKLCH token sets. Neutrals change surface colors; color themes change primary accent.',
+    ),
+    createElement('div', { className: 'space-y-4' },
+      createElement('div', null,
+        createElement('p', { className: 'text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2' }, 'Neutrals'),
+        createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-4 gap-1.5' },
+          ...[
+            { name: 'Neutral', desc: 'Pure black/white, zero chroma. Default.' },
+            { name: 'Stone', desc: 'Warm neutral with slight yellow undertone.' },
+            { name: 'Zinc', desc: 'Cool neutral with blue-purple undertone.' },
+            { name: 'Gray', desc: 'Blue-tinted neutral.' },
+          ].map((t) =>
+            createElement('div', { key: t.name, className: 'text-sm' },
+              createElement('span', { className: 'font-medium' }, t.name),
+              createElement('span', { className: 'text-muted-foreground' }, ' \u2014 ' + t.desc),
+            ),
+          ),
+        ),
+      ),
+      createElement('div', null,
+        createElement('p', { className: 'text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2' }, 'Colors'),
+        createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-4 gap-1.5' },
+          ...['Amber', 'Blue', 'Cyan', 'Emerald', 'Fuchsia', 'Green', 'Indigo', 'Lime',
+              'Orange', 'Pink', 'Purple', 'Red', 'Rose', 'Sky', 'Teal', 'Violet',
+          ].map((name) =>
+            createElement('span', { key: name, className: 'text-sm font-medium' }, name),
+          ),
         ),
       ),
     ),
@@ -62,7 +80,7 @@ createElement(ThemePicker, null)
 // Programmatic API
 import { setBaseTheme, setDarkMode, toggleDarkMode } from '@/store/theme'
 
-setBaseTheme('ribbit')  // Switch to Ribbit green
+setBaseTheme('lime')    // Switch to Lime (default)
 setDarkMode(true)       // Force dark mode
 toggleDarkMode()        // Toggle dark/light` }),
 
@@ -74,7 +92,7 @@ toggleDarkMode()        // Toggle dark/light` }),
       ),
       createElement('ul', { className: 'text-sm text-muted-foreground space-y-1 list-disc pl-5' },
         createElement('li', null, 'Base colors defined in :root (light) and .dark (dark) using oklch values'),
-        createElement('li', null, 'Theme classes (.theme-ribbit, .theme-nostr, .theme-bitcoin) override primary/ring CSS variables on <html>'),
+        createElement('li', null, 'Theme classes (.theme-lime, .theme-blue, etc.) override primary/ring CSS variables on <html>'),
         createElement('li', null, 'Dark variants use .dark.theme-* compound selectors'),
         createElement('li', null, 'Both dark mode and base theme persist to localStorage'),
         createElement('li', null, 'initTheme() in App.tsx applies persisted preferences on load'),
@@ -97,12 +115,12 @@ toggleDarkMode()        // Toggle dark/light` }),
 }
 
 /* Theme override */
-.theme-ribbit {
-  --primary: oklch(0.45 0.10 150);    /* Green */
-  --primary-foreground: oklch(0.985 0.01 150);
+.theme-lime {
+  --primary: oklch(0.65 0.18 132);
+  --primary-foreground: oklch(0.99 0.03 121);
 }
-.dark.theme-ribbit {
-  --primary: oklch(0.65 0.10 155);
+.dark.theme-lime {
+  --primary: oklch(0.77 0.20 131);
 }` }),
 
     // Props

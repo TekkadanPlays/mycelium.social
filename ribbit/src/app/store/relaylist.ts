@@ -2,9 +2,17 @@ import type { NostrEvent } from '../../nostr/event';
 import { Kind } from '../../nostr/event';
 import { getPool } from './relay';
 import { getAuthState } from './auth';
+import { addRelayToProfile, getRelayManagerState } from './relaymanager';
 
 // NIP-65: Relay List Metadata (kind 10002)
 // Tags: ["r", <relay-url>] or ["r", <relay-url>, "read"|"write"]
+//
+// Outbox model:
+//   - Write relays → user's Outbox profile (where they publish)
+//   - Read relays  → user's Inbox profile (where they read from)
+//   - On login, NIP-65 data auto-populates the relay manager profiles
+//   - For other users, fetchRelayListForPubkey() returns their relay list
+//     so we can find their posts in their outbox relays
 
 export interface RelayListEntry {
   url: string;
@@ -86,12 +94,31 @@ export function loadRelayList() {
           isLoaded: true,
           event: latest,
         };
+        // Auto-populate relay manager Outbox/Inbox from NIP-65
+        syncRelayListToManager(state.relays);
       } else {
         state = { relays: [], isLoaded: true, event: null };
       }
       notify();
     },
   );
+}
+
+// Sync NIP-65 relay list into relay manager Outbox/Inbox profiles.
+// Only adds relays that aren't already present — never removes user-added relays.
+function syncRelayListToManager(relays: RelayListEntry[]) {
+  const mgr = getRelayManagerState();
+  const outbox = mgr.profiles.find((p) => p.id === 'outbox');
+  const inbox = mgr.profiles.find((p) => p.id === 'inbox');
+
+  for (const entry of relays) {
+    if (entry.write && outbox && !outbox.relays.includes(entry.url)) {
+      addRelayToProfile('outbox', entry.url);
+    }
+    if (entry.read && inbox && !inbox.relays.includes(entry.url)) {
+      addRelayToProfile('inbox', entry.url);
+    }
+  }
 }
 
 // Fetch relay list for any pubkey (for outbox model)

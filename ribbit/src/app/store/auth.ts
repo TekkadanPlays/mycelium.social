@@ -1,5 +1,14 @@
 import { hasNip07, getNip07PublicKey } from '../../nostr/nip07';
 import { isAndroid, requestPublicKey as nip55RequestPubkey, parseNip55Callback, clearNip55Callback } from '../../nostr/nip55';
+import { flushAndResetIngest } from '../api/cache';
+import { resetProfiles } from './profiles';
+import { resetContacts } from './contacts';
+import { resetFeed } from './feed';
+import { resetNotifications } from './notifications';
+import { resetBootstrap } from './bootstrap';
+import { resetRelayList } from './relaylist';
+import { cleanupCrawler } from './relay-crawler';
+import { getPool } from './relay';
 
 export interface AuthState {
   pubkey: string | null;
@@ -64,7 +73,27 @@ export async function login(): Promise<void> {
   notify();
 }
 
+/**
+ * Reset all per-user stores. Called on sign-out and before account switch.
+ * Flushes pending cache writes, cancels subscriptions, clears in-memory state.
+ */
+export function resetAllStores(): void {
+  // Flush pending write-through events before clearing
+  flushAndResetIngest();
+  // Cancel active subscriptions and clear per-user state
+  resetFeed();
+  resetNotifications();
+  resetContacts();
+  resetProfiles();
+  resetBootstrap();
+  resetRelayList();
+  cleanupCrawler();
+  // Clear pool dedup set so stale IDs don't suppress events for the new account
+  getPool().clearSeenEvents();
+}
+
 export function logout() {
+  resetAllStores();
   state = { pubkey: null, isLoading: false, error: null };
   if (typeof localStorage !== 'undefined') {
     localStorage.removeItem('ribbit_pubkey');

@@ -1,90 +1,103 @@
 import { Component } from 'inferno';
 import { createElement } from 'inferno-create-element';
 import { Link } from 'inferno-router';
-import type { NostrEvent } from '../../nostr/event';
-import { Kind } from '../../nostr/event';
-import { getPool } from '../store/relay';
 import { getAuthState } from '../store/auth';
-import { getProfile, fetchProfile, subscribeProfiles, getDisplayName } from '../store/profiles';
+import { getProfile, subscribeProfiles, getDisplayName } from '../store/profiles';
+import {
+  getNotificationsState,
+  subscribeNotifications,
+  loadNotifications,
+  markAllSeen,
+} from '../store/notifications';
+import type { Notification, NotifType } from '../store/notifications';
 import { Spinner } from '../ui/Spinner';
+import { Badge } from '../ui/Badge';
 
-interface Notification {
-  id: string;
-  type: 'reply' | 'reaction' | 'mention' | 'repost';
-  event: NostrEvent;
-  targetId: string | null;
-}
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-interface NotificationsState {
+type TabKey = 'all' | NotifType;
+
+const TABS: { key: TabKey; label: string; icon: string; color: string }[] = [
+  { key: 'all',      label: 'All',       icon: '\u{1F514}', color: 'text-foreground' },
+  { key: 'reaction', label: 'Reactions',  icon: '\u2764\uFE0F', color: 'text-rose-500' },
+  { key: 'reply',    label: 'Replies',    icon: '\u{1F4AC}', color: 'text-blue-500' },
+  { key: 'mention',  label: 'Mentions',   icon: '\u{1F4E2}', color: 'text-amber-500' },
+  { key: 'repost',   label: 'Reposts',    icon: '\u{1F501}', color: 'text-emerald-500' },
+];
+
+const LABEL_MAP: Record<NotifType, string> = {
+  reaction: 'reacted to your post',
+  reply: 'replied to your post',
+  mention: 'mentioned you',
+  repost: 'reposted your note',
+};
+
+const ACCENT_MAP: Record<NotifType, string> = {
+  reaction: 'border-l-rose-500/40',
+  reply: 'border-l-blue-500/40',
+  mention: 'border-l-amber-500/40',
+  repost: 'border-l-emerald-500/40',
+};
+
+const ICON_BG_MAP: Record<NotifType, string> = {
+  reaction: 'bg-rose-500/10 text-rose-500',
+  reply: 'bg-blue-500/10 text-blue-500',
+  mention: 'bg-amber-500/10 text-amber-500',
+  repost: 'bg-emerald-500/10 text-emerald-500',
+};
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+interface NotificationsPageState {
   notifications: Notification[];
   isLoading: boolean;
+  activeTab: TabKey;
+  lastSeenTimestamp: number;
 }
 
-export class Notifications extends Component<{}, NotificationsState> {
+export class Notifications extends Component<{}, NotificationsPageState> {
   private unsubProfiles: (() => void) | null = null;
-  declare state: NotificationsState;
+  private unsubNotifs: (() => void) | null = null;
+  declare state: NotificationsPageState;
 
   constructor(props: {}) {
     super(props);
+    const ns = getNotificationsState();
     this.state = {
-      notifications: [],
-      isLoading: true,
+      notifications: ns.notifications,
+      isLoading: ns.isLoading,
+      activeTab: 'all',
+      lastSeenTimestamp: ns.lastSeenTimestamp,
     };
   }
 
   componentDidMount() {
     this.unsubProfiles = subscribeProfiles(() => this.forceUpdate());
-    this.loadNotifications();
+    this.unsubNotifs = subscribeNotifications(() => {
+      const ns = getNotificationsState();
+      this.setState({
+        ...this.state,
+        notifications: ns.notifications,
+        isLoading: ns.isLoading,
+        lastSeenTimestamp: ns.lastSeenTimestamp,
+      });
+    });
+    // Load notifications if not already loaded
+    const ns = getNotificationsState();
+    if (ns.notifications.length === 0 && !ns.isLoading) {
+      loadNotifications();
+    }
+    // Mark as seen when viewing
+    markAllSeen();
   }
 
   componentWillUnmount() {
     this.unsubProfiles?.();
-  }
-
-  loadNotifications() {
-    const auth = getAuthState();
-    if (!auth.pubkey) {
-      this.setState({ notifications: [], isLoading: false });
-      return;
-    }
-
-    const pool = getPool();
-    const seen = new Set<string>();
-    const notifs: Notification[] = [];
-
-    // Fetch reactions to my posts, replies mentioning me, reposts of my content
-    const sub = pool.subscribe(
-      [
-        { kinds: [Kind.Reaction], '#p': [auth.pubkey], limit: 50 },
-        { kinds: [Kind.Text], '#p': [auth.pubkey], limit: 50 },
-        { kinds: [6], '#p': [auth.pubkey], limit: 20 },
-      ],
-      (event) => {
-        if (seen.has(event.id)) return;
-        if (event.pubkey === auth.pubkey) return; // skip own events
-        seen.add(event.id);
-        fetchProfile(event.pubkey);
-
-        const eTag = event.tags.find((t) => t[0] === 'e');
-        const targetId = eTag ? eTag[1] : null;
-
-        let type: Notification['type'] = 'mention';
-        if (event.kind === Kind.Reaction) type = 'reaction';
-        else if (event.kind === 6) type = 'repost';
-        else if (event.kind === Kind.Text && targetId) type = 'reply';
-
-        notifs.push({ id: event.id, type, event, targetId });
-
-        // Sort by time, newest first
-        notifs.sort((a, b) => b.event.created_at - a.event.created_at);
-
-        this.setState({ notifications: [...notifs], isLoading: false });
-      },
-      () => {
-        sub.unsubscribe();
-        this.setState({ ...this.state, isLoading: false });
-      },
-    );
+    this.unsubNotifs?.();
   }
 
   formatTime(timestamp: number): string {
@@ -97,84 +110,144 @@ export class Notifications extends Component<{}, NotificationsState> {
     return new Date(timestamp * 1000).toLocaleDateString();
   }
 
+  getFiltered(): Notification[] {
+    const { notifications, activeTab } = this.state;
+    if (activeTab === 'all') return notifications;
+    return notifications.filter((n) => n.type === activeTab);
+  }
+
+  getCounts(): Record<TabKey, number> {
+    const { notifications } = this.state;
+    return {
+      all: notifications.length,
+      reaction: notifications.filter((n) => n.type === 'reaction').length,
+      reply: notifications.filter((n) => n.type === 'reply').length,
+      mention: notifications.filter((n) => n.type === 'mention').length,
+      repost: notifications.filter((n) => n.type === 'repost').length,
+    };
+  }
+
   render() {
     const auth = getAuthState();
-    const { notifications, isLoading } = this.state;
+    const { isLoading, activeTab } = this.state;
 
     if (!auth.pubkey) {
-      return createElement('div', { className: 'text-center py-16' },
-        createElement('div', { className: 'text-4xl mb-3' }, '\u{1F514}'),
-        createElement('p', { className: 'text-sm font-medium text-muted-foreground' }, 'Sign in to see notifications'),
+      return createElement('div', { className: 'flex flex-col items-center justify-center min-h-[60vh]' },
+        createElement('div', { className: 'text-5xl mb-4' }, '\u{1F514}'),
+        createElement('p', { className: 'text-lg font-medium text-muted-foreground' }, 'Sign in to see notifications'),
       );
     }
 
-    return createElement('div', { className: 'space-y-3' },
-      createElement('h1', { className: 'text-lg font-bold tracking-tight' }, 'Notifications'),
+    const filtered = this.getFiltered();
+    const counts = this.getCounts();
 
-      isLoading
-        ? createElement('div', { className: 'flex justify-center py-16' },
-            createElement(Spinner, null),
-          )
-        : null,
-
-      notifications.length > 0
-        ? createElement('div', { className: 'space-y-1' },
-            ...notifications.map((notif) => {
-              const name = getDisplayName(notif.event.pubkey);
-              const initial = (name || '?')[0].toUpperCase();
-              const profile = getProfile(notif.event.pubkey);
-
-              const iconMap = { reaction: '\u2764\uFE0F', reply: '\u{1F4AC}', mention: '\u{1F4E2}', repost: '\u{1F501}' };
-              const labelMap = { reaction: 'reacted to your post', reply: 'replied to your post', mention: 'mentioned you', repost: 'reposted your note' };
-
-              return createElement('div', {
-                key: notif.id,
-                className: 'rounded-lg border border-border p-3 flex items-start gap-3 hover:border-border/80 transition-colors',
+    return createElement('div', { className: 'flex flex-1 flex-col' },
+      // ── Sticky tab bar ──
+      createElement('div', { className: 'sticky top-14 z-30 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60' },
+        createElement('div', { className: 'mx-auto max-w-3xl px-4 sm:px-6' },
+          createElement('div', { className: 'flex items-center gap-1 overflow-x-auto -mb-px' },
+            ...TABS.map((tab) =>
+              createElement('button', {
+                key: tab.key,
+                type: 'button',
+                onClick: () => this.setState({ ...this.state, activeTab: tab.key }),
+                className: [
+                  'whitespace-nowrap border-b-2 py-3 px-3 text-sm font-medium transition-colors cursor-pointer flex items-center gap-2',
+                  activeTab === tab.key
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border',
+                ].join(' '),
               },
-                // Avatar
-                profile?.picture
-                  ? createElement('img', { src: profile.picture, alt: '', className: 'w-7 h-7 rounded-full object-cover shrink-0' })
-                  : createElement('div', { className: 'w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center shrink-0' },
-                      createElement('span', { className: 'text-[10px] font-semibold text-primary' }, initial),
+                createElement('span', null, tab.icon),
+                tab.label,
+                counts[tab.key] > 0
+                  ? createElement('span', {
+                      className: 'text-[10px] font-semibold rounded-full px-1.5 py-0.5 leading-none ' +
+                        (activeTab === tab.key ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'),
+                    }, String(counts[tab.key]))
+                  : null,
+              ),
+            ),
+          ),
+        ),
+      ),
+
+      // ── Content ──
+      createElement('div', { className: 'flex-1' },
+        createElement('div', { className: 'mx-auto max-w-3xl px-4 sm:px-6 py-4' },
+
+          isLoading
+            ? createElement('div', { className: 'flex justify-center py-16' },
+                createElement(Spinner, null),
+              )
+            : null,
+
+          filtered.length > 0
+            ? createElement('div', { className: 'space-y-2' },
+                ...filtered.map((notif) => {
+                  const name = getDisplayName(notif.event.pubkey);
+                  const initial = (name || '?')[0].toUpperCase();
+                  const profile = getProfile(notif.event.pubkey);
+                  const isUnseen = notif.event.created_at > this.state.lastSeenTimestamp;
+
+                  return createElement('div', {
+                    key: notif.id,
+                    className: 'rounded-lg border border-l-[3px] ' + ACCENT_MAP[notif.type] + ' p-4 flex items-start gap-3 transition-colors '
+                      + (isUnseen ? 'bg-primary/5 border-border' : 'border-border hover:bg-accent/30'),
+                  },
+                    // Type icon
+                    createElement('div', {
+                      className: 'w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm ' + ICON_BG_MAP[notif.type],
+                    }, TABS.find((t) => t.key === notif.type)?.icon || ''),
+
+                    // Avatar
+                    profile?.picture
+                      ? createElement('img', { src: profile.picture, alt: '', className: 'w-8 h-8 rounded-full object-cover shrink-0' })
+                      : createElement('div', { className: 'w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0' },
+                          createElement('span', { className: 'text-xs font-semibold text-primary' }, initial),
+                        ),
+
+                    // Content
+                    createElement('div', { className: 'flex-1 min-w-0' },
+                      createElement('p', { className: 'text-sm' },
+                        createElement(Link, {
+                          to: `/u/${notif.event.pubkey}`,
+                          className: 'font-semibold text-foreground hover:text-primary transition-colors',
+                        }, name),
+                        createElement('span', { className: 'text-muted-foreground' }, ' ' + LABEL_MAP[notif.type]),
+                      ),
+                      // Preview content for replies/mentions
+                      notif.type === 'reply' || notif.type === 'mention'
+                        ? createElement(Link, {
+                            to: notif.targetId ? `/post/${notif.targetId}` : '#',
+                            className: 'block mt-1.5 text-xs text-muted-foreground line-clamp-2 hover:text-foreground/60 transition-colors leading-relaxed',
+                          }, notif.event.content.slice(0, 200) + (notif.event.content.length > 200 ? '...' : ''))
+                        : null,
+                      // Reaction content
+                      notif.type === 'reaction' && notif.event.content && notif.event.content !== '+'
+                        ? createElement('span', { className: 'text-lg mt-1 inline-block' }, notif.event.content)
+                        : null,
                     ),
 
-                // Content
-                createElement('div', { className: 'flex-1 min-w-0' },
-                  createElement('p', { className: 'text-sm' },
-                    createElement('span', null, iconMap[notif.type] + ' '),
-                    createElement(Link, {
-                      to: `/u/${notif.event.pubkey}`,
-                      className: 'font-medium text-foreground/80 hover:text-foreground transition-colors',
-                    }, name),
-                    createElement('span', { className: 'text-muted-foreground' }, ` ${labelMap[notif.type]}`),
+                    // Time
+                    createElement('span', { className: 'text-xs text-muted-foreground/50 shrink-0 mt-0.5' },
+                      this.formatTime(notif.event.created_at),
+                    ),
+                  );
+                }),
+              )
+            : !isLoading
+              ? createElement('div', { className: 'text-center py-20' },
+                  createElement('div', { className: 'text-5xl mb-4' },
+                    activeTab === 'all' ? '\u{1F389}' : TABS.find((t) => t.key === activeTab)?.icon || '',
                   ),
-                  // Preview content for replies/mentions
-                  notif.type === 'reply' || notif.type === 'mention'
-                    ? createElement(Link, {
-                        to: notif.targetId ? `/post/${notif.targetId}` : '#',
-                        className: 'block mt-1 text-xs text-muted-foreground line-clamp-2 hover:text-foreground/60 transition-colors',
-                      }, notif.event.content.slice(0, 150) + (notif.event.content.length > 150 ? '...' : ''))
-                    : null,
-                  // Reaction content
-                  notif.type === 'reaction' && notif.event.content && notif.event.content !== '+'
-                    ? createElement('span', { className: 'text-sm' }, notif.event.content)
-                    : null,
-                ),
-
-                // Time
-                createElement('span', { className: 'text-xs text-muted-foreground/50 shrink-0' },
-                  this.formatTime(notif.event.created_at),
-                ),
-              );
-            }),
-          )
-        : !isLoading
-          ? createElement('div', { className: 'text-center py-16' },
-              createElement('div', { className: 'text-4xl mb-3' }, '\u{1F389}'),
-              createElement('p', { className: 'text-sm font-medium text-muted-foreground' }, 'All caught up!'),
-              createElement('p', { className: 'text-xs text-muted-foreground mt-1' }, 'No notifications yet.'),
-            )
-          : null,
+                  createElement('p', { className: 'text-sm font-medium text-muted-foreground' },
+                    activeTab === 'all' ? 'All caught up!' : 'No ' + activeTab + 's yet.',
+                  ),
+                )
+              : null,
+        ),
+      ),
     );
   }
 }

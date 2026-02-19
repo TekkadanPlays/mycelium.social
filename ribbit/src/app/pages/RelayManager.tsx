@@ -1,6 +1,7 @@
 import { Component } from 'inferno';
 import { createElement } from 'inferno-create-element';
 import { Link } from 'inferno-router';
+import { RelayLink } from '../components/RelayLink';
 import {
   getRelayManagerState,
   subscribeRelayManager,
@@ -103,7 +104,7 @@ export class RelayManager extends Component<{}, RelayManagerPageState> {
     const { profiles, activeProfileId, relayStatuses, newRelayUrl, newProfileName, editingProfileId, editingName } = this.state;
     const activeProfile = profiles.find((p) => p.id === activeProfileId) || profiles[0];
 
-    return createElement('div', { className: 'space-y-6 max-w-3xl' },
+    return createElement('div', { className: 'mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-6' },
       // Header
       createElement('div', { className: 'flex items-center justify-between' },
         createElement('div', null,
@@ -246,7 +247,7 @@ export class RelayManager extends Component<{}, RelayManagerPageState> {
                   createElement('div', { className: 'flex items-center gap-3 min-w-0' },
                     createElement('span', { className: `w-2 h-2 rounded-full shrink-0 ${statusColor}` }),
                     createElement('div', { className: 'min-w-0' },
-                      createElement('p', { className: 'text-sm font-mono truncate' }, url),
+                      createElement(RelayLink, { url, className: 'text-sm font-mono truncate text-foreground hover:text-primary transition-colors' }),
                       createElement('p', { className: 'text-[11px] text-muted-foreground' }, statusText),
                     ),
                   ),

@@ -41,7 +41,7 @@ export function KajiRelayPage() {
               { type: 'OK', desc: 'Resolves the publish() promise with { accepted, message }' },
               { type: 'NOTICE', desc: 'Logged to console.warn' },
               { type: 'CLOSED', desc: 'Triggers onClosed callback, removes subscription' },
-              { type: 'AUTH', desc: 'NIP-42 challenge \u2014 stub present, full impl in ribbit\'s relay.ts' },
+              { type: 'AUTH', desc: 'NIP-42 challenge \u2014 stub present, full impl in mycelium\'s relay.ts' },
             ]).map((row, i) =>
               createElement('tr', {
                 key: row.type,

@@ -49,10 +49,12 @@ relaysRoute.get('/relays/health', async (c) => {
   return c.json(data, res.status as any);
 });
 
-// GET /relays — list relays with pagination
+// GET /relays — list relays with pagination and sorting
 relaysRoute.get('/relays', async (c) => {
-  const qs = c.req.url.split('?')[1] || '';
-  const res = await proxy(`/relays${qs ? '?' + qs : ''}`);
+  // Forward all query params to rstate
+  const url = new URL(c.req.url, 'http://localhost');
+  const qs = url.search; // includes leading '?'
+  const res = await proxy(`/relays${qs}`);
   const data = await res.json();
   return c.json(data, res.status as any);
 });
@@ -117,6 +119,75 @@ relaysRoute.get('/relays/by/country', async (c) => {
 relaysRoute.post('/relays/compare', async (c) => {
   const body = await c.req.text();
   const res = await proxy('/relays/compare', { method: 'POST', body });
+  const data = await res.json();
+  return c.json(data, res.status as any);
+});
+
+// POST /relays/offline — find offline relays
+relaysRoute.post('/relays/offline', async (c) => {
+  const body = await c.req.text();
+  const res = await proxy('/relays/offline', { method: 'POST', body });
+  const data = await res.json();
+  return c.json(data, res.status as any);
+});
+
+// POST /relays/dead — find dead relays
+relaysRoute.post('/relays/dead', async (c) => {
+  const body = await c.req.text();
+  const res = await proxy('/relays/dead', { method: 'POST', body });
+  const data = await res.json();
+  return c.json(data, res.status as any);
+});
+
+// GET /relays/nearby — geospatial relay search
+relaysRoute.get('/relays/nearby', async (c) => {
+  const url = new URL(c.req.url, 'http://localhost');
+  const res = await proxy(`/relays/nearby${url.search}`);
+  const data = await res.json();
+  return c.json(data, res.status as any);
+});
+
+// GET /relays/labels — get labels for a specific relay
+relaysRoute.get('/relays/labels', async (c) => {
+  const url = new URL(c.req.url, 'http://localhost');
+  const res = await proxy(`/relays/labels${url.search}`);
+  const data = await res.json();
+  return c.json(data, res.status as any);
+});
+
+// GET /relays/labels/list — list all available labels
+relaysRoute.get('/relays/labels/list', async (c) => {
+  const res = await proxy('/relays/labels/list');
+  const data = await res.json();
+  return c.json(data, res.status as any);
+});
+
+// GET /relays/by/label — find relays with a specific label
+relaysRoute.get('/relays/by/label', async (c) => {
+  const url = new URL(c.req.url, 'http://localhost');
+  const res = await proxy(`/relays/by/label${url.search}`);
+  const data = await res.json();
+  return c.json(data, res.status as any);
+});
+
+// GET /relays/by/network — group by network type
+relaysRoute.get('/relays/by/network', async (c) => {
+  const res = await proxy('/relays/by/network');
+  const data = await res.json();
+  return c.json(data, res.status as any);
+});
+
+// GET /monitors — list monitors
+relaysRoute.get('/monitors', async (c) => {
+  const res = await proxy('/monitors');
+  const data = await res.json();
+  return c.json(data, res.status as any);
+});
+
+// GET /monitors/:pubkey — get monitor info
+relaysRoute.get('/monitors/:pubkey', async (c) => {
+  const pubkey = c.req.param('pubkey');
+  const res = await proxy(`/monitors/${pubkey}`);
   const data = await res.json();
   return c.json(data, res.status as any);
 });

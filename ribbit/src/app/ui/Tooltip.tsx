@@ -7,7 +7,7 @@ import { cn } from './utils';
 //
 // InfernoJS doesn't have portals, so we position the tooltip relative to the
 // trigger using a wrapper div. This is the main architectural difference from
-// shadcn's Radix-based Tooltip which uses a portal.
+// blazecn's Radix-based Tooltip which uses a portal.
 // ---------------------------------------------------------------------------
 
 interface TooltipProps {

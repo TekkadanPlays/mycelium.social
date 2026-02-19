@@ -4,8 +4,14 @@ import { logger } from 'hono/logger';
 import { nip05Route } from './routes/nip05';
 import { healthRoute } from './routes/health';
 import { relaysRoute } from './routes/relays';
+import { cacheRoute } from './routes/cache';
+import { getDb, getEventCount } from './db';
 
 const app = new Hono();
+
+// Initialize database on startup
+const db = getDb();
+console.log(`📦 SQLite database initialized (${getEventCount()} cached events)`);
 
 app.use('*', logger());
 
@@ -28,6 +34,7 @@ app.use('*', async (c, next) => {
 
 // API routes
 app.route('/api', healthRoute);
+app.route('/api/cache', cacheRoute);
 app.route('/.well-known', nip05Route);
 
 // Relay discovery API (NIP-66 rstate proxy)

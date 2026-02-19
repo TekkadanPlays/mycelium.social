@@ -55,7 +55,7 @@ export class HashtagFeed extends Component<HashtagFeedProps, HashtagFeedState> {
     const { posts, isLoading } = this.state;
     const tag = this.props.match.params.tag;
 
-    return createElement('div', { className: 'space-y-3' },
+    return createElement('div', { className: 'mx-auto max-w-2xl px-4 sm:px-6 py-6 space-y-3' },
       createElement(Link, {
         to: '/feed',
         className: 'inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mb-2',

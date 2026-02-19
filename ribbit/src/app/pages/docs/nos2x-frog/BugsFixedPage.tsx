@@ -95,6 +95,48 @@ if (existingEntry) {
     rootCause: 'The original nos2x-fox was built with React hooks (useState, useEffect, etc.) throughout all UI components.',
     fix: 'Complete migration to InfernoJS 9.0.11 — a React-compatible library that is significantly smaller and faster. All functional components with hooks were converted to class components. A react-shim.ts handles SVG component imports that expect React. Bundle size reduced substantially.',
   },
+  {
+    id: 'NFB-006',
+    title: 'Profile save broken by audit log filling storage quota',
+    severity: 'critical',
+    date: '2026-02-18',
+    commit: '',
+    file: 'src/options.tsx, src/requestLog.ts',
+    symptom: 'Creating or saving a profile throws QuotaExceededError. The "Clear audit log" button in Danger Zone also fails with the same error. The extension becomes unable to persist any data.',
+    rootCause: 'The audit log (AUDIT_LOG key in browser.storage.local) grew unbounded and consumed the entire 5 MB storage quota. When the quota is critically full, even browser.storage.local.remove() fails — the browser\'s quota check fires on any write transaction, including deletions.',
+    fix: 'Two-layer fix: (1) The audit log flush in requestLog.ts now catches QuotaExceededError and aggressively trims to 25% of entries, or nukes the log entirely if still over quota. (2) saveNewProfile wraps the storage write in a try/catch — on quota failure it performs a surgical clear: reads essential keys (profiles, private keys, permissions) into memory, calls browser.storage.local.clear() (the only API that always succeeds regardless of quota), then restores the essentials without the bloated audit log. The Danger Zone "Clear audit log" button uses the same surgical clear+restore approach.',
+    code: `// Surgical clear — the only way to free space when quota is critically full
+const keysToKeep = [
+  'private_key', 'profiles', 'pin_enabled', 'encrypted_private_key',
+  'active_public_key', 'pin_cache_duration', 'nip42_auto_sign',
+  'site_permissions', 'security_preferences',
+];
+const essentials = await browser.storage.local.get(keysToKeep);
+await browser.storage.local.clear(); // always succeeds
+await browser.storage.local.set(essentials); // restore without audit log`,
+  },
+  {
+    id: 'NFB-007',
+    title: 'Profile creation used mutable state and sentinel key pattern',
+    severity: 'high',
+    date: '2026-02-18',
+    commit: '',
+    file: 'src/options.tsx',
+    symptom: 'Creating a new profile used an empty-string key ("") as a sentinel value in the profiles map. This caused subtle bugs: the empty key could persist in storage, the active profile pill had no way to deselect during creation, and canceling creation left stale state.',
+    rootCause: 'The original code used a single privateKey state field for both viewing existing profiles and entering new ones. An empty string key in the profiles object served as a marker for "new profile in progress", conflating data model with UI state.',
+    fix: 'Replaced with a clean isCreatingProfile boolean flag and a separate newProfileKey state field. Profile creation is now fully isolated from existing profile viewing. Cancel properly resets state and reloads the previously selected profile. The profiles map is never mutated — all updates use immutable spreads.',
+  },
+  {
+    id: 'NFB-008',
+    title: 'SVG icons invisible on dark background',
+    severity: 'medium',
+    date: '2026-02-18',
+    commit: '',
+    file: 'src/style.scss, src/assets/icons/*.svg',
+    symptom: 'All Ionicon SVG icons in the options page were nearly invisible — rendering as black shapes on the dark (#1a1a1e) background.',
+    rootCause: 'Two issues: (1) Many Ionicon SVGs have shape elements (<ellipse>, <circle>, <path>) with no fill attribute, which defaults to fill:black in SVG. (2) The CSS used attribute selectors like svg :not([fill]) to catch these, but esbuild-plugin-svgr converts SVGs to JSX components that set DOM properties, not HTML attributes — so the CSS selectors never matched.',
+    fix: 'Replaced the unreliable attribute selectors with a blanket CSS rule that forces all SVG shape elements (path, circle, ellipse, rect, line, polyline, polygon) to fill:currentColor and stroke:currentColor, with a higher-specificity [fill="none"] { fill: none !important } rule to preserve stroke-only outlines. Also added explicit fill="currentColor" to all affected SVG source files as belt-and-suspenders.',
+  },
 ];
 
 const SEVERITY_BADGE: Record<string, string> = {

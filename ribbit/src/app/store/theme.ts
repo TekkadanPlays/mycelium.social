@@ -2,7 +2,11 @@
 // Theme store — persists base color theme + dark mode to localStorage
 // ---------------------------------------------------------------------------
 
-export type BaseTheme = 'neutral' | 'ribbit' | 'nostr' | 'bitcoin';
+export type BaseTheme =
+  | 'neutral' | 'stone' | 'zinc' | 'gray'
+  | 'amber' | 'blue' | 'cyan' | 'emerald' | 'fuchsia' | 'green'
+  | 'indigo' | 'lime' | 'orange' | 'pink' | 'purple' | 'red'
+  | 'rose' | 'sky' | 'teal' | 'violet';
 
 const THEME_KEY = 'ribbit_base_theme';
 const DARK_KEY = 'ribbit_dark_mode';
@@ -17,8 +21,17 @@ export function subscribeTheme(fn: ThemeListener): () => void {
   return () => { _listeners = _listeners.filter((l) => l !== fn); };
 }
 
+const VALID_THEMES: Set<string> = new Set([
+  'neutral', 'stone', 'zinc', 'gray',
+  'amber', 'blue', 'cyan', 'emerald', 'fuchsia', 'green',
+  'indigo', 'lime', 'orange', 'pink', 'purple', 'red',
+  'rose', 'sky', 'teal', 'violet',
+]);
+
 export function getBaseTheme(): BaseTheme {
-  return (localStorage.getItem(THEME_KEY) as BaseTheme) || 'ribbit';
+  const stored = localStorage.getItem(THEME_KEY);
+  if (stored && VALID_THEMES.has(stored)) return stored as BaseTheme;
+  return 'lime';
 }
 
 export function setBaseTheme(theme: BaseTheme) {
@@ -55,8 +68,10 @@ export function applyTheme() {
     html.classList.remove('dark');
   }
 
-  // Base color theme — remove all, then add current
-  html.classList.remove('theme-ribbit', 'theme-nostr', 'theme-bitcoin');
+  // Base color theme — remove all theme-* classes, then add current
+  Array.from(html.classList)
+    .filter((c) => c.startsWith('theme-'))
+    .forEach((c) => html.classList.remove(c));
   if (base !== 'neutral') {
     html.classList.add(`theme-${base}`);
   }
@@ -69,6 +84,11 @@ function migrateOldKey() {
     localStorage.setItem(DARK_KEY, old === 'dark' ? 'true' : 'false');
     localStorage.removeItem('theme');
   }
+  // Migrate removed identity themes to their closest match
+  const stored = localStorage.getItem(THEME_KEY);
+  if (stored === 'ribbit') localStorage.setItem(THEME_KEY, 'emerald');
+  else if (stored === 'nostr') localStorage.setItem(THEME_KEY, 'violet');
+  else if (stored === 'bitcoin') localStorage.setItem(THEME_KEY, 'orange');
 }
 
 // Initialize on load

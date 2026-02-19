@@ -9,6 +9,7 @@ import { Button } from '../../../ui/Button';
 
 interface DrawerPageState {
   open: boolean;
+  goal: number;
 }
 
 export class DrawerPage extends Component<{}, DrawerPageState> {
@@ -16,11 +17,11 @@ export class DrawerPage extends Component<{}, DrawerPageState> {
 
   constructor(props: {}) {
     super(props);
-    this.state = { open: false };
+    this.state = { open: false, goal: 350 };
   }
 
   render() {
-    const { open } = this.state;
+    const { open, goal } = this.state;
 
     return createElement('div', { className: 'space-y-10' },
       createElement(PageHeader, {
@@ -46,16 +47,16 @@ export class DrawerPage extends Component<{}, DrawerPageState> {
                 createElement(Button, {
                   variant: 'outline',
                   size: 'icon',
-                  onClick: () => {},
+                  onClick: () => this.setState({ goal: Math.max(0, goal - 10) }),
                 }, '\u2212'),
                 createElement('div', { className: 'text-center' },
-                  createElement('div', { className: 'text-6xl font-bold tracking-tighter' }, '350'),
+                  createElement('div', { className: 'text-6xl font-bold tracking-tighter' }, String(goal)),
                   createElement('div', { className: 'text-xs uppercase text-muted-foreground tracking-wide' }, 'Calories/day'),
                 ),
                 createElement(Button, {
                   variant: 'outline',
                   size: 'icon',
-                  onClick: () => {},
+                  onClick: () => this.setState({ goal: goal + 10 }),
                 }, '+'),
               ),
             ),

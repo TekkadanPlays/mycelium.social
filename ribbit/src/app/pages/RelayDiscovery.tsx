@@ -14,15 +14,68 @@ import { Input } from '../ui/Input';
 import { Badge } from '../ui/Badge';
 
 // ---------------------------------------------------------------------------
-// NIP-66 Relay Discovery
+// Relay Discovery — rstate API with NIP-66 WebSocket fallback
 // ---------------------------------------------------------------------------
-// NIP-66 defines kind 30166 (relay metadata) and kind 10166 (relay monitor).
-// We query known monitor relays for kind 30166 events to discover relays.
+// Primary: ribbit.network proxies rstate at /relays/* endpoints.
+// Fallback: If rstate is unavailable (502), query NIP-66 monitor relays
+// directly via WebSocket for kind 30166 relay metadata events.
 
 const MONITOR_RELAYS = [
   'wss://relay.nostr.watch',
   'wss://history.nostr.watch',
 ];
+
+function parseNip66Event(event: NostrEvent): RelayInfo | null {
+  const dTag = event.tags.find((t: string[]) => t[0] === 'd');
+  if (!dTag || !dTag[1]) return null;
+  const url = dTag[1];
+  let name = '';
+  let description = '';
+  let software = '';
+  let version = '';
+  let contact = '';
+  const supportedNips: number[] = [];
+  for (const tag of event.tags) {
+    if (tag[0] === 'N' && tag[1]) { const n = parseInt(tag[1], 10); if (!isNaN(n)) supportedNips.push(n); }
+    if (tag[0] === 'R' && tag[1] === 'name' && tag[2]) name = tag[2];
+    if (tag[0] === 'R' && tag[1] === 'desc' && tag[2]) description = tag[2];
+    if (tag[0] === 'R' && tag[1] === 'software' && tag[2]) software = tag[2];
+    if (tag[0] === 'R' && tag[1] === 'version' && tag[2]) version = tag[2];
+    if (tag[0] === 'R' && tag[1] === 'contact' && tag[2]) contact = tag[2];
+  }
+  if (event.content) {
+    try {
+      const info = JSON.parse(event.content);
+      if (!name && info.name) name = info.name;
+      if (!description && info.description) description = info.description;
+      if (!software && info.software) software = info.software;
+      if (!version && info.version) version = info.version;
+      if (!contact && info.contact) contact = info.contact;
+      if (supportedNips.length === 0 && Array.isArray(info.supported_nips)) {
+        for (const n of info.supported_nips) { if (typeof n === 'number') supportedNips.push(n); }
+      }
+    } catch { /* content isn't JSON */ }
+  }
+  const sw = software ? (software.split('/').pop() || software) : '';
+  return {
+    url,
+    name: name || url.replace('wss://', '').replace('ws://', ''),
+    description,
+    software: sw,
+    version,
+    supportedNips: supportedNips.sort((a, b) => a - b),
+    contact,
+    pubkey: event.pubkey,
+    countryCode: '',
+    countryName: '',
+    city: '',
+    isOnline: true,
+    uptimePct: null,
+    rttRead: null,
+    rttWrite: null,
+    lastSeen: event.created_at,
+  };
+}
 
 interface RelayInfo {
   url: string;
@@ -33,10 +86,18 @@ interface RelayInfo {
   supportedNips: number[];
   contact: string;
   pubkey: string;
+  countryCode: string;
+  countryName: string;
+  city: string;
+  isOnline: boolean;
+  uptimePct: number | null;
+  rttRead: number | null;
+  rttWrite: number | null;
   lastSeen: number;
 }
 
-type SortMode = 'recent' | 'name' | 'nips';
+type SortMode = 'recent' | 'name' | 'nips' | 'rtt' | 'uptime';
+type CountryFilter = '' | 'NA' | 'US' | 'CA' | string;
 
 interface DiscoveryState {
   relays: RelayInfo[];
@@ -45,87 +106,77 @@ interface DiscoveryState {
   search: string;
   profiles: RelayProfile[];
   addMenuOpen: string | null;
-  // Filters
-  filterSoftware: string; // '' = all
-  filterNip: number | null; // null = all
+  filterSoftware: string;
+  filterNip: number | null;
+  filterCountry: CountryFilter;
   sortBy: SortMode;
   showFilters: boolean;
+  rstateAvailable: boolean;
 }
 
-function parseRelayInfo(event: NostrEvent): RelayInfo | null {
-  const dTag = event.tags.find((t) => t[0] === 'd');
-  if (!dTag || !dTag[1]) return null;
+const NA_COUNTRIES = new Set(['US', 'CA']);
 
-  const url = dTag[1];
-  let name = '';
-  let description = '';
-  let software = '';
-  let version = '';
-  let contact = '';
-  const supportedNips: number[] = [];
-
-  for (const tag of event.tags) {
-    if (tag[0] === 'N' && tag[1]) {
-      const n = parseInt(tag[1], 10);
-      if (!isNaN(n)) supportedNips.push(n);
-    }
-    if (tag[0] === 'R' && tag[1] === 'name' && tag[2]) name = tag[2];
-    if (tag[0] === 'R' && tag[1] === 'desc' && tag[2]) description = tag[2];
-    if (tag[0] === 'R' && tag[1] === 'software' && tag[2]) software = tag[2];
-    if (tag[0] === 'R' && tag[1] === 'version' && tag[2]) version = tag[2];
-    if (tag[0] === 'R' && tag[1] === 'contact' && tag[2]) contact = tag[2];
-    // Also try rtt tag for name fallback
-    if (tag[0] === 'rtt' && tag[1] === 'open') name = name || '';
-  }
-
-  // Try parsing content as JSON for relay info document
-  if (event.content) {
-    try {
-      const info = JSON.parse(event.content);
-      if (!name && info.name) name = info.name;
-      if (!description && info.description) description = info.description;
-      if (!software && info.software) software = info.software;
-      if (!version && info.version) version = info.version;
-      if (!contact && info.contact) contact = info.contact;
-      if (supportedNips.length === 0 && Array.isArray(info.supported_nips)) {
-        for (const n of info.supported_nips) {
-          if (typeof n === 'number') supportedNips.push(n);
-        }
-      }
-    } catch {
-      // content isn't JSON, that's fine
+// Parse rstate relay object into our RelayInfo
+function parseRstateRelay(raw: any): RelayInfo {
+  const url = raw.url || raw.relay_url || raw.d || '';
+  const info = raw.info || raw.nip11 || {};
+  const geo = raw.geo || raw.location || {};
+  const nips: number[] = [];
+  if (Array.isArray(info.supported_nips)) {
+    for (const n of info.supported_nips) {
+      if (typeof n === 'number') nips.push(n);
     }
   }
+  if (Array.isArray(raw.supported_nips)) {
+    for (const n of raw.supported_nips) {
+      if (typeof n === 'number' && !nips.includes(n)) nips.push(n);
+    }
+  }
+
+  const sw = info.software || raw.software || '';
 
   return {
     url,
-    name: name || url.replace('wss://', '').replace('ws://', ''),
-    description: description || '',
-    software: software ? software.split('/').pop() || software : '',
-    version,
-    contact,
-    supportedNips: supportedNips.sort((a, b) => a - b),
-    pubkey: event.pubkey,
-    lastSeen: event.created_at,
+    name: info.name || raw.name || url.replace('wss://', '').replace('ws://', ''),
+    description: info.description || raw.description || '',
+    software: sw ? (sw.split('/').pop() || sw) : '',
+    version: info.version || raw.version || '',
+    supportedNips: nips.sort((a, b) => a - b),
+    contact: info.contact || raw.contact || '',
+    pubkey: info.pubkey || raw.pubkey || '',
+    countryCode: geo.country_code || geo.countryCode || raw.country_code || '',
+    countryName: geo.country || geo.countryName || raw.country || '',
+    city: geo.city || raw.city || '',
+    isOnline: raw.is_online ?? raw.online ?? true,
+    uptimePct: raw.uptime_pct ?? raw.uptime ?? null,
+    rttRead: raw.rtt_read ?? raw.avg_rtt_read ?? raw.rtt?.read ?? null,
+    rttWrite: raw.rtt_write ?? raw.avg_rtt_write ?? raw.rtt?.write ?? null,
+    lastSeen: raw.last_seen ?? raw.created_at ?? 0,
   };
 }
 
-// Collect unique software names from relay list
 function collectSoftwareOptions(relays: RelayInfo[]): string[] {
   const set = new Set<string>();
-  for (const r of relays) {
-    if (r.software) set.add(r.software);
-  }
+  for (const r of relays) if (r.software) set.add(r.software);
   return Array.from(set).sort();
 }
 
-// Collect unique NIP numbers from relay list
 function collectNipOptions(relays: RelayInfo[]): number[] {
   const set = new Set<number>();
-  for (const r of relays) {
-    for (const n of r.supportedNips) set.add(n);
-  }
+  for (const r of relays) for (const n of r.supportedNips) set.add(n);
   return Array.from(set).sort((a, b) => a - b);
+}
+
+function collectCountryOptions(relays: RelayInfo[]): { code: string; name: string }[] {
+  const map = new Map<string, string>();
+  for (const r of relays) {
+    if (r.countryCode && !map.has(r.countryCode)) {
+      map.set(r.countryCode, r.countryName || r.countryCode);
+    }
+  }
+  return Array.from(map.entries())
+    .map(([code, name]) => ({ code, name }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
 function sortRelays(relays: RelayInfo[], mode: SortMode): RelayInfo[] {
@@ -133,9 +184,18 @@ function sortRelays(relays: RelayInfo[], mode: SortMode): RelayInfo[] {
   switch (mode) {
     case 'name': return copy.sort((a, b) => a.name.localeCompare(b.name));
     case 'nips': return copy.sort((a, b) => b.supportedNips.length - a.supportedNips.length);
+    case 'rtt': return copy.sort((a, b) => (a.rttRead ?? 9999) - (b.rttRead ?? 9999));
+    case 'uptime': return copy.sort((a, b) => (b.uptimePct ?? 0) - (a.uptimePct ?? 0));
     case 'recent':
     default: return copy.sort((a, b) => b.lastSeen - a.lastSeen);
   }
+}
+
+function countryFlag(code: string): string {
+  if (!code || code.length !== 2) return '';
+  return String.fromCodePoint(
+    ...code.toUpperCase().split('').map((c) => 0x1F1E6 + c.charCodeAt(0) - 65),
+  );
 }
 
 export class RelayDiscovery extends Component<{}, DiscoveryState> {
@@ -154,8 +214,10 @@ export class RelayDiscovery extends Component<{}, DiscoveryState> {
       addMenuOpen: null,
       filterSoftware: '',
       filterNip: null,
+      filterCountry: '',
       sortBy: 'recent',
       showFilters: false,
+      rstateAvailable: true,
     };
   }
 
@@ -170,46 +232,68 @@ export class RelayDiscovery extends Component<{}, DiscoveryState> {
     this.unsubManager?.();
     if (this.monitorRelay) {
       this.monitorRelay.disconnect();
+      this.monitorRelay = null;
     }
   }
 
-  fetchRelays() {
-    this.setState({ ...this.state, isLoading: true, error: null, relays: [] });
+  async fetchRelays() {
+    this.setState({ ...this.state, isLoading: true, error: null });
 
-    const relay = new Relay(MONITOR_RELAYS[0]);
-    this.monitorRelay = relay;
+    try {
+      const res = await fetch('/relays?limit=1000');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+
+      const rawList = Array.isArray(data) ? data : (data.relays || data.data || []);
+      const relays: RelayInfo[] = rawList.map(parseRstateRelay).filter((r: RelayInfo) => r.url);
+
+      if (relays.length === 0) throw new Error('rstate returned empty list');
+      this.setState({ ...this.state, relays, isLoading: false, rstateAvailable: true });
+    } catch {
+      // rstate unavailable — fall back to NIP-66 WebSocket
+      this.fallbackToNip66();
+    }
+  }
+
+  fallbackToNip66() {
+    this.setState({ ...this.state, isLoading: true, error: null, rstateAvailable: false });
+
     const seen = new Map<string, RelayInfo>();
+    const tryRelay = (url: string) => {
+      const relay = new Relay(url);
+      this.monitorRelay = relay;
 
-    const onEvent = (event: NostrEvent) => {
-      const info = parseRelayInfo(event);
-      if (info && !seen.has(info.url)) {
-        seen.set(info.url, info);
-        this.setState({
-          ...this.state,
-          relays: Array.from(seen.values()),
-        });
-      }
-    };
-
-    const onEose = () => {
-      this.setState({ ...this.state, isLoading: false });
-      relay.disconnect();
-    };
-
-    relay.connect().then(() => {
-      relay.subscribe([{ kinds: [30166], limit: 500 }], onEvent, onEose);
-    }).catch(() => {
-      const fallback = new Relay(MONITOR_RELAYS[1]);
-      this.monitorRelay = fallback;
-      fallback.connect().then(() => {
-        fallback.subscribe([{ kinds: [30166], limit: 500 }], onEvent, () => {
-          this.setState({ ...this.state, isLoading: false });
-          fallback.disconnect();
-        });
-      }).catch((err2) => {
-        this.setState({ ...this.state, isLoading: false, error: 'Could not connect to relay monitors. ' + String(err2) });
+      relay.connect().then(() => {
+        relay.subscribe(
+          [{ kinds: [30166], limit: 500 }],
+          (event: NostrEvent) => {
+            const info = parseNip66Event(event);
+            if (info && !seen.has(info.url)) {
+              seen.set(info.url, info);
+              this.setState({ ...this.state, relays: Array.from(seen.values()), isLoading: false });
+            }
+          },
+          () => {
+            this.setState({ ...this.state, isLoading: false });
+            relay.disconnect();
+          },
+        );
+      }).catch(() => {
+        // Try next monitor relay
+        const nextIdx = MONITOR_RELAYS.indexOf(url) + 1;
+        if (nextIdx < MONITOR_RELAYS.length) {
+          tryRelay(MONITOR_RELAYS[nextIdx]);
+        } else {
+          this.setState({
+            ...this.state,
+            isLoading: false,
+            error: 'Could not connect to any relay monitors. Check your network connection.',
+          });
+        }
       });
-    });
+    };
+
+    tryRelay(MONITOR_RELAYS[0]);
   }
 
   isRelayInAnyProfile(url: string): boolean {
@@ -217,29 +301,35 @@ export class RelayDiscovery extends Component<{}, DiscoveryState> {
   }
 
   getFiltered(): RelayInfo[] {
-    const { relays, search, filterSoftware, filterNip, sortBy } = this.state;
-
+    const { relays, search, filterSoftware, filterNip, filterCountry, sortBy } = this.state;
     let result = relays;
 
-    // Text search
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((r) =>
         r.url.toLowerCase().includes(q) ||
         r.name.toLowerCase().includes(q) ||
         r.description.toLowerCase().includes(q) ||
-        r.software.toLowerCase().includes(q)
+        r.software.toLowerCase().includes(q) ||
+        r.city.toLowerCase().includes(q) ||
+        r.countryName.toLowerCase().includes(q)
       );
     }
 
-    // Software filter
     if (filterSoftware) {
       result = result.filter((r) => r.software === filterSoftware);
     }
 
-    // NIP filter
     if (filterNip !== null) {
       result = result.filter((r) => r.supportedNips.includes(filterNip));
+    }
+
+    if (filterCountry) {
+      if (filterCountry === 'NA') {
+        result = result.filter((r) => NA_COUNTRIES.has(r.countryCode));
+      } else {
+        result = result.filter((r) => r.countryCode === filterCountry);
+      }
     }
 
     return sortRelays(result, sortBy);
@@ -249,29 +339,26 @@ export class RelayDiscovery extends Component<{}, DiscoveryState> {
     let count = 0;
     if (this.state.filterSoftware) count++;
     if (this.state.filterNip !== null) count++;
+    if (this.state.filterCountry) count++;
     if (this.state.sortBy !== 'recent') count++;
     return count;
   }
 
   render() {
-    const { relays, isLoading, error, search, profiles, addMenuOpen, filterSoftware, filterNip, sortBy, showFilters } = this.state;
+    const { relays, isLoading, error, search, profiles, addMenuOpen, filterSoftware, filterNip, filterCountry, sortBy, showFilters } = this.state;
     const filtered = this.getFiltered();
     const softwareOptions = collectSoftwareOptions(relays);
     const nipOptions = collectNipOptions(relays);
+    const countryOptions = collectCountryOptions(relays);
     const filterCount = this.activeFilterCount;
 
-    return createElement('div', { className: 'space-y-4 max-w-3xl' },
+    return createElement('div', { className: 'mx-auto max-w-3xl px-4 sm:px-6 py-6 space-y-4' },
       // Header
       createElement('div', { className: 'flex items-center justify-between' },
         createElement('div', null,
           createElement('h1', { className: 'text-xl font-bold tracking-tight' }, 'Discover Relays'),
           createElement('p', { className: 'text-sm text-muted-foreground mt-1' },
-            'Browse relays monitored via NIP-66. Filter by software, NIPs, or search. Like ',
-            createElement('a', {
-              href: '/docs/ribbit-android',
-              className: 'text-primary hover:underline',
-            }, 'Ribbit Android'),
-            '\u2019s relay manager, you can add relays to categorized profiles.',
+            'Browse relays via rstate (nostr.watch). Filter by country, software, NIPs, or search.',
           ),
         ),
         createElement(Link, { to: '/settings/relays' },
@@ -285,7 +372,7 @@ export class RelayDiscovery extends Component<{}, DiscoveryState> {
           type: 'text',
           value: search,
           onInput: (e: Event) => this.setState({ ...this.state, search: (e.target as HTMLInputElement).value }),
-          placeholder: 'Search relays by name, URL, or software...',
+          placeholder: 'Search by name, URL, software, city, country...',
           className: 'flex-1',
         }),
         createElement(Button, {
@@ -308,10 +395,31 @@ export class RelayDiscovery extends Component<{}, DiscoveryState> {
               createElement('p', { className: 'text-xs font-semibold uppercase tracking-wider text-muted-foreground' }, 'Filters'),
               filterCount > 0
                 ? createElement('button', {
-                    onClick: () => this.setState({ ...this.state, filterSoftware: '', filterNip: null, sortBy: 'recent' }),
+                    onClick: () => this.setState({ ...this.state, filterSoftware: '', filterNip: null, filterCountry: '', sortBy: 'recent' }),
                     className: 'text-xs text-primary hover:underline',
                   }, 'Clear all')
                 : null,
+            ),
+
+            // Country filter
+            createElement('div', null,
+              createElement('label', { className: 'text-xs text-muted-foreground mb-1 block' }, 'Country / Region'),
+              createElement('div', { className: 'flex flex-wrap gap-1.5' },
+                ...([
+                  { code: '', label: 'All' },
+                  { code: 'NA', label: '\u{1F1FA}\u{1F1F8}\u{1F1E8}\u{1F1E6} North America' },
+                  { code: 'US', label: '\u{1F1FA}\u{1F1F8} US' },
+                  { code: 'CA', label: '\u{1F1E8}\u{1F1E6} Canada' },
+                ] as { code: CountryFilter; label: string }[]).map((opt) =>
+                  createElement('button', {
+                    key: opt.code || 'all',
+                    onClick: () => this.setState({ ...this.state, filterCountry: filterCountry === opt.code ? '' : opt.code }),
+                    className: `text-xs px-2 py-1 rounded-md transition-colors ${
+                      filterCountry === opt.code ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'
+                    }`,
+                  }, opt.label),
+                ),
+              ),
             ),
 
             // Software filter
@@ -366,6 +474,8 @@ export class RelayDiscovery extends Component<{}, DiscoveryState> {
                   { key: 'recent' as SortMode, label: 'Recent' },
                   { key: 'name' as SortMode, label: 'Name' },
                   { key: 'nips' as SortMode, label: 'Most NIPs' },
+                  { key: 'rtt' as SortMode, label: 'Fastest RTT' },
+                  { key: 'uptime' as SortMode, label: 'Best Uptime' },
                 ]).map((opt) =>
                   createElement('button', {
                     key: opt.key,
@@ -383,11 +493,18 @@ export class RelayDiscovery extends Component<{}, DiscoveryState> {
       // Stats
       createElement('div', { className: 'flex items-center gap-3 text-xs text-muted-foreground' },
         isLoading
-          ? createElement('span', { className: 'animate-pulse' }, 'Loading relays from monitors...')
+          ? createElement('span', { className: 'animate-pulse' },
+              this.state.rstateAvailable ? 'Loading relays from rstate...' : 'Loading relays via NIP-66 monitors...',
+            )
           : createElement('span', null,
               filtered.length + ' relay' + (filtered.length !== 1 ? 's' : ''),
               relays.length !== filtered.length ? ` (of ${relays.length} total)` : '',
             ),
+        !isLoading && relays.length > 0
+          ? createElement('span', { className: 'text-muted-foreground/50' },
+              this.state.rstateAvailable ? 'via rstate' : 'via NIP-66',
+            )
+          : null,
         error ? createElement('span', { className: 'text-destructive' }, error) : null,
       ),
 
@@ -397,6 +514,7 @@ export class RelayDiscovery extends Component<{}, DiscoveryState> {
             ...filtered.slice(0, 100).map((relay) => {
               const inProfile = this.isRelayInAnyProfile(relay.url);
               const menuOpen = addMenuOpen === relay.url;
+              const flag = countryFlag(relay.countryCode);
 
               return createElement('div', {
                 key: relay.url,
@@ -404,8 +522,13 @@ export class RelayDiscovery extends Component<{}, DiscoveryState> {
               },
                 createElement('div', { className: 'flex items-start justify-between gap-3' },
                   createElement('div', { className: 'flex-1 min-w-0' },
+                    // Name row
                     createElement('div', { className: 'flex items-center gap-2 mb-1' },
-                      createElement('p', { className: 'text-sm font-semibold truncate' }, relay.name),
+                      flag ? createElement('span', { className: 'text-sm shrink-0' }, flag) : null,
+                      createElement(Link, {
+                        to: '/relay/' + encodeURIComponent(relay.url),
+                        className: 'text-sm font-semibold truncate hover:text-primary transition-colors',
+                      }, relay.name),
                       relay.software
                         ? createElement(Badge, { variant: 'secondary', className: 'text-[10px] shrink-0' },
                             relay.software + (relay.version ? ' ' + relay.version : ''),
@@ -416,6 +539,29 @@ export class RelayDiscovery extends Component<{}, DiscoveryState> {
                         : null,
                     ),
                     createElement('p', { className: 'text-xs font-mono text-muted-foreground truncate' }, relay.url),
+
+                    // Geo + metrics row
+                    createElement('div', { className: 'flex flex-wrap items-center gap-3 mt-1.5 text-[11px] text-muted-foreground' },
+                      relay.city || relay.countryName
+                        ? createElement('span', null,
+                            (relay.city ? relay.city + ', ' : '') + relay.countryName,
+                          )
+                        : null,
+                      relay.rttRead !== null
+                        ? createElement('span', { className: relay.rttRead < 200 ? 'text-emerald-600' : relay.rttRead < 500 ? 'text-amber-500' : 'text-destructive' },
+                            relay.rttRead + 'ms RTT',
+                          )
+                        : null,
+                      relay.uptimePct !== null
+                        ? createElement('span', { className: relay.uptimePct > 95 ? 'text-emerald-600' : relay.uptimePct > 80 ? 'text-amber-500' : 'text-destructive' },
+                            relay.uptimePct.toFixed(1) + '% uptime',
+                          )
+                        : null,
+                      relay.isOnline
+                        ? createElement('span', { className: 'text-emerald-600' }, '\u25CF online')
+                        : createElement('span', { className: 'text-destructive' }, '\u25CF offline'),
+                    ),
+
                     relay.description
                       ? createElement('p', { className: 'text-xs text-muted-foreground mt-1 line-clamp-2' }, relay.description)
                       : null,
@@ -493,7 +639,7 @@ export class RelayDiscovery extends Component<{}, DiscoveryState> {
               ),
               filterCount > 0
                 ? createElement('button', {
-                    onClick: () => this.setState({ ...this.state, filterSoftware: '', filterNip: null, sortBy: 'recent', search: '' }),
+                    onClick: () => this.setState({ ...this.state, filterSoftware: '', filterNip: null, filterCountry: '', sortBy: 'recent', search: '' }),
                     className: 'text-xs text-primary hover:underline mt-2 inline-block',
                   }, 'Clear filters')
                 : null,

@@ -57,7 +57,8 @@ import { KbdPage } from './blazecn/KbdPage';
 import { TypographyPage } from './blazecn/TypographyPage';
 import { EmptyPage } from './blazecn/EmptyPage';
 import { ButtonGroupPage } from './blazecn/ButtonGroupPage';
-import { BlocksPage } from './blazecn/BlocksPage';
+import { SidebarPage } from './blazecn/SidebarPage';
+import { ComponentsPage } from './blazecn/ComponentsPage';
 
 // Kaji module pages
 import { KajiEventPage } from './kaji/EventPage';
@@ -71,14 +72,20 @@ import { KajiNip10Page } from './kaji/Nip10Page';
 import { KajiNip25Page } from './kaji/Nip25Page';
 import { KajiNip29Page } from './kaji/Nip29Page';
 import { KajiUtilsPage } from './kaji/UtilsPage';
+import { KajiNip55Page } from './kaji/Nip55Page';
+import { KajiNip66Page } from './kaji/Nip66Page';
 
 // Other project pages
-import { RibbitIntro } from './ribbit/index';
+import { MyceliumIntro } from './ribbit/index';
 import { KajiIntro } from './kaji/index';
 import { Nos2xFrogIntro } from './nos2x-frog/index';
 import { BugsFixedPage } from './nos2x-frog/BugsFixedPage';
-import { RibbitAndroidIndex } from './ribbit-android/index';
+import { FixingNos2xFoxPage } from './nos2x-frog/FixingNos2xFoxPage';
+import { UpgradingNos2xFoxPage } from './nos2x-frog/UpgradingNos2xFoxPage';
+import { BreakingNos2xFrogPage } from './nos2x-frog/BreakingNos2xFrogPage';
+import { MyceliumAndroidIndex } from './ribbit-android/index';
 import { NipsIntro } from './nips/index';
+import { Nips1xxPage, Nips2xxPage, Nips3xxPage, Nips4xxPage, Nips5xxPage, Nips6xxPage, Nips7xxPage, Nips8xxPage, Nips9xxPage } from './nips/CategoryPage';
 
 // ---------------------------------------------------------------------------
 // Route map
@@ -142,7 +149,8 @@ const ROUTES: Record<string, any> = {
   '/docs/blazecn/typography': TypographyPage,
   '/docs/blazecn/empty': EmptyPage,
   '/docs/blazecn/button-group': ButtonGroupPage,
-  '/docs/blazecn/blocks': BlocksPage,
+  '/docs/blazecn/sidebar': SidebarPage,
+  '/docs/blazecn/components': ComponentsPage,
 
   // Kaji modules
   '/docs/kaji': KajiIntro,
@@ -156,14 +164,28 @@ const ROUTES: Record<string, any> = {
   '/docs/kaji/nip10': KajiNip10Page,
   '/docs/kaji/nip25': KajiNip25Page,
   '/docs/kaji/nip29': KajiNip29Page,
+  '/docs/kaji/nip55': KajiNip55Page,
+  '/docs/kaji/nip66': KajiNip66Page,
   '/docs/kaji/utils': KajiUtilsPage,
 
   // Other projects
-  '/docs/ribbit': RibbitIntro,
-  '/docs/ribbit-android': RibbitAndroidIndex,
+  '/docs/mycelium': MyceliumIntro,
+  '/docs/mycelium-android': MyceliumAndroidIndex,
   '/docs/nos2x-frog': Nos2xFrogIntro,
   '/docs/nos2x-frog/bugs-fixed': BugsFixedPage,
+  '/docs/nos2x-frog/fixing-nos2x-fox': FixingNos2xFoxPage,
+  '/docs/nos2x-frog/upgrading-nos2x-fox': UpgradingNos2xFoxPage,
+  '/docs/nos2x-frog/breaking-nos2x-frog': BreakingNos2xFrogPage,
   '/docs/nips': NipsIntro,
+  '/docs/nips/1xx': Nips1xxPage,
+  '/docs/nips/2xx': Nips2xxPage,
+  '/docs/nips/3xx': Nips3xxPage,
+  '/docs/nips/4xx': Nips4xxPage,
+  '/docs/nips/5xx': Nips5xxPage,
+  '/docs/nips/6xx': Nips6xxPage,
+  '/docs/nips/7xx': Nips7xxPage,
+  '/docs/nips/8xx': Nips8xxPage,
+  '/docs/nips/9xx': Nips9xxPage,
 };
 
 // ---------------------------------------------------------------------------

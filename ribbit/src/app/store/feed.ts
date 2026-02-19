@@ -3,7 +3,9 @@ import { Kind } from '../../nostr/event';
 import { isRootNote } from '../../nostr/nip10';
 import { getPool } from './relay';
 import { getFollowingList } from './contacts';
+import { getOutboxUrls } from './bootstrap';
 import type { PoolSubscription } from '../../nostr/pool';
+import { cacheEvent, getCachedFeed } from '../api/cache';
 
 export type FeedSort = 'new' | 'hot' | 'top';
 export type FeedMode = 'global' | 'following';
@@ -27,7 +29,7 @@ let state: FeedState = {
   replyCounts: new Map(),
   isLoading: false,
   sort: 'new',
-  mode: 'global',
+  mode: 'following',
   eoseReceived: false,
   newPostsBuffer: [],
 };
@@ -38,9 +40,18 @@ let reactionsSub: PoolSubscription | null = null;
 let repliesSub: PoolSubscription | null = null;
 let liveSub: PoolSubscription | null = null;
 let collectedPostIds: Set<string> = new Set();
+let seenReactionIds: Set<string> = new Set();
+let seenReplyIds: Set<string> = new Set();
 
+// Throttle notifications — batch UI updates to avoid thrashing InfernoJS
+let notifyScheduled = false;
 function notify() {
-  for (const fn of listeners) fn();
+  if (notifyScheduled) return;
+  notifyScheduled = true;
+  queueMicrotask(() => {
+    notifyScheduled = false;
+    for (const fn of listeners) fn();
+  });
 }
 
 export function getFeedState(): FeedState {
@@ -108,10 +119,31 @@ function cleanupSubs() {
   if (liveSub) { liveSub.unsubscribe(); liveSub = null; }
 }
 
+/** Reset all feed state and cancel active subscriptions. */
+export function resetFeed(): void {
+  cleanupSubs();
+  collectedPostIds = new Set();
+  seenReactionIds = new Set();
+  seenReplyIds = new Set();
+  state = {
+    posts: [],
+    reactions: new Map(),
+    replyCounts: new Map(),
+    isLoading: false,
+    sort: 'new',
+    mode: 'following',
+    eoseReceived: false,
+    newPostsBuffer: [],
+  };
+  notify();
+}
+
 export function loadFeed(limit: number = 50) {
   const pool = getPool();
   cleanupSubs();
   collectedPostIds = new Set();
+  seenReactionIds = new Set();
+  seenReplyIds = new Set();
 
   state = { ...state, isLoading: true, posts: [], reactions: new Map(), replyCounts: new Map(), eoseReceived: false, newPostsBuffer: [] };
   notify();
@@ -120,8 +152,10 @@ export function loadFeed(limit: number = 50) {
 
   // Build filter based on mode
   const filter: Record<string, any> = { kinds: [Kind.Text], limit };
-  if (state.mode === 'following') {
-    const authors = getFollowingList();
+  const isFollowing = state.mode === 'following';
+  let authors: string[] = [];
+  if (isFollowing) {
+    authors = getFollowingList();
     if (authors.length === 0) {
       state = { ...state, isLoading: false, eoseReceived: true };
       notify();
@@ -130,38 +164,64 @@ export function loadFeed(limit: number = 50) {
     filter.authors = authors;
   }
 
-  activeSub = pool.subscribe(
-    [filter],
-    (event) => {
-      if (!isRootNote(event)) return;
-      if (collectedPostIds.has(event.id)) return;
-      collectedPostIds.add(event.id);
-
-      state = {
-        ...state,
-        posts: sortPosts([...state.posts, event], state.sort),
-      };
-      notify();
-    },
-    () => {
-      eoseCount++;
-      if (eoseCount >= 1) {
-        state = { ...state, isLoading: false, eoseReceived: true };
-        notify();
-
-        if (activeSub) { activeSub.unsubscribe(); activeSub = null; }
-
-        if (collectedPostIds.size > 0) {
-          const ids = Array.from(collectedPostIds);
-          fetchReactionsBatch(ids);
-          fetchReplyCounts(ids);
+  // For following mode, hydrate from server cache first (instant feed)
+  if (isFollowing && authors.length > 0) {
+    getCachedFeed(authors, limit).then((cached) => {
+      if (cached.length > 0) {
+        for (const event of cached) {
+          if (isRootNote(event) && !collectedPostIds.has(event.id)) {
+            collectedPostIds.add(event.id);
+          }
         }
-
-        // Start live subscription for new posts
-        startLiveSubscription();
+        const rootNotes = cached.filter((e) => isRootNote(e));
+        if (rootNotes.length > 0 && state.posts.length === 0) {
+          state = { ...state, posts: sortPosts(rootNotes, state.sort) };
+          notify();
+        }
       }
-    },
-  );
+    }).catch(() => { /* server unreachable */ });
+  }
+
+  // Use outbox relays when available, otherwise fall back to full pool
+  const outboxUrls = getOutboxUrls();
+  const useOutbox = outboxUrls.length > 0;
+
+  const onEvent = (event: NostrEvent) => {
+    if (!isRootNote(event)) return;
+    if (collectedPostIds.has(event.id)) return;
+    collectedPostIds.add(event.id);
+    // Only cache posts from followed users, not global
+    if (isFollowing) cacheEvent(event);
+
+    state = {
+      ...state,
+      posts: sortPosts([...state.posts, event], state.sort),
+    };
+    notify();
+  };
+
+  const onEose = () => {
+    eoseCount++;
+    if (eoseCount >= 1) {
+      state = { ...state, isLoading: false, eoseReceived: true };
+      notify();
+
+      if (activeSub) { activeSub.unsubscribe(); activeSub = null; }
+
+      if (collectedPostIds.size > 0) {
+        const ids = Array.from(collectedPostIds);
+        fetchReactionsBatch(ids);
+        fetchReplyCounts(ids);
+      }
+
+      // Start live subscription for new posts
+      startLiveSubscription();
+    }
+  };
+
+  activeSub = useOutbox
+    ? pool.subscribeToUrls(outboxUrls, [filter], onEvent, onEose)
+    : pool.subscribe([filter], onEvent, onEose);
 }
 
 // Load older posts (pagination)
@@ -176,49 +236,88 @@ export function loadMore(count: number = 30) {
 
   const newIds: string[] = [];
 
-  const sub = pool.subscribe(
-    [{ kinds: [Kind.Text], until: oldestTimestamp - 1, limit: count }],
-    (event) => {
-      if (!isRootNote(event)) return;
-      if (collectedPostIds.has(event.id)) return;
-      collectedPostIds.add(event.id);
-      newIds.push(event.id);
+  const outboxUrls = getOutboxUrls();
+  const useOutbox = outboxUrls.length > 0;
 
-      state = {
-        ...state,
-        posts: sortPosts([...state.posts, event], state.sort),
-      };
-      notify();
-    },
-    () => {
-      sub.unsubscribe();
-      state = { ...state, isLoading: false };
-      notify();
+  const paginationFilter = [{ kinds: [Kind.Text], until: oldestTimestamp - 1, limit: count }];
+  const sub = useOutbox
+    ? pool.subscribeToUrls(outboxUrls, paginationFilter,
+      (event) => {
+        if (!isRootNote(event)) return;
+        if (collectedPostIds.has(event.id)) return;
+        collectedPostIds.add(event.id);
+        newIds.push(event.id);
 
-      if (newIds.length > 0) {
-        fetchReactionsBatch(newIds);
-        fetchReplyCounts(newIds);
-      }
-    },
-  );
+        state = {
+          ...state,
+          posts: sortPosts([...state.posts, event], state.sort),
+        };
+        notify();
+      },
+      () => {
+        sub.unsubscribe();
+        state = { ...state, isLoading: false };
+        notify();
+
+        if (newIds.length > 0) {
+          fetchReactionsBatch(newIds);
+          fetchReplyCounts(newIds);
+        }
+      },
+    )
+    : pool.subscribe(
+      paginationFilter,
+      (event) => {
+        if (!isRootNote(event)) return;
+        if (collectedPostIds.has(event.id)) return;
+        collectedPostIds.add(event.id);
+        newIds.push(event.id);
+
+        state = {
+          ...state,
+          posts: sortPosts([...state.posts, event], state.sort),
+        };
+        notify();
+      },
+      () => {
+        sub.unsubscribe();
+        state = { ...state, isLoading: false };
+        notify();
+
+        if (newIds.length > 0) {
+          fetchReactionsBatch(newIds);
+          fetchReplyCounts(newIds);
+        }
+      },
+    );
 }
 
 function startLiveSubscription() {
   const pool = getPool();
   const since = Math.floor(Date.now() / 1000);
+  const outboxUrls = getOutboxUrls();
+  const isFollowing = state.mode === 'following';
 
-  liveSub = pool.subscribe(
-    [{ kinds: [Kind.Text], since }],
-    (event) => {
-      if (!isRootNote(event)) return;
-      if (collectedPostIds.has(event.id)) return;
-      collectedPostIds.add(event.id);
+  const liveFilter: Record<string, any>[] = [{ kinds: [Kind.Text], since }];
+  if (isFollowing) {
+    const authors = getFollowingList();
+    if (authors.length > 0) liveFilter[0].authors = authors;
+  }
 
-      // Buffer new posts instead of inserting directly
-      state = { ...state, newPostsBuffer: [...state.newPostsBuffer, event] };
-      notify();
-    },
-  );
+  const onLiveEvent = (event: NostrEvent) => {
+    if (!isRootNote(event)) return;
+    if (collectedPostIds.has(event.id)) return;
+    collectedPostIds.add(event.id);
+    if (isFollowing) cacheEvent(event);
+
+    // Buffer new posts instead of inserting directly
+    state = { ...state, newPostsBuffer: [...state.newPostsBuffer, event] };
+    notify();
+  };
+
+  liveSub = outboxUrls.length > 0
+    ? pool.subscribeToUrls(outboxUrls, liveFilter, onLiveEvent)
+    : pool.subscribe(liveFilter, onLiveEvent);
 }
 
 function fetchReactionsBatch(eventIds: string[]) {
@@ -229,14 +328,16 @@ function fetchReactionsBatch(eventIds: string[]) {
   reactionsSub = pool.subscribe(
     [{ kinds: [Kind.Reaction], '#e': eventIds }],
     (reaction) => {
+      if (seenReactionIds.has(reaction.id)) return;
+      seenReactionIds.add(reaction.id);
+      cacheEvent(reaction);
+
       const eTag = reaction.tags.find((t) => t[0] === 'e');
       if (!eTag) return;
       const targetId = eTag[1];
       if (!eventIds.includes(targetId)) return;
 
       const existing = state.reactions.get(targetId) || [];
-      if (existing.some((r) => r.id === reaction.id)) return;
-
       const updated = new Map(state.reactions);
       updated.set(targetId, [...existing, reaction]);
       state = { ...state, reactions: updated };
@@ -257,14 +358,11 @@ function fetchReplyCounts(eventIds: string[]) {
 
   if (repliesSub) repliesSub.unsubscribe();
 
-  // We subscribe to kind-1 replies referencing these events, and just count them
-  const seen = new Set<string>();
-
   repliesSub = pool.subscribe(
     [{ kinds: [Kind.Text], '#e': eventIds }],
     (event) => {
-      if (seen.has(event.id)) return;
-      seen.add(event.id);
+      if (seenReplyIds.has(event.id)) return;
+      seenReplyIds.add(event.id);
 
       // Find which post this replies to
       const eTags = event.tags.filter((t) => t[0] === 'e');

@@ -1,8 +1,8 @@
-# 🐸 ribbit.network
+# 🍄 mycelium.social
 
 **A Nostr social platform built with InfernoJS.**
 
-ribbit.network is a fast, lightweight Nostr client featuring a modern dark UI powered by [Blazecn](https://github.com/TekkadanPlays/blazecn) — our shadcn/ui-compatible component library for InfernoJS.
+mycelium.social is a fast, lightweight Nostr client featuring a modern dark UI powered by [Blazecn](https://github.com/TekkadanPlays/blazecn) — our shadcn/ui-compatible component library for InfernoJS.
 
 ## Stack
 
@@ -38,7 +38,7 @@ The app starts at `http://localhost:3000`.
 ## Project Structure
 
 ```
-ribbit.network/
+mycelium.social/
 └── ribbit/                 # Main application
     ├── public/             # Static assets
     ├── src/
@@ -60,7 +60,8 @@ ribbit.network/
 |------|-------------|
 | [blazecn](https://github.com/TekkadanPlays/blazecn) | shadcn/ui-compatible component library for InfernoJS |
 | [kaji](https://github.com/TekkadanPlays/kaji) | InfernoJS-native Nostr protocol library |
-| [nos2x-frog](https://github.com/TekkadanPlays/nos2x-frog) | Nostr signer browser extension (Ribbit Signer) |
+| [nos2x-frog](https://github.com/TekkadanPlays/nos2x-frog) | Nostr signer browser extension |
+| [mycelium-android](https://github.com/TekkadanPlays/mycelium-android) | Native Android Nostr client (Mycelium for Android) |
 | [nips](https://github.com/TekkadanPlays/nips) | Reorganized Nostr Implementation Possibilities |
 
 ## License

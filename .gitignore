@@ -11,6 +11,8 @@ ribbit/dist/
 /nips/
 /ui/
 /moltbook-frontend/
+/sonner/
+/.claude/
 
 # OS
 .DS_Store

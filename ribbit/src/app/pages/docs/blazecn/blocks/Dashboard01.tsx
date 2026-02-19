@@ -605,45 +605,7 @@ class AppSidebarBlock extends Component<{}, SidebarState> {
     }
 
     render() {
-        const { open } = this.state;
-
-        const navMain = [
-            { icon: DashboardIcon, label: 'Dashboard' },
-            { icon: ChartIcon, label: 'Analytics' },
-            { icon: FolderIcon, label: 'Projects' },
-            { icon: UsersIcon, label: 'Team' },
-        ];
-
-        const navSecondary = [
-            { icon: SettingsIcon, label: 'Settings' },
-            { icon: SearchIcon, label: 'Search' },
-        ];
-
-        return createElement('div', null,
-            // Sidebar toggle
-            createElement(Button, {
-                variant: 'ghost',
-                size: 'icon',
-                onClick: () => this.setState({ open: true }),
-                className: 'lg:hidden',
-            }, createElement(MenuIcon, null)),
-
-            // Desktop sidebar always visible
-            createElement('div', { className: 'hidden lg:flex lg:flex-col lg:w-56 shrink-0 border-r bg-card h-full' },
-                this.renderSidebarContent(),
-            ),
-
-            // Mobile sidebar via Sheet
-            createElement(Sheet, { open, onOpenChange: (o: boolean) => this.setState({ open: o }) },
-                createElement(SheetContent, { side: 'left', onClose: () => this.setState({ open: false }) },
-                    createElement(SheetHeader, null,
-                        createElement(SheetTitle, null, 'Acme Inc.'),
-                        createElement(SheetDescription, null, 'Dashboard navigation'),
-                    ),
-                    this.renderSidebarContent(),
-                ),
-            ),
-        );
+        return this.renderSidebarContent();
     }
 
     private renderSidebarContent() {
@@ -659,7 +621,7 @@ class AppSidebarBlock extends Component<{}, SidebarState> {
             { icon: SearchIcon, label: 'Search' },
         ];
 
-        return createElement('div', { className: 'flex flex-col gap-4 py-4' },
+        return createElement('div', { className: 'flex flex-col gap-4 py-4 h-full' },
             // Logo area
             createElement('div', { className: 'px-4 flex items-center gap-2' },
                 createElement('div', { className: 'flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground' },
@@ -716,7 +678,7 @@ class AppSidebarBlock extends Component<{}, SidebarState> {
                     createElement(AvatarFallback, { className: 'text-[10px]' }, 'CN'),
                 ),
                 createElement('div', { className: 'flex-1 min-w-0' },
-                    createElement('div', { className: 'text-sm font-medium truncate' }, 'shadcn'),
+                    createElement('div', { className: 'text-sm font-medium truncate' }, 'blazecn'),
                     createElement('div', { className: 'text-xs text-muted-foreground truncate' }, 'm@example.com'),
                 ),
             ),
@@ -768,7 +730,7 @@ export class Dashboard01Demo extends Component<{}, Dashboard01State> {
         return createElement('div', { className: 'rounded-xl border overflow-hidden bg-background' },
             createElement('div', { className: 'flex min-h-[700px]' },
                 // Desktop sidebar
-                createElement('div', { className: 'hidden lg:block w-56 shrink-0 border-r' },
+                createElement('div', { className: 'hidden lg:block w-56 shrink-0 border-r bg-sidebar' },
                     createElement(AppSidebarBlock, null),
                 ),
 

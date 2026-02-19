@@ -381,11 +381,16 @@ export class PageCopyButton extends Component<{ title: string; description: stri
 
 export function PageHeader({ title, description }: { title: string; description: string }) {
   return createElement('div', { className: 'mb-8' },
-    createElement('div', { className: 'flex items-start justify-between gap-4' },
-      createElement('div', null,
-        createElement('h1', { className: 'text-2xl font-bold tracking-tight mb-2' }, title),
-        createElement('p', { className: 'text-muted-foreground' }, description),
+    // Title row: title + copy button on same line (button wraps below on very narrow)
+    createElement('div', { className: 'flex items-start justify-between gap-3 mb-2' },
+      createElement('h1', { className: 'text-2xl font-bold tracking-tight' }, title),
+      createElement('div', { className: 'hidden sm:block shrink-0' },
+        createElement(PageCopyButton, { title, description }),
       ),
+    ),
+    createElement('p', { className: 'text-muted-foreground' }, description),
+    // On mobile: copy button drops below description
+    createElement('div', { className: 'sm:hidden mt-3' },
       createElement(PageCopyButton, { title, description }),
     ),
   );

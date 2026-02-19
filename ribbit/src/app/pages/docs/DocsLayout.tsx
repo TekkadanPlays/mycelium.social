@@ -41,6 +41,7 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/tokens', label: 'Design Tokens' },
           { path: '/docs/blazecn/theme-toggle', label: 'Themes' },
           { path: '/docs/blazecn/cn', label: 'cn() Utility' },
+          { path: '/docs/blazecn/components', label: 'Components' },
         ],
       },
       {
@@ -82,6 +83,7 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/select', label: 'Select' },
           { path: '/docs/blazecn/separator', label: 'Separator' },
           { path: '/docs/blazecn/sheet', label: 'Sheet' },
+          { path: '/docs/blazecn/sidebar', label: 'Sidebar' },
           { path: '/docs/blazecn/skeleton', label: 'Skeleton' },
           { path: '/docs/blazecn/slider', label: 'Slider' },
           { path: '/docs/blazecn/toast', label: 'Sonner' },
@@ -96,25 +98,18 @@ const NAV: NavGroup[] = [
           { path: '/docs/blazecn/typography', label: 'Typography' },
         ],
       },
-      {
-        heading: 'Blocks',
-        items: [
-          { path: '/docs/blazecn/blocks', label: 'Authentication' },
-          { path: '/docs/blazecn/blocks#dashboard', label: 'Dashboard' },
-        ],
-      },
     ],
   },
   {
-    title: 'Ribbit',
-    basePath: '/docs/ribbit',
-    icon: '\uD83D\uDC38',
+    title: 'Mycelium',
+    basePath: '/docs/mycelium',
+    icon: '\uD83C\uDF44',
     description: 'Nostr social client',
     sections: [
       {
         heading: 'Overview',
         items: [
-          { path: '/docs/ribbit', label: 'Introduction' },
+          { path: '/docs/mycelium', label: 'Introduction' },
         ],
       },
     ],
@@ -154,6 +149,8 @@ const NAV: NavGroup[] = [
           { path: '/docs/kaji/nip10', label: 'nip10' },
           { path: '/docs/kaji/nip25', label: 'nip25' },
           { path: '/docs/kaji/nip29', label: 'nip29' },
+          { path: '/docs/kaji/nip55', label: 'nip55' },
+          { path: '/docs/kaji/nip66', label: 'nip66' },
         ],
       },
       {
@@ -165,15 +162,15 @@ const NAV: NavGroup[] = [
     ],
   },
   {
-    title: 'Ribbit Android',
-    basePath: '/docs/ribbit-android',
+    title: 'Mycelium for Android',
+    basePath: '/docs/mycelium-android',
     icon: '\uD83D\uDCF1',
     description: 'Native Android app',
     sections: [
       {
         heading: 'Overview',
         items: [
-          { path: '/docs/ribbit-android', label: 'Introduction' },
+          { path: '/docs/mycelium-android', label: 'Introduction' },
         ],
       },
     ],
@@ -188,7 +185,14 @@ const NAV: NavGroup[] = [
         heading: 'Overview',
         items: [
           { path: '/docs/nos2x-frog', label: 'Introduction' },
-          { path: '/docs/nos2x-frog/bugs-fixed', label: 'Bugs Fixed from nos2x-fox' },
+        ],
+      },
+      {
+        heading: 'History',
+        items: [
+          { path: '/docs/nos2x-frog/fixing-nos2x-fox', label: 'Fixing nos2x-fox' },
+          { path: '/docs/nos2x-frog/upgrading-nos2x-fox', label: 'Upgrading nos2x-fox' },
+          { path: '/docs/nos2x-frog/breaking-nos2x-frog', label: 'Breaking nos2x-frog' },
         ],
       },
     ],
@@ -203,6 +207,20 @@ const NAV: NavGroup[] = [
         heading: 'Overview',
         items: [
           { path: '/docs/nips', label: 'Introduction' },
+        ],
+      },
+      {
+        heading: 'Categories',
+        items: [
+          { path: '/docs/nips/1xx', label: '1xx — Core Protocol' },
+          { path: '/docs/nips/2xx', label: '2xx — Identity & Keys' },
+          { path: '/docs/nips/3xx', label: '3xx — Relay Infrastructure' },
+          { path: '/docs/nips/4xx', label: '4xx — Signing & Encryption' },
+          { path: '/docs/nips/5xx', label: '5xx — Social & Content' },
+          { path: '/docs/nips/6xx', label: '6xx — Messaging & Groups' },
+          { path: '/docs/nips/7xx', label: '7xx — Payments & Zaps' },
+          { path: '/docs/nips/8xx', label: '8xx — Media & Files' },
+          { path: '/docs/nips/9xx', label: '9xx — Applications' },
         ],
       },
     ],

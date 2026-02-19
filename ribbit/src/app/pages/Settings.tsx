@@ -80,12 +80,12 @@ export class Settings extends Component<{}, SettingsState> {
         title: 'Developer',
         items: [
           { to: '/raw', label: 'Raw Events', desc: 'Connect to any relay and inspect the raw event firehose.', icon: '\u{1F50C}' },
-          { to: '/docs', label: 'Documentation', desc: 'Explore the ribbit.network stack documentation.', icon: '\uD83D\uDCDA' },
+          { to: '/docs', label: 'Documentation', desc: 'Explore the mycelium.social stack documentation.', icon: '\uD83D\uDCDA' },
         ],
       },
     ];
 
-    return createElement('div', { className: 'space-y-6 max-w-2xl' },
+    return createElement('div', { className: 'mx-auto max-w-2xl px-4 sm:px-6 py-6 space-y-6' },
       // Page header
       createElement('div', null,
         createElement('h1', { className: 'text-xl font-bold tracking-tight' }, 'Settings'),

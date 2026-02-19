@@ -11,20 +11,26 @@ import { RawEvents } from './pages/RawEvents';
 import { Settings } from './pages/Settings';
 import { RelayManager } from './pages/RelayManager';
 import { RelayDiscovery } from './pages/RelayDiscovery';
+import { RelayDetail } from './pages/RelayDetail';
 import { Notifications } from './pages/Notifications';
 import { HashtagFeed } from './pages/HashtagFeed';
 import { Docs } from './pages/docs/DocsRouter';
 import { BlocksShowcase } from './pages/BlocksShowcase';
 import { ExamplesPage } from './pages/ExamplesPage';
+import { RunItPage } from './pages/RunItPage';
 import { Toaster } from './ui/Toast';
-import { getAuthState, subscribeAuth, restoreSession } from './store/auth';
+import { getAuthState, subscribeAuth, restoreSession, resetAllStores } from './store/auth';
 import { connectRelays, getPool } from './store/relay';
-import { loadContacts } from './store/contacts';
+import { loadContacts, applyContactsEvent } from './store/contacts';
 import { loadRelayList, resetRelayList } from './store/relaylist';
 import { loadRelayManager, syncPoolToActiveProfile } from './store/relaymanager';
 import { fetchProfile } from './store/profiles';
 import { signWithExtension } from '../nostr/nip07';
 import { initTheme } from './store/theme';
+import { discoverIndexers } from './store/indexers';
+import { bootstrapUser, getBootstrapState, startPeriodicRefresh } from './store/bootstrap';
+import { loadNotifications } from './store/notifications';
+import { loadPopularRelays } from './store/relay-crawler';
 
 interface AppState {
   isAuthenticated: boolean;
@@ -32,6 +38,7 @@ interface AppState {
 
 export class App extends Component<{}, AppState> {
   private unsub: (() => void) | null = null;
+  private lastPubkey: string | null = null;
   declare state: AppState;
 
   constructor(props: {}) {
@@ -56,12 +63,33 @@ export class App extends Component<{}, AppState> {
     this.setState({ isAuthenticated: !!auth.pubkey });
     this.updateAuthSigner();
 
+    // Detect account switch: pubkey changed to a *different* account
+    if (auth.pubkey && this.lastPubkey && auth.pubkey !== this.lastPubkey) {
+      resetAllStores();
+    }
+    this.lastPubkey = auth.pubkey;
+
     if (auth.pubkey) {
-      // Fetch user data after login or session restore
-      fetchProfile(auth.pubkey);
-      loadContacts();
-      loadRelayList();
+      // Bootstrap: discover indexers → fetch profile + NIP-65 + contacts → connect outbox/inbox
+      bootstrapUser(auth.pubkey).then(() => {
+        // Apply contacts from bootstrap immediately (before pool query)
+        const bs = getBootstrapState();
+        if (bs.contactsEvent) {
+          applyContactsEvent(bs.contactsEvent);
+        }
+        // Also load contacts and relay list via the now-connected pool (may find newer data)
+        loadContacts();
+        loadRelayList();
+        // Start notification subscription
+        loadNotifications();
+        // Start periodic indexer refresh (every ~60 min)
+        startPeriodicRefresh();
+        // Load popular relay rankings from server cache (for broader discovery)
+        loadPopularRelays();
+      }).catch((err) => console.warn('Bootstrap error:', err));
     } else {
+      // logout() already calls resetAllStores(), but guard in case
+      // onAuthChange fires from other paths (e.g. session restore to null)
       resetRelayList();
     }
   }
@@ -75,6 +103,9 @@ export class App extends Component<{}, AppState> {
     // Load relay manager from localStorage and sync pool
     loadRelayManager();
     syncPoolToActiveProfile();
+
+    // Start indexer discovery early (before login) so it's ready when user signs in
+    discoverIndexers(10).catch((err) => console.warn('Indexer discovery error:', err));
 
     // Initialize — don't block render on relay connection
     restoreSession();
@@ -101,11 +132,14 @@ export class App extends Component<{}, AppState> {
         createElement(Route, { path: '/notifications', component: Notifications }),
         createElement(Route, { exact: true, path: '/settings', component: Settings }),
         createElement(Route, { path: '/settings/relays', component: RelayManager }),
-        createElement(Route, { path: '/discover', component: RelayDiscovery }),
+        createElement(Route, { exact: true, path: '/discover', component: RelayDiscovery }),
+        createElement(Route, { path: '/relay/:url', component: RelayDetail }),
+        createElement(Route, { path: '/discover/relay/:url', component: RelayDetail }),
         createElement(Route, { path: '/t/:tag', component: HashtagFeed }),
         createElement(Route, { path: '/raw', component: RawEvents }),
         createElement(Route, { path: '/blocks', component: BlocksShowcase }),
         createElement(Route, { path: '/examples', component: ExamplesPage }),
+        createElement(Route, { path: '/run', component: RunItPage }),
         createElement(Route, { path: '/docs', component: Docs }),
         createElement(Route, { path: '/docs/:rest*', component: Docs }),
         createElement(Route, {

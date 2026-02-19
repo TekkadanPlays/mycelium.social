@@ -1,10 +1,10 @@
 import { createElement } from 'inferno-create-element';
 import { PageHeader, CodeBlock } from '../_helpers';
 
-export function RibbitAndroidIndex() {
+export function MyceliumAndroidIndex() {
   return createElement('div', { className: 'space-y-8 max-w-3xl' },
     createElement(PageHeader, {
-      title: 'Ribbit Android',
+      title: 'Mycelium for Android',
       description: 'Native Nostr social client for Android, built with Jetpack Compose and Material Design 3.',
     }),
 
@@ -12,7 +12,7 @@ export function RibbitAndroidIndex() {
     createElement('section', { className: 'space-y-3' },
       createElement('h2', { className: 'text-lg font-bold tracking-tight' }, 'Overview'),
       createElement('p', { className: 'text-sm text-muted-foreground leading-relaxed' },
-        'Ribbit Android is the native mobile companion to ribbit.network. It shares the same NIP coverage and design philosophy \u2014 censorship-resistant social networking with full relay sovereignty. Built entirely in Kotlin with Jetpack Compose, it delivers a smooth, modern Material Design 3 experience.',
+        'Mycelium for Android is the native mobile companion to mycelium.social. It shares the same NIP coverage and design philosophy \u2014 censorship-resistant social networking with full relay sovereignty. Built entirely in Kotlin with Jetpack Compose, it delivers a smooth, modern Material Design 3 experience.',
       ),
     ),
 
@@ -126,7 +126,7 @@ data class UserRelay(
     createElement('section', { className: 'space-y-3' },
       createElement('h2', { className: 'text-lg font-bold tracking-tight' }, 'NIP Coverage'),
       createElement('p', { className: 'text-sm text-muted-foreground leading-relaxed' },
-        'Ribbit Android implements the same NIPs as ribbit.network, plus NIP-55 (Android Signer) and NIP-47 (Wallet Connect):',
+        'Mycelium for Android implements the same NIPs as mycelium.social, plus NIP-55 (Android Signer) and NIP-47 (Wallet Connect):',
       ),
       createElement('div', { className: 'flex flex-wrap gap-1.5' },
         ...([1, 2, 5, 7, 9, 10, 11, 18, 19, 25, 29, 42, 47, 55, 65]).map((n) =>
@@ -147,13 +147,13 @@ data class UserRelay(
           createElement('p', { className: 'text-xs text-muted-foreground' },
             'Install Obtanium from F-Droid, then add the repository URL:',
           ),
-          createElement(CodeBlock, { code: 'https://github.com/TekkadanPlays/ribbit-android' }),
+          createElement(CodeBlock, { code: 'https://github.com/TekkadanPlays/mycelium-android' }),
         ),
         createElement('div', { className: 'rounded-lg border border-border p-4' },
           createElement('p', { className: 'text-sm font-semibold mb-1' }, 'Build from Source'),
           createElement(CodeBlock, {
-            code: `git clone https://github.com/TekkadanPlays/ribbit-android.git
-cd ribbit-android
+            code: `git clone https://github.com/TekkadanPlays/mycelium-android.git
+cd mycelium-android
 ./gradlew assembleDebug`,
           }),
         ),

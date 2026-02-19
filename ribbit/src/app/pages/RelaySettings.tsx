@@ -1,6 +1,7 @@
 import { Component } from 'inferno';
 import { createElement } from 'inferno-create-element';
 import { Link } from 'inferno-router';
+import { RelayLink } from '../components/RelayLink';
 import { getRelayState, subscribeRelay, addRelay, removeRelay } from '../store/relay';
 import type { RelayStatus } from '../../nostr/relay';
 import { Button } from '../ui/Button';
@@ -96,7 +97,7 @@ export class RelaySettings extends Component<{}, RelaySettingsState> {
             createElement('div', { className: 'flex items-center gap-3 min-w-0' },
               createElement('span', { className: `w-2 h-2 rounded-full shrink-0 ${statusColor}` }),
               createElement('div', { className: 'min-w-0' },
-                createElement('p', { className: 'text-sm font-mono text-foreground truncate' }, url),
+                createElement(RelayLink, { url, className: 'text-sm font-mono text-foreground hover:text-primary truncate transition-colors' }),
                 createElement('p', { className: `text-xs ${statusTextColor}` }, status),
               ),
             ),

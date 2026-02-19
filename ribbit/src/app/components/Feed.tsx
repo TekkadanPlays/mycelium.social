@@ -6,6 +6,7 @@ import { getFeedState, subscribeFeed, setSort, setFeedMode, loadFeed, loadMore, 
 import type { FeedSort, FeedMode } from '../store/feed';
 import { getAuthState } from '../store/auth';
 import { getContactsState } from '../store/contacts';
+import { getBootstrapState, subscribeBootstrap } from '../store/bootstrap';
 import { Spinner } from '../ui/Spinner';
 import { Button } from '../ui/Button';
 
@@ -18,33 +19,21 @@ interface FeedLocalState {
   newPostsCount: number;
 }
 
-export class SortTabs extends Component<{ sort: FeedSort; onSort: (s: FeedSort) => void }> {
-  render() {
-    const { sort, onSort } = this.props;
-    const tabs: { value: FeedSort; label: string; icon: string }[] = [
-      { value: 'hot', label: 'Hot', icon: '\u{1F525}' },
-      { value: 'new', label: 'New', icon: '\u2728' },
-      { value: 'top', label: 'Top', icon: '\u{1F4C8}' },
-    ];
+const MODE_TABS: { value: FeedMode; label: string; icon: string }[] = [
+  { value: 'global', label: 'Global', icon: '\u{1F30D}' },
+  { value: 'following', label: 'Following', icon: '\u{1F465}' },
+];
 
-    return createElement('div', { className: 'flex items-center gap-1' },
-      ...tabs.map((tab) =>
-        createElement('button', {
-          key: tab.value,
-          onClick: () => onSort(tab.value),
-          className: `px-3 py-1.5 text-sm rounded-md transition-colors ${
-            sort === tab.value
-              ? 'bg-accent text-foreground font-medium'
-              : 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
-          }`,
-        }, `${tab.icon} ${tab.label}`),
-      ),
-    );
-  }
-}
+const SORT_TABS: { value: FeedSort; label: string }[] = [
+  { value: 'new', label: 'New' },
+  { value: 'hot', label: 'Hot' },
+  { value: 'top', label: 'Top' },
+];
 
 export class Feed extends Component<{}, FeedLocalState> {
   private unsub: (() => void) | null = null;
+  private unsubBootstrap: (() => void) | null = null;
+  private feedLoaded = false;
   declare state: FeedLocalState;
 
   constructor(props: {}) {
@@ -60,6 +49,25 @@ export class Feed extends Component<{}, FeedLocalState> {
     };
   }
 
+  private tryLoadFeed() {
+    if (this.feedLoaded) return;
+    const auth = getAuthState();
+    const bs = getBootstrapState();
+
+    // If logged in, wait for bootstrap to finish (outbox relays + contacts ready)
+    if (auth.pubkey) {
+      if (bs.phase === 'ready' || bs.phase === 'error') {
+        this.feedLoaded = true;
+        loadFeed();
+      }
+      // else: still bootstrapping, wait for next notify
+    } else {
+      // Not logged in — load global feed immediately
+      this.feedLoaded = true;
+      loadFeed();
+    }
+  }
+
   componentDidMount() {
     this.unsub = subscribeFeed(() => {
       const s = getFeedState();
@@ -72,64 +80,83 @@ export class Feed extends Component<{}, FeedLocalState> {
         newPostsCount: s.newPostsBuffer.length,
       });
     });
-    loadFeed();
+
+    // Wait for bootstrap to be ready before loading feed
+    this.unsubBootstrap = subscribeBootstrap(() => {
+      this.tryLoadFeed();
+    });
+
+    this.tryLoadFeed();
   }
 
   componentWillUnmount() {
     this.unsub?.();
+    this.unsubBootstrap?.();
   }
-
-  handleSort = (sort: FeedSort) => {
-    setSort(sort);
-  };
 
   render() {
     const { posts, isLoading, sort, mode, eoseReceived, newPostsCount } = this.state;
     const isLoggedIn = !!getAuthState().pubkey;
     const hasFollows = getContactsState().following.size > 0;
 
-    return createElement('div', { className: 'space-y-3' },
-      // Feed mode + sort tabs
+    return createElement('div', { className: 'space-y-4' },
+      // Sticky feed controls
       createElement('div', {
-        className: 'rounded-lg border border-border px-3 py-2 flex items-center justify-between flex-wrap gap-2',
+        className: 'sticky top-14 z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-2 border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60',
       },
-        // Mode tabs (left)
-        isLoggedIn
-          ? createElement('div', { className: 'flex items-center gap-1' },
+        createElement('div', { className: 'flex items-center justify-between gap-2' },
+          // Mode tabs (left)
+          createElement('div', { className: 'flex items-center gap-1' },
+            ...MODE_TABS.map((tab) => {
+              const isActive = mode === tab.value;
+              const disabled = tab.value === 'following' && (!isLoggedIn || !hasFollows);
+              return createElement('button', {
+                key: tab.value,
+                onClick: () => !disabled && setFeedMode(tab.value),
+                disabled,
+                className: [
+                  'px-3 py-1.5 text-sm rounded-lg transition-colors font-medium',
+                  isActive
+                    ? 'bg-primary text-primary-foreground'
+                    : disabled
+                      ? 'text-muted-foreground/30 cursor-not-allowed'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent',
+                ].join(' '),
+                title: disabled ? 'Follow some people first' : '',
+              }, tab.icon + ' ' + tab.label);
+            }),
+          ),
+          // Sort tabs (right)
+          createElement('div', { className: 'flex items-center gap-0.5 bg-muted/50 rounded-lg p-0.5' },
+            ...SORT_TABS.map((tab) =>
               createElement('button', {
-                onClick: () => setFeedMode('global'),
-                className: `px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  mode === 'global' ? 'bg-accent text-foreground font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
-                }`,
-              }, '\u{1F30D} Global'),
-              createElement('button', {
-                onClick: () => setFeedMode('following'),
-                disabled: !hasFollows,
-                className: `px-3 py-1.5 text-sm rounded-md transition-colors ${
-                  mode === 'following' ? 'bg-accent text-foreground font-medium'
-                  : !hasFollows ? 'text-muted-foreground/30 cursor-not-allowed'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
-                }`,
-                title: !hasFollows ? 'Follow some people first' : '',
-              }, '\u{1F465} Following'),
-            )
-          : null,
-        // Sort tabs (right)
-        createElement(SortTabs, { sort, onSort: this.handleSort }),
+                key: tab.value,
+                onClick: () => setSort(tab.value),
+                className: [
+                  'px-2.5 py-1 text-xs rounded-md transition-colors font-medium',
+                  sort === tab.value
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground',
+                ].join(' '),
+              }, tab.label),
+            ),
+          ),
+        ),
       ),
 
       // New posts banner
       newPostsCount > 0
         ? createElement('button', {
             onClick: flushNewPosts,
-            className: 'w-full rounded-lg border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm font-medium text-primary hover:bg-primary/10 transition-colors',
-          }, `\u2191 ${newPostsCount} new post${newPostsCount > 1 ? 's' : ''}`)
+            className: 'w-full rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 text-sm font-semibold text-primary hover:bg-primary/10 transition-colors',
+          }, '\u2191 ' + newPostsCount + ' new post' + (newPostsCount > 1 ? 's' : '') + ' \u2014 click to load')
         : null,
 
       // Loading
       isLoading && posts.length === 0
-        ? createElement('div', { className: 'flex justify-center py-16' },
+        ? createElement('div', { className: 'flex flex-col items-center justify-center py-20 gap-3' },
             createElement(Spinner, null),
+            createElement('p', { className: 'text-xs text-muted-foreground' }, 'Loading feed...'),
           )
         : null,
 
@@ -141,26 +168,28 @@ export class Feed extends Component<{}, FeedLocalState> {
             ),
           )
         : eoseReceived
-          ? createElement('div', { className: 'text-center py-16' },
-              createElement('div', { className: 'text-4xl mb-3' }, '\u{1F438}'),
-              createElement('p', { className: 'text-sm font-medium text-muted-foreground' }, 'No posts yet'),
-              createElement('p', { className: 'text-xs text-muted-foreground mt-1' }, 'Be the first to croak!'),
+          ? createElement('div', { className: 'text-center py-20' },
+              createElement('div', { className: 'text-5xl mb-4' }, '\u{1F438}'),
+              createElement('p', { className: 'text-base font-semibold text-muted-foreground' }, 'No posts yet'),
+              createElement('p', { className: 'text-sm text-muted-foreground/70 mt-1' }, 'Be the first to croak!'),
             )
           : null,
 
-      // Load more button
+      // Load more
       posts.length > 0 && eoseReceived && !isLoading
-        ? createElement('div', { className: 'flex justify-center pt-2 pb-4' },
+        ? createElement('div', { className: 'flex justify-center py-6' },
             createElement(Button, {
               variant: 'outline',
+              size: 'lg',
               onClick: () => loadMore(),
+              className: 'px-8',
             }, 'Load more'),
           )
         : null,
 
-      // Loading indicator for load-more
+      // Pagination spinner
       isLoading && posts.length > 0
-        ? createElement('div', { className: 'flex justify-center py-4' },
+        ? createElement('div', { className: 'flex justify-center py-6' },
             createElement(Spinner, { size: 'sm' }),
           )
         : null,

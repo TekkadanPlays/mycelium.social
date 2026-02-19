@@ -1,9 +1,8 @@
 import { Component } from 'inferno';
 import { createElement } from 'inferno-create-element';
+import { Link } from 'inferno-router';
 import { Feed } from '../components/Feed';
-import { Compose } from '../components/Compose';
 import { getAuthState, subscribeAuth, login } from '../store/auth';
-import { loadFeed } from '../store/feed';
 import { Button } from '../ui/Button';
 
 interface HomeState {
@@ -29,37 +28,29 @@ export class Home extends Component<{}, HomeState> {
     this.unsub?.();
   }
 
-  handlePublished = () => {
-    loadFeed();
-  };
-
   render() {
     const { isAuthenticated } = this.state;
 
-    return createElement('div', { className: 'space-y-4' },
+    return createElement('div', { className: 'mx-auto max-w-2xl px-4 sm:px-6 py-6' },
       // Login prompt for logged-out users
       !isAuthenticated
         ? createElement('div', {
-            className: 'rounded-xl border border-border bg-muted/30 p-5 flex items-center justify-between gap-4 flex-wrap',
+            className: 'rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/5 to-transparent p-6 mb-6',
           },
-            createElement('div', null,
-              createElement('p', { className: 'text-sm font-semibold' },
-                '\u{1F438} Welcome to ribbit',
+            createElement('div', { className: 'flex items-center justify-between gap-4 flex-wrap' },
+              createElement('div', null,
+                createElement('h2', { className: 'text-base font-bold tracking-tight' },
+                  '\u{1F344} Welcome to Mycelium',
+                ),
+                createElement('p', { className: 'text-sm text-muted-foreground mt-1' },
+                  'A Nostr client built different. Sign in to post, react, and join the conversation.',
+                ),
               ),
-              createElement('p', { className: 'text-xs text-muted-foreground mt-1' },
-                'Sign in with your Nostr extension to post, react, and reply.',
-              ),
+              createElement(Button, {
+                onClick: login,
+              }, 'Sign In'),
             ),
-            createElement(Button, {
-              onClick: login,
-              size: 'sm',
-            }, 'Sign In'),
           )
-        : null,
-
-      // Compose box for logged-in users
-      isAuthenticated
-        ? createElement(Compose, { onPublished: this.handlePublished })
         : null,
 
       // Feed for everyone

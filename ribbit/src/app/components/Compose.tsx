@@ -68,28 +68,32 @@ export class Compose extends Component<{ onPublished?: () => void }, ComposeStat
     if (!auth.pubkey) return null;
 
     return createElement('div', {
-      className: 'rounded-lg border border-border p-4 mb-4',
+      className: 'rounded-2xl border border-border bg-card p-5 shadow-sm',
     },
       createElement(Textarea, {
         value: content,
         onInput: this.handleInput,
         onKeyDown: this.handleKeyDown,
-        placeholder: "What's on your mind? (Ctrl+Enter to post)",
+        placeholder: "What's on your mind?",
         rows: 3,
-        className: 'resize-none min-h-[80px]',
+        className: 'resize-none min-h-[80px] border-0 bg-transparent p-0 text-sm focus-visible:ring-0 placeholder:text-muted-foreground/50',
       }),
-      createElement('div', { className: 'flex items-center justify-between mt-3' },
-        createElement('span', { className: 'text-xs text-muted-foreground/50' },
-          `${content.length} characters`,
+      createElement('div', { className: 'flex items-center justify-between mt-4 pt-3 border-t border-border/40' },
+        createElement('div', { className: 'flex items-center gap-3' },
+          createElement('span', { className: 'text-[11px] text-muted-foreground/40 tabular-nums' },
+            content.length > 0 ? content.length + ' chars' : '',
+          ),
+          createElement('span', { className: 'text-[11px] text-muted-foreground/30' },
+            '\u2318\u21A9 to post',
+          ),
         ),
         createElement(Button, {
           onClick: this.handleSubmit,
           disabled: isPublishing || !content.trim(),
-          size: 'sm',
         }, isPublishing ? 'Publishing...' : 'Post'),
       ),
       error
-        ? createElement('p', { className: 'text-xs text-destructive mt-2' }, error)
+        ? createElement('p', { className: 'text-xs text-destructive mt-3' }, error)
         : null,
     );
   }

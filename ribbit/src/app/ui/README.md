@@ -1,13 +1,13 @@
 # Blazecn
 
-**A shadcn/ui-compatible component library for InfernoJS.**
+**A component library for InfernoJS.**
 
-Blazecn brings the design language, token system, and component patterns of [shadcn/ui](https://ui.shadcn.com) to [InfernoJS](https://infernojs.org) — the fastest JavaScript UI library. No React dependency. No Radix. Just pure `createElement` components with Tailwind CSS v4 and `class-variance-authority`.
+Blazecn brings a beautiful design language, token system, and component patterns to [InfernoJS](https://infernojs.org) — the fastest JavaScript UI library. No React dependency. No Radix. Just pure `createElement` components with Tailwind CSS v4 and `class-variance-authority`.
 
 ## Why Blazecn?
 
-- **shadcn-compatible tokens** — Same CSS custom properties (`--background`, `--foreground`, `--primary`, `--muted`, etc.)
-- **Same class strings** — Button, Badge, Card, Input all use the exact Tailwind classes from shadcn
+- **Semantic design tokens** — CSS custom properties (`--background`, `--foreground`, `--primary`, `--muted`, etc.)
+- **Consistent class strings** — Button, Badge, Card, Input all use clean Tailwind utility classes
 - **InfernoJS native** — Pure `createElement()` components, no JSX runtime required
 - **Tiny footprint** — No Radix UI, no heavy abstractions. Each component is a single file
 - **cva variants** — `class-variance-authority` for type-safe variant props
@@ -71,7 +71,7 @@ Add to your `tailwind.css`:
 
 ### Copy components
 
-Blazecn follows the shadcn philosophy — you own the code. Copy the component files you need into your project's `ui/` directory.
+Blazecn follows a simple philosophy — you own the code. Copy the component files you need into your project's `ui/` directory.
 
 ## Components
 
@@ -288,14 +288,14 @@ ui/
 ```
 
 Every component:
-- Uses `data-slot` attributes for identification (matches shadcn)
+- Uses `data-slot` attributes for identification
 - Accepts `className` for composition via `cn()`
 - Is a pure function (no class components, no hooks)
 - Has zero external dependencies beyond Tailwind classes
 
 ## Design Tokens
 
-Blazecn uses the same semantic token pairs as shadcn/ui:
+Blazecn uses semantic token pairs:
 
 | Token | Purpose |
 |-------|---------|

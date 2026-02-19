@@ -63,7 +63,7 @@ export class Login extends Component<{}, LoginState> {
         }, 'Decentralized Social \u00B7 Powered by Nostr'),
         createElement('h1', { className: 'text-2xl sm:text-3xl font-bold tracking-tight mb-3' },
           'Welcome to ',
-          createElement('span', { className: 'text-primary' }, 'ribbit'),
+          createElement('span', { className: 'text-primary' }, 'Mycelium'),
         ),
         createElement('p', {
           className: 'text-sm text-muted-foreground max-w-lg mx-auto mb-6',

@@ -14,6 +14,8 @@ const MODULES = [
   { name: 'nip10', path: '/docs/kaji/nip10', desc: 'Thread parsing: root/reply markers, positional fallback, reply tag builder.' },
   { name: 'nip25', path: '/docs/kaji/nip25', desc: 'Reactions: like/dislike/emoji, dedup per pubkey, summaries.' },
   { name: 'nip29', path: '/docs/kaji/nip29', desc: 'Relay-based groups: metadata, members, join/leave requests.' },
+  { name: 'nip55', path: '/docs/kaji/nip55', desc: 'Android signer integration (NIP-55). Intent-based signing for native apps.' },
+  { name: 'nip66', path: '/docs/kaji/nip66', desc: 'Relay discovery and monitoring (NIP-66). Indexer queries, RTT, metadata.' },
   { name: 'utils', path: '/docs/kaji/utils', desc: 'NIP-19 bech32 encoding, nprofile TLV, hex helpers, kind names.' },
 ];
 
@@ -26,14 +28,19 @@ export function KajiIntro() {
     createElement('div', { className: 'flex flex-wrap gap-2 mb-4' },
       createElement(Badge, null, 'Nostr'),
       createElement(Badge, { variant: 'secondary' }, 'TypeScript'),
-      createElement(Badge, { variant: 'secondary' }, '11 modules'),
+      createElement(Badge, { variant: 'secondary' }, '13 modules'),
       createElement(Badge, { variant: 'secondary' }, '~2.5 KB gzipped'),
       createElement(Badge, { variant: 'outline' }, 'v0.1.0'),
     ),
     // Quick start
     createElement('div', { className: 'space-y-3' },
       createElement('h2', { className: 'text-lg font-bold tracking-tight' }, 'Quick Start'),
-      createElement(CodeBlock, { code: "bun add kaji" }),
+      createElement('div', { className: 'rounded-lg border border-border p-4 bg-muted/30' },
+        createElement('p', { className: 'text-sm text-muted-foreground' },
+          'Kaji is not yet published to a package registry. Clone the source and import directly:',
+        ),
+      ),
+      createElement(CodeBlock, { code: "git clone https://github.com/TekkadanPlays/kaji.git" }),
       createElement(CodeBlock, { code: "import { createEvent, Kind, RelayPool, signWithExtension } from 'kaji'\n\n// Connect to relays\nconst pool = new RelayPool()\npool.addRelay('wss://mycelium.social')\nawait pool.connectAll()\n\n// Create and sign a note via NIP-07 extension\nconst event = createEvent(Kind.Text, 'Hello from Kaji!')\nconst signed = await signWithExtension(event)\n\n// Publish to all connected relays\nawait pool.publish(signed)" }),
     ),
 
@@ -45,7 +52,7 @@ export function KajiIntro() {
       ),
       createElement('div', { className: 'rounded-lg border border-border p-4 bg-muted/30' },
         createElement('p', { className: 'text-sm font-mono leading-relaxed whitespace-pre' },
-          'kaji/\n  src/\n    index.ts      \u2190 barrel re-export\n    event.ts      \u2190 NIP-01 core\n    keys.ts       \u2190 key generation\n    sign.ts       \u2190 schnorr sign/verify\n    filter.ts     \u2190 fluent filter builder\n    relay.ts      \u2190 single WebSocket relay\n    pool.ts       \u2190 multi-relay pool\n    nip07.ts      \u2190 browser extension\n    nip10.ts      \u2190 threads\n    nip25.ts      \u2190 reactions\n    nip29.ts      \u2190 groups\n    utils.ts      \u2190 bech32, hex, helpers',
+          'kaji/\n  src/\n    index.ts      \u2190 barrel re-export\n    event.ts      \u2190 NIP-01 core\n    keys.ts       \u2190 key generation\n    sign.ts       \u2190 schnorr sign/verify\n    filter.ts     \u2190 fluent filter builder\n    relay.ts      \u2190 single WebSocket relay\n    pool.ts       \u2190 multi-relay pool\n    nip07.ts      \u2190 browser extension\n    nip10.ts      \u2190 threads\n    nip25.ts      \u2190 reactions\n    nip29.ts      \u2190 groups\n    nip55.ts      \u2190 android signer\n    nip66.ts      \u2190 relay discovery\n    utils.ts      \u2190 bech32, hex, helpers',
         ),
       ),
     ),
@@ -89,10 +96,13 @@ export function KajiIntro() {
               { nip: '25', desc: 'Reactions (like/dislike/emoji, dedup)', mod: 'nip25' },
               { nip: '29', desc: 'Relay-based groups (metadata, members)', mod: 'nip29' },
               { nip: '42', desc: 'Client authentication (AUTH challenge stub)', mod: 'relay' },
-            ]).map((row, i) =>
+              { nip: '55', desc: 'Android signer integration (intent-based)', mod: 'nip55' },
+              { nip: '65', desc: 'Relay list metadata (read/write relay lists)', mod: 'pool' },
+              { nip: '66', desc: 'Relay discovery and monitoring', mod: 'nip66' },
+            ]).map((row, i, arr) =>
               createElement('tr', {
                 key: row.nip,
-                className: i < 6 ? 'border-b border-border/50' : '',
+                className: i < arr.length - 1 ? 'border-b border-border/50' : '',
               },
                 createElement('td', { className: 'px-3 py-2 font-mono text-xs' }, row.nip),
                 createElement('td', { className: 'px-3 py-2' }, row.desc),

@@ -1,0 +1,82 @@
+import { createElement } from 'inferno-create-element';
+import { Link } from 'inferno-router';
+import { PageHeader } from '../_helpers';
+
+const COMPONENTS = [
+    { label: 'Accordion', path: '/docs/blazecn/accordion' },
+    { label: 'Alert', path: '/docs/blazecn/alert' },
+    { label: 'Alert Dialog', path: '/docs/blazecn/alert-dialog' },
+    { label: 'Aspect Ratio', path: '/docs/blazecn/aspect-ratio' },
+    { label: 'Avatar', path: '/docs/blazecn/avatar' },
+    { label: 'Badge', path: '/docs/blazecn/badge' },
+    { label: 'Breadcrumb', path: '/docs/blazecn/breadcrumb' },
+    { label: 'Button', path: '/docs/blazecn/button' },
+    { label: 'Button Group', path: '/docs/blazecn/button-group' },
+    { label: 'Card', path: '/docs/blazecn/card' },
+    { label: 'Carousel', path: '/docs/blazecn/carousel' },
+    { label: 'Checkbox', path: '/docs/blazecn/checkbox' },
+    { label: 'Collapsible', path: '/docs/blazecn/collapsible' },
+    { label: 'Combobox', path: '/docs/blazecn/combobox' },
+    { label: 'Command', path: '/docs/blazecn/command' },
+    { label: 'Context Menu', path: '/docs/blazecn/context-menu' },
+    { label: 'Dialog', path: '/docs/blazecn/dialog' },
+    { label: 'Drawer', path: '/docs/blazecn/drawer' },
+    { label: 'Dropdown Menu', path: '/docs/blazecn/dropdown-menu' },
+    { label: 'Empty', path: '/docs/blazecn/empty' },
+    { label: 'Hover Card', path: '/docs/blazecn/hover-card' },
+    { label: 'Input', path: '/docs/blazecn/input' },
+    { label: 'Input OTP', path: '/docs/blazecn/input-otp' },
+    { label: 'Kbd', path: '/docs/blazecn/kbd' },
+    { label: 'Label', path: '/docs/blazecn/label' },
+    { label: 'Menubar', path: '/docs/blazecn/menubar' },
+    { label: 'Navigation Menu', path: '/docs/blazecn/navigation-menu' },
+    { label: 'Pagination', path: '/docs/blazecn/pagination' },
+    { label: 'Popover', path: '/docs/blazecn/popover' },
+    { label: 'Progress', path: '/docs/blazecn/progress' },
+    { label: 'Radio Group', path: '/docs/blazecn/radio-group' },
+    { label: 'Resizable', path: '/docs/blazecn/resizable' },
+    { label: 'Scroll Area', path: '/docs/blazecn/scroll-area' },
+    { label: 'Select', path: '/docs/blazecn/select' },
+    { label: 'Separator', path: '/docs/blazecn/separator' },
+    { label: 'Sheet', path: '/docs/blazecn/sheet' },
+    { label: 'Skeleton', path: '/docs/blazecn/skeleton' },
+    { label: 'Slider', path: '/docs/blazecn/slider' },
+    { label: 'Sonner', path: '/docs/blazecn/toast' },
+    { label: 'Spinner', path: '/docs/blazecn/spinner' },
+    { label: 'Switch', path: '/docs/blazecn/switch' },
+    { label: 'Table', path: '/docs/blazecn/table' },
+    { label: 'Tabs', path: '/docs/blazecn/tabs' },
+    { label: 'Textarea', path: '/docs/blazecn/textarea' },
+    { label: 'Themes', path: '/docs/blazecn/theme-toggle' },
+    { label: 'Toggle', path: '/docs/blazecn/toggle' },
+    { label: 'Toggle Group', path: '/docs/blazecn/toggle-group' },
+    { label: 'Tooltip', path: '/docs/blazecn/tooltip' },
+    { label: 'Typography', path: '/docs/blazecn/typography' },
+];
+
+export function ComponentsPage() {
+    return createElement('div', { className: 'space-y-8' },
+        createElement(PageHeader, {
+            title: 'Components',
+            description: 'Beautifully designed components built with InfernoJS and Tailwind CSS. Browse the full library below or pick one from the sidebar.',
+        }),
+
+        createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2' },
+            ...COMPONENTS.map((item) =>
+                createElement(Link, {
+                    key: item.label,
+                    to: item.path,
+                    className: 'group rounded-lg border border-border px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 hover:border-accent-foreground/20 transition-colors',
+                },
+                    createElement('span', { className: 'font-medium' }, item.label),
+                ),
+            ),
+        ),
+
+        createElement('p', { className: 'text-sm text-muted-foreground pt-4' },
+            `${COMPONENTS.length} components available. Each is a single file with only `,
+            createElement('code', { className: 'text-xs bg-muted px-1 py-0.5 rounded' }, 'cn()'),
+            ' as a local dependency.',
+        ),
+    );
+}

@@ -1,12 +1,13 @@
 import { createElement } from 'inferno-create-element';
 import { Link } from 'inferno-router';
+import { RelayLink } from './RelayLink';
 
 // Image extensions to detect
 const IMAGE_EXTS = /\.(jpg|jpeg|png|gif|webp|svg|bmp|avif)(\?[^\s]*)?$/i;
 // Video extensions
 const VIDEO_EXTS = /\.(mp4|webm|mov|ogg)(\?[^\s]*)?$/i;
-// URL regex
-const URL_RE = /https?:\/\/[^\s<>"')\]]+/g;
+// URL regex (http/https + wss/ws)
+const URL_RE = /(?:https?|wss?):\/\/[^\s<>"')\]]+/g;
 // Hashtag regex (must be preceded by whitespace or start of string)
 const HASHTAG_RE = /(?:^|\s)#(\w{1,64})/g;
 // Nostr entity regex (npub, note, nprofile, nevent, naddr)
@@ -18,7 +19,7 @@ interface ContentRendererProps {
 }
 
 interface ContentPart {
-  type: 'text' | 'url' | 'image' | 'video' | 'hashtag' | 'nostr';
+  type: 'text' | 'url' | 'image' | 'video' | 'hashtag' | 'nostr' | 'relay';
   value: string;
   display?: string;
 }
@@ -33,7 +34,8 @@ function parseContent(content: string): ContentPart[] {
   while ((m = URL_RE.exec(content)) !== null) {
     const url = m[0];
     let type: ContentPart['type'] = 'url';
-    if (IMAGE_EXTS.test(url)) type = 'image';
+    if (url.startsWith('wss://') || url.startsWith('ws://')) type = 'relay';
+    else if (IMAGE_EXTS.test(url)) type = 'image';
     else if (VIDEO_EXTS.test(url)) type = 'video';
     matches.push({ start: m.index, end: m.index + url.length, part: { type, value: url } });
   }
@@ -106,6 +108,13 @@ export function ContentRenderer({ content, className }: ContentRendererProps) {
         },
           ...inlineParts.map((part, i) => {
             switch (part.type) {
+              case 'relay':
+                return createElement(RelayLink, {
+                  key: i,
+                  url: part.value,
+                  className: 'text-primary hover:underline break-all font-mono text-xs',
+                });
+
               case 'url':
                 return createElement('a', {
                   key: i,

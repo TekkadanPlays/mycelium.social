@@ -5,15 +5,20 @@ import type { NostrEvent } from '../../nostr/event';
 import { Kind } from '../../nostr/event';
 import { PostCard } from '../components/PostCard';
 import { getPool } from '../store/relay';
-import { getProfile, fetchProfile, subscribeProfiles } from '../store/profiles';
+import { getProfile, fetchProfile, fetchProfiles, subscribeProfiles } from '../store/profiles';
 import { npubEncode, shortenNpub } from '../../nostr/utils';
 import { isRootNote } from '../../nostr/nip10';
 import { getAuthState } from '../store/auth';
-import { isFollowing, followUser, unfollowUser, subscribeContacts } from '../store/contacts';
+import { isFollowing, followUser, unfollowUser, subscribeContacts, getContactsState } from '../store/contacts';
+import { getCachedAuthorPosts, cacheEvent } from '../api/cache';
+import { crawl } from '../store/relay-crawler';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/Avatar';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 import { Spinner } from '../ui/Spinner';
+
+type ProfileTab = 'posts' | 'following';
+const PAGE_SIZE = 50;
 
 interface UserProfileProps {
   match: { params: { pubkey: string } };
@@ -23,8 +28,13 @@ interface UserProfileState {
   profile: ReturnType<typeof getProfile>;
   posts: NostrEvent[];
   isLoading: boolean;
+  isLoadingMore: boolean;
+  hasMore: boolean;
   isFollowed: boolean;
   followLoading: boolean;
+  activeTab: ProfileTab;
+  followList: string[];
+  followListLoading: boolean;
 }
 
 export class UserProfile extends Component<UserProfileProps, UserProfileState> {
@@ -32,14 +42,21 @@ export class UserProfile extends Component<UserProfileProps, UserProfileState> {
   private unsubContacts: (() => void) | null = null;
   declare state: UserProfileState;
 
+  private seenPostIds: Set<string> = new Set();
+
   constructor(props: UserProfileProps) {
     super(props);
     this.state = {
       profile: undefined,
       posts: [],
       isLoading: true,
+      isLoadingMore: false,
+      hasMore: true,
       isFollowed: isFollowing(props.match.params.pubkey),
       followLoading: false,
+      activeTab: 'posts',
+      followList: [],
+      followListLoading: false,
     };
   }
 
@@ -76,26 +93,146 @@ export class UserProfile extends Component<UserProfileProps, UserProfileState> {
     this.setState({ ...this.state, followLoading: false });
   };
 
-  loadUser() {
-    const pubkey = this.props.match.params.pubkey;
-    fetchProfile(pubkey);
+  setTab = (tab: ProfileTab) => {
+    this.setState({ ...this.state, activeTab: tab });
+    if (tab === 'following' && this.state.followList.length === 0 && !this.state.followListLoading) {
+      this.loadFollowList();
+    }
+  };
 
+  loadFollowList() {
+    const pubkey = this.props.match.params.pubkey;
+    const auth = getAuthState();
+
+    // If viewing own profile, use contacts store
+    if (auth.pubkey === pubkey) {
+      const contacts = getContactsState();
+      if (contacts.isLoaded) {
+        const list = Array.from(contacts.following);
+        this.setState({ ...this.state, followList: list, followListLoading: false, activeTab: 'following' });
+        if (list.length > 0) fetchProfiles(list);
+        return;
+      }
+    }
+
+    // Otherwise fetch kind-3 for this pubkey
+    this.setState({ ...this.state, followListLoading: true });
     const pool = getPool();
-    pool.subscribe(
-      [{ kinds: [Kind.Text], authors: [pubkey], limit: 30 }],
+    let latest: NostrEvent | null = null;
+
+    const sub = pool.subscribe(
+      [{ kinds: [Kind.Contacts], authors: [pubkey], limit: 1 }],
       (event) => {
-        if (!isRootNote(event)) return;
-        if (this.state.posts.some((p) => p.id === event.id)) return;
-        this.setState({
-          ...this.state,
-          posts: [...this.state.posts, event].sort((a, b) => b.created_at - a.created_at),
-        });
+        if (!latest || event.created_at > latest.created_at) {
+          latest = event;
+        }
       },
       () => {
-        this.setState({ ...this.state, isLoading: false });
+        sub.unsubscribe();
+        const list: string[] = [];
+        if (latest) {
+          for (const tag of latest.tags) {
+            if (tag[0] === 'p' && tag[1]) list.push(tag[1]);
+          }
+        }
+        this.setState({ ...this.state, followList: list, followListLoading: false });
+        if (list.length > 0) fetchProfiles(list);
       },
     );
   }
+
+  private addPosts(events: NostrEvent[]) {
+    const newPosts: NostrEvent[] = [];
+    for (const event of events) {
+      if (this.seenPostIds.has(event.id)) continue;
+      if (!isRootNote(event)) continue;
+      this.seenPostIds.add(event.id);
+      cacheEvent(event);
+      newPosts.push(event);
+    }
+    if (newPosts.length === 0) return;
+    const merged = [...this.state.posts, ...newPosts].sort((a, b) => b.created_at - a.created_at);
+    this.setState({ ...this.state, posts: merged });
+  }
+
+  async loadUser() {
+    const pubkey = this.props.match.params.pubkey;
+    fetchProfile(pubkey);
+
+    // 1. Restore from server cache (instant)
+    try {
+      const cached = await getCachedAuthorPosts(pubkey, 1, PAGE_SIZE);
+      if (cached.length > 0) {
+        this.addPosts(cached);
+        this.setState({ ...this.state, isLoading: false });
+      }
+    } catch { /* server unreachable */ }
+
+    // 2. Fan out to pool + crawler simultaneously for fresh data
+    const pool = getPool();
+    const poolDone = new Promise<void>((resolve) => {
+      const sub = pool.subscribe(
+        [{ kinds: [Kind.Text], authors: [pubkey], limit: PAGE_SIZE }],
+        (event) => this.addPosts([event]),
+        () => { sub.unsubscribe(); resolve(); },
+      );
+    });
+
+    const crawlDone = crawl(
+      [{ kinds: [Kind.Text], authors: [pubkey], limit: PAGE_SIZE }],
+      (event) => this.addPosts([event]),
+      { maxRelays: 6, timeout: 6000, preferIndexers: true },
+    ).catch(() => {});
+
+    await Promise.allSettled([poolDone, crawlDone]);
+    this.setState({
+      ...this.state,
+      isLoading: false,
+      hasMore: this.state.posts.length >= PAGE_SIZE,
+    });
+  }
+
+  loadMore = async () => {
+    const { posts, isLoadingMore, hasMore } = this.state;
+    if (isLoadingMore || !hasMore || posts.length === 0) return;
+
+    const pubkey = this.props.match.params.pubkey;
+    const oldest = posts[posts.length - 1]!.created_at;
+    const prevCount = this.seenPostIds.size;
+
+    this.setState({ ...this.state, isLoadingMore: true });
+
+    // 1. Check server cache for older posts
+    try {
+      const cached = await getCachedAuthorPosts(pubkey, 1, PAGE_SIZE, oldest);
+      if (cached.length > 0) this.addPosts(cached);
+    } catch { /* server unreachable */ }
+
+    // 2. Crawl relays for older posts using `until` cursor
+    const pool = getPool();
+    const poolDone = new Promise<void>((resolve) => {
+      const sub = pool.subscribe(
+        [{ kinds: [Kind.Text], authors: [pubkey], limit: PAGE_SIZE, until: oldest }],
+        (event) => this.addPosts([event]),
+        () => { sub.unsubscribe(); resolve(); },
+      );
+    });
+
+    const crawlDone = crawl(
+      [{ kinds: [Kind.Text], authors: [pubkey], limit: PAGE_SIZE, until: oldest }],
+      (event) => this.addPosts([event]),
+      { maxRelays: 8, timeout: 8000, preferIndexers: true },
+    ).catch(() => {});
+
+    await Promise.allSettled([poolDone, crawlDone]);
+
+    const gained = this.seenPostIds.size - prevCount;
+    this.setState({
+      ...this.state,
+      isLoadingMore: false,
+      hasMore: gained >= 5,
+    });
+  };
 
   render() {
     const { profile, posts, isLoading } = this.state;
@@ -106,7 +243,7 @@ export class UserProfile extends Component<UserProfileProps, UserProfileState> {
     const auth = getAuthState();
     const isOwnProfile = auth.pubkey === pubkey;
 
-    return createElement('div', { className: 'space-y-4 max-w-2xl' },
+    return createElement('div', { className: 'mx-auto max-w-2xl px-4 sm:px-6 py-6 space-y-4' },
       // Back link
       createElement(Link, {
         to: '/feed',
@@ -182,24 +319,107 @@ export class UserProfile extends Component<UserProfileProps, UserProfileState> {
         ),
       ),
 
-      // Posts section
-      createElement('div', { className: 'space-y-3' },
-        createElement('p', { className: 'text-xs font-semibold tracking-wider uppercase text-muted-foreground' },
-          'Posts',
-        ),
-
-        isLoading && posts.length === 0
-          ? createElement('div', { className: 'flex justify-center py-16' },
-              createElement(Spinner, null),
-            )
-          : posts.length > 0
-            ? createElement('div', { className: 'space-y-3' },
-                ...posts.map((event) => createElement(PostCard, { key: event.id, event, compact: true })),
-              )
-            : createElement('div', { className: 'text-center py-12' },
-                createElement('p', { className: 'text-sm text-muted-foreground' }, 'No posts yet.'),
-              ),
+      // Tabs
+      createElement('div', { className: 'flex gap-1 border-b border-border' },
+        createElement('button', {
+          className: 'px-4 py-2.5 text-sm font-medium transition-colors relative ' +
+            (this.state.activeTab === 'posts'
+              ? 'text-foreground after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full'
+              : 'text-muted-foreground hover:text-foreground'),
+          onClick: () => this.setTab('posts'),
+        }, 'Posts'),
+        createElement('button', {
+          className: 'px-4 py-2.5 text-sm font-medium transition-colors relative ' +
+            (this.state.activeTab === 'following'
+              ? 'text-foreground after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full'
+              : 'text-muted-foreground hover:text-foreground'),
+          onClick: () => this.setTab('following'),
+        }, 'Following'),
       ),
+
+      // Tab content
+      this.state.activeTab === 'posts'
+        ? this.renderPostsTab(posts, isLoading)
+        : this.renderFollowingTab(),
+    );
+  }
+
+  renderPostsTab(posts: NostrEvent[], isLoading: boolean) {
+    const { isLoadingMore, hasMore } = this.state;
+
+    return createElement('div', { className: 'space-y-3' },
+      isLoading && posts.length === 0
+        ? createElement('div', { className: 'flex justify-center py-16' },
+            createElement(Spinner, null),
+          )
+        : posts.length > 0
+          ? createElement('div', { className: 'space-y-3' },
+              ...posts.map((event) => createElement(PostCard, { key: event.id, event, compact: true })),
+              // Load More button
+              hasMore
+                ? createElement('div', { className: 'flex justify-center py-6' },
+                    createElement(Button, {
+                      variant: 'outline',
+                      size: 'sm',
+                      onClick: this.loadMore,
+                      disabled: isLoadingMore,
+                    }, isLoadingMore
+                      ? createElement('span', { className: 'flex items-center gap-2' },
+                          createElement(Spinner, { size: 'sm' }),
+                          'Loading older posts...',
+                        )
+                      : 'Load More'),
+                  )
+                : createElement('p', { className: 'text-center text-xs text-muted-foreground py-6' },
+                    `Showing all ${posts.length} posts`,
+                  ),
+            )
+          : createElement('div', { className: 'text-center py-12' },
+              createElement('p', { className: 'text-sm text-muted-foreground' }, 'No posts yet.'),
+            ),
+    );
+  }
+
+  renderFollowingTab() {
+    const { followList, followListLoading } = this.state;
+
+    if (followListLoading) {
+      return createElement('div', { className: 'flex justify-center py-16' },
+        createElement(Spinner, null),
+      );
+    }
+
+    if (followList.length === 0) {
+      return createElement('div', { className: 'text-center py-12' },
+        createElement('p', { className: 'text-sm text-muted-foreground' }, 'Not following anyone yet.'),
+      );
+    }
+
+    return createElement('div', { className: 'space-y-1' },
+      ...followList.map((pk) => {
+        const p = getProfile(pk);
+        const name = p?.displayName || p?.name || shortenNpub(npubEncode(pk));
+        const initial = (name || '?')[0].toUpperCase();
+
+        return createElement(Link, {
+          key: pk,
+          to: `/u/${pk}`,
+          className: 'flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted/50 transition-colors',
+        },
+          createElement(Avatar, { className: 'size-10' },
+            p?.picture
+              ? createElement(AvatarImage, { src: p.picture, alt: name })
+              : null,
+            createElement(AvatarFallback, { className: 'text-sm' }, initial),
+          ),
+          createElement('div', { className: 'min-w-0 flex-1' },
+            createElement('p', { className: 'text-sm font-medium truncate' }, name),
+            p?.nip05
+              ? createElement('p', { className: 'text-xs text-primary truncate' }, p.nip05)
+              : createElement('p', { className: 'text-xs text-muted-foreground font-mono truncate' }, shortenNpub(npubEncode(pk))),
+          ),
+        );
+      }),
     );
   }
 }

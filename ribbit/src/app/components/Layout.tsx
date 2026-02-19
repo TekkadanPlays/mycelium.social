@@ -3,6 +3,8 @@ import { createElement } from 'inferno-create-element';
 import { Link } from 'inferno-router';
 import { getAuthState, subscribeAuth, login, logout } from '../store/auth';
 import { getProfile, subscribeProfiles } from '../store/profiles';
+import { getBootstrapState, subscribeBootstrap } from '../store/bootstrap';
+import { getNotificationsState, subscribeNotifications } from '../store/notifications';
 import { npubEncode, shortenNpub } from '../../nostr/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '../ui/Avatar';
 import { Button } from '../ui/Button';
@@ -15,9 +17,9 @@ import { ThemeSelector } from '../ui/ThemeSelector';
 
 const DOCS_PROJECTS = [
   { icon: '\u26A1', title: 'Blazecn', desc: 'UI component library', path: '/docs/blazecn' },
-  { icon: '\uD83D\uDC38', title: 'Ribbit', desc: 'Nostr social client', path: '/docs/ribbit' },
+  { icon: '\uD83C\uDF44', title: 'Mycelium', desc: 'Nostr social client', path: '/docs/mycelium' },
   { icon: '\uD83D\uDD25', title: 'Kaji', desc: 'Nostr protocol library', path: '/docs/kaji' },
-  { icon: '\uD83D\uDCF1', title: 'Ribbit Android', desc: 'Native Android app', path: '/docs/ribbit-android' },
+  { icon: '\uD83D\uDCF1', title: 'Mycelium for Android', desc: 'Native Android app', path: '/docs/mycelium-android' },
   { icon: '\uD83D\uDD10', title: 'nos2x-frog', desc: 'Browser signer extension', path: '/docs/nos2x-frog' },
   { icon: '\uD83D\uDCDC', title: 'NIPs', desc: 'Nostr protocol specs', path: '/docs/nips' },
 ];
@@ -33,11 +35,14 @@ interface HeaderState {
   mobileOpen: boolean;
   dropdownOpen: boolean;
   docsOpen: boolean;
+  unseenNotifs: number;
 }
 
 export class Header extends Component<{}, HeaderState> {
   private unsubAuth: (() => void) | null = null;
   private unsubProfiles: (() => void) | null = null;
+  private unsubBootstrap: (() => void) | null = null;
+  private unsubNotifs: (() => void) | null = null;
   private outsideClickHandler: ((e: Event) => void) | null = null;
   private headerRef: HTMLElement | null = null;
   declare state: HeaderState;
@@ -51,6 +56,7 @@ export class Header extends Component<{}, HeaderState> {
       mobileOpen: false,
       dropdownOpen: false,
       docsOpen: false,
+      unseenNotifs: getNotificationsState().unseenCount,
     };
   }
 
@@ -63,21 +69,30 @@ export class Header extends Component<{}, HeaderState> {
     this.unsubProfiles = subscribeProfiles(() => {
       this.updateProfile(this.state.auth.pubkey);
     });
+    this.unsubBootstrap = subscribeBootstrap(() => {
+      this.updateProfile(this.state.auth.pubkey);
+    });
+    this.unsubNotifs = subscribeNotifications(() => {
+      this.setState({ ...this.state, unseenNotifs: getNotificationsState().unseenCount });
+    });
     this.updateProfile(this.state.auth.pubkey);
 
     this.outsideClickHandler = (e: Event) => {
-      if (this.state.dropdownOpen) this.setState({ ...this.state, dropdownOpen: false });
-      if (this.state.docsOpen && this.headerRef && !this.headerRef.contains(e.target as Node)) {
-        this.setState({ ...this.state, docsOpen: false });
+      if (this.headerRef && !this.headerRef.contains(e.target as Node)) {
+        if (this.state.dropdownOpen || this.state.docsOpen) {
+          this.setState({ ...this.state, dropdownOpen: false, docsOpen: false });
+        }
       }
     };
-    document.addEventListener('click', this.outsideClickHandler);
+    document.addEventListener('mousedown', this.outsideClickHandler);
   }
 
   componentWillUnmount() {
     this.unsubAuth?.();
     this.unsubProfiles?.();
-    if (this.outsideClickHandler) document.removeEventListener('click', this.outsideClickHandler);
+    this.unsubBootstrap?.();
+    this.unsubNotifs?.();
+    if (this.outsideClickHandler) document.removeEventListener('mousedown', this.outsideClickHandler);
   }
 
   updateProfile(pubkey: string | null) {
@@ -85,9 +100,25 @@ export class Header extends Component<{}, HeaderState> {
       this.setState({ profileName: '', profilePicture: '' });
       return;
     }
+    // Try bootstrap profile first (available immediately from indexers)
+    const bs = getBootstrapState();
+    if (bs.profile) {
+      const name = bs.profile.displayName || bs.profile.name || shortenNpub(npubEncode(pubkey));
+      const picture = bs.profile.picture || '';
+      // Only update if we have better data than current state
+      if (name !== this.state.profileName || picture !== this.state.profilePicture) {
+        this.setState({ profileName: name, profilePicture: picture });
+      }
+    }
+    // Also check profiles store (may have newer data after pool connects)
     const profile = getProfile(pubkey);
-    const name = profile?.displayName || profile?.name || shortenNpub(npubEncode(pubkey));
-    this.setState({ profileName: name, profilePicture: profile?.picture || '' });
+    if (profile) {
+      const name = profile.displayName || profile.name || shortenNpub(npubEncode(pubkey));
+      const picture = profile.picture || '';
+      if (name !== this.state.profileName || picture !== this.state.profilePicture) {
+        this.setState({ profileName: name, profilePicture: picture });
+      }
+    }
   }
 
   render() {
@@ -112,8 +143,8 @@ export class Header extends Component<{}, HeaderState> {
           createElement('div', { className: 'flex items-center gap-1' },
             // Logo
             createElement(Link, { to: '/', className: 'flex items-center gap-2 shrink-0 mr-4' },
-              createElement('span', { className: 'text-xl' }, '\u{1F438}'),
-              createElement('span', { className: 'font-extrabold text-base tracking-tight' }, 'ribbit'),
+              createElement('span', { className: 'text-xl' }, '\u{1F344}'),
+              createElement('span', { className: 'font-extrabold text-base tracking-tight' }, 'mycelium'),
             ),
 
             // Desktop nav
@@ -166,15 +197,23 @@ export class Header extends Component<{}, HeaderState> {
               // Examples link
               createElement(Link, {
                 to: '/examples',
+                onClick: () => this.setState({ ...this.state, docsOpen: false, dropdownOpen: false }),
                 className: 'inline-flex h-9 items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors'
                   + ' hover:bg-accent hover:text-accent-foreground',
               }, 'Examples'),
               // Blocks link
               createElement(Link, {
                 to: '/blocks',
+                onClick: () => this.setState({ ...this.state, docsOpen: false, dropdownOpen: false }),
                 className: 'inline-flex h-9 items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors'
                   + ' hover:bg-accent hover:text-accent-foreground',
               }, 'Blocks'),
+              createElement(Link, {
+                to: '/run',
+                onClick: () => this.setState({ ...this.state, docsOpen: false, dropdownOpen: false }),
+                className: 'inline-flex h-9 items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-colors'
+                  + ' hover:bg-accent hover:text-accent-foreground',
+              }, 'Run it'),
             ),
           ),
 
@@ -215,12 +254,17 @@ export class Header extends Component<{}, HeaderState> {
                   ? createElement('div', {
                     className: 'absolute right-0 top-full mt-2 w-52 bg-popover border border-border rounded-lg shadow-lg py-1 z-50',
                   },
-                    createElement(Link, { to: `/u/${auth.pubkey}`, className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Profile'),
-                    createElement(Link, { to: '/notifications', className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Notifications'),
-                    createElement(Link, { to: '/settings', className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Settings'),
-                    createElement(Link, { to: '/settings/relays', className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Relay Manager'),
+                    createElement(Link, { to: `/u/${auth.pubkey}`, onClick: () => this.setState({ ...this.state, dropdownOpen: false }), className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Profile'),
+                    createElement(Link, { to: '/notifications', onClick: () => this.setState({ ...this.state, dropdownOpen: false }), className: 'flex items-center justify-between px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' },
+                      'Notifications',
+                      this.state.unseenNotifs > 0
+                        ? createElement('span', { className: 'text-[10px] font-semibold rounded-full px-1.5 py-0.5 leading-none bg-primary text-primary-foreground' }, String(this.state.unseenNotifs))
+                        : null,
+                    ),
+                    createElement(Link, { to: '/settings', onClick: () => this.setState({ ...this.state, dropdownOpen: false }), className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Settings'),
+                    createElement(Link, { to: '/settings/relays', onClick: () => this.setState({ ...this.state, dropdownOpen: false }), className: 'flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors' }, 'Relay Manager'),
                     createElement('div', { className: 'border-t border-border my-1' }),
-                    createElement('button', { onClick: logout, className: 'flex items-center gap-2 px-3 py-2 w-full text-sm text-destructive/70 hover:text-destructive hover:bg-destructive/5 transition-colors' }, 'Sign Out'),
+                    createElement('button', { onClick: () => { logout(); this.setState({ ...this.state, dropdownOpen: false }); }, className: 'flex items-center gap-2 px-3 py-2 w-full text-sm text-destructive/70 hover:text-destructive hover:bg-destructive/5 transition-colors' }, 'Sign Out'),
                   )
                   : null,
               )
@@ -304,7 +348,12 @@ export class Header extends Component<{}, HeaderState> {
             auth.pubkey
               ? createElement('div', { className: 'space-y-0.5 border-t border-border mt-2 pt-2' },
                 createElement(Link, { to: `/u/${auth.pubkey}`, className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Profile'),
-                createElement(Link, { to: '/notifications', className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Notifications'),
+                createElement(Link, { to: '/notifications', className: 'flex items-center justify-between px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) },
+                  'Notifications',
+                  this.state.unseenNotifs > 0
+                    ? createElement('span', { className: 'text-[10px] font-semibold rounded-full px-1.5 py-0.5 leading-none bg-primary text-primary-foreground' }, String(this.state.unseenNotifs))
+                    : null,
+                ),
                 createElement(Link, { to: '/settings', className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Settings'),
                 createElement(Link, { to: '/settings/relays', className: 'block px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/80 rounded-md transition-colors', onClick: () => this.setState({ ...this.state, mobileOpen: false }) }, 'Relay Manager'),
                 createElement('button', {
@@ -400,7 +449,7 @@ export class MainLayout extends Component<{ children: any }> {
     const hideSidebar = isLanding || path.startsWith('/docs') || path.startsWith('/blocks');
 
     // Landing page and blocks page get full-width, no container constraints
-    if (isLanding || path.startsWith('/blocks') || path.startsWith('/examples')) {
+    if (isLanding || path.startsWith('/blocks') || path.startsWith('/examples') || path.startsWith('/run') || path.startsWith('/notifications') || path.startsWith('/feed') || path.startsWith('/post/') || path.startsWith('/u/') || path.startsWith('/t/') || path.startsWith('/discover') || path.startsWith('/relay/') || path.startsWith('/settings')) {
       return createElement('div', { className: 'min-h-screen bg-background' },
         createElement(Header, null),
         createElement('main', null,

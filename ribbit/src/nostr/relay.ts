@@ -53,6 +53,10 @@ export class Relay {
     this._authSigner = signer;
   }
 
+  get hasAuthSigner(): boolean {
+    return this._authSigner !== null;
+  }
+
   get authenticated(): boolean {
     return this._authenticated;
   }
@@ -133,6 +137,14 @@ export class Relay {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
     }
+    // Reject pending publishes so callers don't hang
+    for (const [_id, pending] of this.pendingPublish) {
+      clearTimeout(pending.timer);
+      pending.resolve({ accepted: false, message: 'disconnected' });
+    }
+    this.pendingPublish.clear();
+    this.subscriptions.clear();
+    this.pendingMessages = [];
     if (this.ws) {
       this.ws.onclose = null;
       this.ws.close();
@@ -216,12 +228,12 @@ export class Relay {
     }
   }
 
+  private _authFailed = false;
+
   private async handleAuthChallenge(challenge: string) {
-    if (!this._authSigner) {
-      console.warn(`[Relay ${this.url}] AUTH challenge received but no signer configured`);
-      return;
-    }
+    if (!this._authSigner) return; // No signer — silently ignore (ephemeral relays)
     if (this._authInProgress) return;
+    if (this._authFailed) return; // Don't retry after signer rejection
     this._authInProgress = true;
 
     try {
@@ -236,9 +248,10 @@ export class Relay {
       const signed = await this._authSigner(unsigned);
       this.send(JSON.stringify(['AUTH', signed]));
       this._authenticated = true;
-      console.log(`[Relay ${this.url}] AUTH response sent`);
     } catch (err) {
-      console.error(`[Relay ${this.url}] AUTH failed:`, err);
+      // Signer rejected (e.g. nos2x-fox insufficient permissions) — don't retry
+      this._authFailed = true;
+      console.warn(`[Relay ${this.url}] AUTH declined by signer`);
     } finally {
       this._authInProgress = false;
     }
