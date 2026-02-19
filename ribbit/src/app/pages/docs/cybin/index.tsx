@@ -29,7 +29,7 @@ export function CybinIntro() {
     // Why not Kaji?
     createElement(SectionHeading, { id: 'why' }, 'Why a custom library?'),
     createElement('p', { className: 'text-sm text-muted-foreground' },
-      'Kaji (vitorpamplona/amethyst) is an excellent Nostr library, but it carries the full weight of the Amethyst client\'s architecture. Cybin is purpose-built for Mycelium\'s needs: leaner, with only the NIP implementations we actually use, and designed to integrate cleanly with our relay connection state machine and signer architecture.',
+      'Kaji is our InfernoJS-native Nostr protocol library for the web. Cybin fills the same role for Kotlin Multiplatform — purpose-built for Mycelium Android\'s needs: lean, with only the NIP implementations we actually use, and designed to integrate cleanly with our relay connection state machine and signer architecture.',
     ),
 
     createElement(Separator, null),
