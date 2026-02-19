@@ -9,7 +9,7 @@ import { Badge } from '../../../ui/Badge';
 interface BugEntry {
   id: string;
   title: string;
-  severity: 'critical' | 'high' | 'medium';
+  severity: 'critical' | 'high' | 'medium' | 'security';
   date: string;
   commit: string;
   file: string;
@@ -61,35 +61,15 @@ if (existingEntry) {
     fix: 'Complete migration to InfernoJS 9.0.11 — a React-compatible library that is significantly smaller and faster. All functional components with hooks were converted to class components. A react-shim.ts handles SVG component imports that expect React. Bundle size reduced substantially.',
   },
   {
-    id: 'NFB-006',
-    title: 'Profile save broken by audit log filling storage quota',
-    severity: 'critical',
-    date: '2026-02-18',
+    id: 'NFU-003',
+    title: 'Flood protection and rate limiting',
+    severity: 'security' as any,
+    date: '2026-01-01',
     commit: '',
-    file: 'src/options.tsx, src/requestLog.ts',
-    symptom: 'Creating or saving a profile throws QuotaExceededError. The "Clear audit log" button in Danger Zone also fails with the same error. The extension becomes unable to persist any data.',
-    rootCause: 'The audit log (AUDIT_LOG key in browser.storage.local) grew unbounded and consumed the entire 5 MB storage quota. When the quota is critically full, even browser.storage.local.remove() fails — the browser\'s quota check fires on any write transaction, including deletions.',
-    fix: 'Two-layer fix: (1) The audit log flush in requestLog.ts now catches QuotaExceededError and aggressively trims to 25% of entries, or nukes the log entirely if still over quota. (2) saveNewProfile wraps the storage write in a try/catch — on quota failure it performs a surgical clear: reads essential keys (profiles, private keys, permissions) into memory, calls browser.storage.local.clear() (the only API that always succeeds regardless of quota), then restores the essentials without the bloated audit log. The Danger Zone "Clear audit log" button uses the same surgical clear+restore approach.',
-    code: `// Surgical clear — the only way to free space when quota is critically full
-const keysToKeep = [
-  'private_key', 'profiles', 'pin_enabled', 'encrypted_private_key',
-  'active_public_key', 'pin_cache_duration', 'nip42_auto_sign',
-  'site_permissions', 'security_preferences',
-];
-const essentials = await browser.storage.local.get(keysToKeep);
-await browser.storage.local.clear(); // always succeeds
-await browser.storage.local.set(essentials); // restore without audit log`,
-  },
-  {
-    id: 'NFB-008',
-    title: 'SVG icons invisible on dark background',
-    severity: 'medium',
-    date: '2026-02-18',
-    commit: '',
-    file: 'src/style.scss, src/assets/icons/*.svg',
-    symptom: 'All Ionicon SVG icons in the options page were nearly invisible — rendering as black shapes on the dark (#1a1a1e) background.',
-    rootCause: 'Two issues: (1) Many Ionicon SVGs have shape elements (<ellipse>, <circle>, <path>) with no fill attribute, which defaults to fill:black in SVG. (2) The CSS used attribute selectors like svg :not([fill]) to catch these, but esbuild-plugin-svgr converts SVGs to JSX components that set DOM properties, not HTML attributes — so the CSS selectors never matched.',
-    fix: 'Replaced the unreliable attribute selectors with a blanket CSS rule that forces all SVG shape elements (path, circle, ellipse, rect, line, polyline, polygon) to fill:currentColor and stroke:currentColor, with a higher-specificity [fill="none"] { fill: none !important } rule to preserve stroke-only outlines. Also added explicit fill="currentColor" to all affected SVG source files as belt-and-suspenders.',
+    file: 'src/background.ts, src/prompt.tsx',
+    symptom: 'A malicious or buggy website could send unlimited signEvent requests, each queuing into the prompt system with no throttling. Combined with the popup race condition (NFB-001), this could spawn dozens of popup windows.',
+    rootCause: 'The original nos2x-fox had no rate limiting or flood detection whatsoever. Every incoming request was processed unconditionally.',
+    fix: 'Rate limiting at 10 requests per 30-second window per host with a rejection cooldown. The prompt UI detects floods (10+ pending requests) and shows a warning banner with a "Reject all N" button. A batch "Authorize all AUTH events" button handles legitimate NIP-42 relay auth floods. The rate limiter uses a sliding window counter per origin.',
   },
 ];
 
@@ -97,6 +77,7 @@ const SEVERITY_BADGE: Record<string, string> = {
   critical: 'destructive',
   high: 'default',
   medium: 'secondary',
+  security: 'destructive',
 };
 
 export function FixingNos2xFoxPage() {

@@ -38,26 +38,6 @@ const UPGRADES: UpgradeEntry[] = [
     after: 'A 4-tier risk classification system (low/medium/high/critical) based on event kind. The prompt shows a color-coded risk banner, human-readable event kind names, site trust badges (NEW SITE, KNOWN SITE, FREQUENTLY DENIED), content previews, and tag breakdowns. Critical-risk events (zaps, wallet ops, NIP-46 remote signing) always prompt regardless of existing grants.',
     details: 'Risk tiers: Low = metadata updates, relay lists, contact lists. Medium = text notes, reactions, reposts. High = DMs, channel messages, application-specific events. Critical = zaps (kind 9734/9735), NIP-46 remote signing (kind 24133), wallet operations. The prompt UI adapts its layout based on risk \u2014 critical events get a red banner and expanded detail view.',
   },
-  {
-    id: 'NFU-003',
-    title: 'Flood protection and rate limiting',
-    scope: 'security',
-    date: '2026-01-01',
-    files: 'src/background.ts, src/prompt.tsx',
-    before: 'A malicious or buggy website could send unlimited signEvent requests, each queuing into the prompt system with no throttling. Combined with the popup race condition (NFB-001), this could spawn dozens of popup windows.',
-    after: 'Rate limiting at 10 requests per 30-second window per host with a rejection cooldown. The prompt UI detects floods (10+ pending requests) and shows a warning banner with a "Reject all N" button. A batch "Authorize all AUTH events" button handles legitimate NIP-42 relay auth floods.',
-    details: 'The rate limiter uses a sliding window counter per origin. When the limit is hit, subsequent requests are auto-rejected with a descriptive error message. The cooldown prevents the site from immediately retrying. The prompt UI groups pending requests by type and shows batch action buttons when appropriate.',
-  },
-  {
-    id: 'NFU-004',
-    title: 'Profile management overhaul',
-    scope: 'ux',
-    date: '2026-02-18',
-    files: 'src/options.tsx',
-    before: 'Creating a new profile used an empty-string key ("") as a sentinel value in the profiles map. This caused subtle bugs: the empty key could persist in storage, the active profile pill had no way to deselect during creation, and canceling creation left stale state. The code used a single privateKey state field for both viewing existing profiles and entering new ones.',
-    after: 'Clean isCreatingProfile boolean flag and a separate newProfileKey state field. Profile creation is fully isolated from existing profile viewing. Cancel properly resets state and reloads the previously selected profile. The profiles map is never mutated \u2014 all updates use immutable spreads. Storage writes are wrapped in quota-aware try/catch with surgical clear recovery.',
-    details: 'The profile UI now has three distinct modes: viewing (shows selected profile details), creating (isolated form with its own state), and editing (inline field updates). Transitions between modes are explicit and clean up after themselves. The active profile indicator in the popup updates immediately via browser.storage.onChanged listeners.',
-  },
 ];
 
 const SCOPE_BADGE: Record<string, { variant: string; label: string }> = {

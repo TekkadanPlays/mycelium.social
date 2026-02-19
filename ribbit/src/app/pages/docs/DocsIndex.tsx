@@ -53,12 +53,12 @@ const PROJECTS: ProjectCard[] = [
     status: 'stable',
   },
   {
-    icon: '\uD83D\uDCDC',
-    title: 'NIPs',
-    description: 'Nostr Implementation Possibilities. Categorical reorganization of the protocol specification.',
-    path: '/docs/nips',
-    tags: ['Nostr', 'Protocol', 'Specification'],
-    status: 'wip',
+    icon: '\uD83E\uDDA0',
+    title: 'Cybin',
+    description: 'Custom Kotlin Multiplatform Nostr protocol library. Event signing, relay pools, NIP-19, NIP-47, NIP-55.',
+    path: '/docs/cybin',
+    tags: ['Kotlin', 'Multiplatform', 'secp256k1'],
+    status: 'beta',
   },
 ];
 

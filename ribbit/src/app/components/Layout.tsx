@@ -21,7 +21,7 @@ const DOCS_PROJECTS = [
   { icon: '\uD83D\uDD25', title: 'Kaji', desc: 'Nostr protocol library', path: '/docs/kaji' },
   { icon: '\uD83D\uDCF1', title: 'Mycelium for Android', desc: 'Native Android app', path: '/docs/mycelium-android' },
   { icon: '\uD83D\uDD10', title: 'nos2x-frog', desc: 'Browser signer extension', path: '/docs/nos2x-frog' },
-  { icon: '\uD83D\uDCDC', title: 'NIPs', desc: 'Nostr protocol specs', path: '/docs/nips' },
+  { icon: '\uD83E\uDDA0', title: 'Cybin', desc: 'Kotlin Nostr protocol library', path: '/docs/cybin' },
 ];
 
 // ---------------------------------------------------------------------------

@@ -199,7 +199,7 @@ const NAV: NavGroup[] = [
         items: [
           { path: '/docs/nos2x-frog/fixing-nos2x-fox', label: 'Fixing nos2x-fox' },
           { path: '/docs/nos2x-frog/upgrading-nos2x-fox', label: 'Upgrading nos2x-fox' },
-          { path: '/docs/nos2x-frog/breaking-nos2x-frog', label: 'Breaking nos2x-frog' },
+          { path: '/docs/nos2x-frog/breaking-nos2x-frog', label: 'Upgrading nos2x-frog' },
         ],
       },
     ],

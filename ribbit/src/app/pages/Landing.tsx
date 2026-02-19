@@ -75,13 +75,13 @@ const PROJECTS = [
     cta: 'Android Docs',
   },
   {
-    icon: '\uD83D\uDCDC',
-    name: 'NIPs',
-    tagline: 'The protocol, reorganized',
-    desc: 'Categorical reorganization of the Nostr specification. 69 NIPs across 9 numbered categories for easier discovery. A reference for builders.',
-    tags: ['Protocol', '9 categories', 'Fork'],
-    href: '/docs/nips',
-    cta: 'View NIPs',
+    icon: '\uD83E\uDDA0',
+    name: 'Cybin',
+    tagline: 'Kotlin Nostr protocol library',
+    desc: 'Custom Kotlin Multiplatform Nostr library powering Mycelium for Android. Event signing, relay pools, NIP-19 encoding, NIP-47 wallet connect, NIP-55 signer integration \u2014 all in one package.',
+    tags: ['Kotlin', 'Multiplatform', 'secp256k1'],
+    href: '/docs/cybin',
+    cta: 'Cybin Docs',
   },
 ];
 
@@ -233,53 +233,11 @@ function ProjectsSection() {
         ),
       ),
     ),
-  );
-}
-
-function NipCoverage() {
-  return createElement('section', { className: 'border-y border-border bg-muted/30' },
-    createElement('div', { className: 'max-w-4xl mx-auto px-4 py-16' },
-      createElement('div', { className: 'text-center mb-10' },
-        createElement('h2', { className: 'text-2xl sm:text-3xl font-bold tracking-tight mb-3' }, 'Protocol coverage.'),
-        createElement('p', { className: 'text-muted-foreground max-w-lg mx-auto' },
-          'We implement the NIPs that matter for a real social experience. More coming every sprint.',
-        ),
-      ),
-      createElement('div', { className: 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3' },
-        ...([
-          { nip: 'NIP-01', title: 'Events & Protocol', status: 'full' },
-          { nip: 'NIP-02', title: 'Follow Lists', status: 'full' },
-          { nip: 'NIP-05', title: 'DNS Identifiers', status: 'full' },
-          { nip: 'NIP-07', title: 'Browser Extension', status: 'full' },
-          { nip: 'NIP-10', title: 'Threads', status: 'full' },
-          { nip: 'NIP-15', title: 'Marketplace', status: 'full' },
-          { nip: 'NIP-18', title: 'Reposts', status: 'full' },
-          { nip: 'NIP-19', title: 'Bech32 Encoding', status: 'full' },
-          { nip: 'NIP-25', title: 'Reactions', status: 'full' },
-          { nip: 'NIP-29', title: 'Groups', status: 'full' },
-          { nip: 'NIP-42', title: 'Relay Auth', status: 'full' },
-          { nip: 'NIP-55', title: 'Android Signer', status: 'full' },
-          { nip: 'NIP-65', title: 'Relay Lists', status: 'full' },
-          { nip: 'NIP-66', title: 'Relay Discovery', status: 'full' },
-        ]).map((n) =>
-          createElement('div', {
-            key: n.nip,
-            className: 'rounded-lg border border-border p-3 bg-background',
-          },
-            createElement('div', { className: 'flex items-center justify-between mb-1' },
-              createElement('span', { className: 'text-xs font-mono font-bold' }, n.nip),
-              createElement('span', { className: 'text-xs' }, '\u2705'),
-            ),
-            createElement('p', { className: 'text-[11px] text-muted-foreground' }, n.title),
-          ),
-        ),
-      ),
-      createElement('div', { className: 'text-center mt-6' },
-        createElement(Link, {
-          to: '/docs/nips',
-          className: 'text-xs text-primary hover:underline',
-        }, 'View full NIP coverage matrix \u2192'),
-      ),
+    createElement('div', { className: 'text-center mt-6' },
+      createElement(Link, {
+        to: '/docs/nips',
+        className: 'text-xs text-muted-foreground hover:text-primary hover:underline transition-colors',
+      }, 'View full NIP coverage matrix \u2192'),
     ),
   );
 }
@@ -343,6 +301,15 @@ function CTASection() {
       }, 'Open Feed'),
       createElement(GlowDocsButton, { label: 'Documentation' }),
     ),
+    createElement('div', { className: 'mt-6' },
+      createElement('button', {
+        type: 'button',
+        className: 'inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold transition-colors border-2 border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 hover:border-amber-500/60',
+      },
+        createElement('span', { className: 'text-base' }, '\uD83C\uDF44'),
+        'Support Mycelium',
+      ),
+    ),
   );
 }
 
@@ -363,7 +330,7 @@ function Footer() {
             rel: 'noopener',
             className: 'hover:text-foreground transition-colors',
           }, 'GitHub'),
-          createElement(Link, { to: '/docs/nips', className: 'hover:text-foreground transition-colors' }, 'NIPs'),
+          createElement(Link, { to: '/docs/cybin', className: 'hover:text-foreground transition-colors' }, 'Cybin'),
         ),
         createElement('p', { className: 'text-xs text-muted-foreground/50' },
           'MIT License \u00B7 Built with Kaji + Blazecn',
@@ -382,7 +349,6 @@ export function Landing() {
     HeroSection(),
     StatsBar(),
     ProjectsSection(),
-    NipCoverage(),
     CodePreview(),
     CTASection(),
     Footer(),
