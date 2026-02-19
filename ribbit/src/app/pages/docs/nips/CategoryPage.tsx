@@ -6,7 +6,7 @@ import { CATEGORIES, type CategoryDef } from './index';
 
 // Reusable category page — renders the NIP table for a given range slug (e.g. '1xx')
 function renderCategory(cat: CategoryDef) {
-  const implemented = cat.nips.filter((n) => n.kaji === true || n.mycelium === true).length;
+  const implemented = cat.nips.filter((n) => n.kaji === true || n.myceliumWeb === true || n.myceliumAndroid === true || n.cybin === true).length;
 
   return createElement('div', { className: 'space-y-6' },
     createElement(PageHeader, {
@@ -51,8 +51,8 @@ function renderCategory(cat: CategoryDef) {
                   : createElement('span', { className: 'text-muted-foreground/30' }, '\u2014'),
               ),
               createElement('td', { className: 'px-3 py-2 text-center' },
-                nip.mycelium === true ? '\u2705'
-                  : nip.mycelium === 'partial' ? '\u26A0\uFE0F'
+                nip.myceliumWeb === true ? '\u2705'
+                  : nip.myceliumWeb === 'partial' ? '\u26A0\uFE0F'
                   : createElement('span', { className: 'text-muted-foreground/30' }, '\u2014'),
               ),
             ),

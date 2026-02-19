@@ -86,8 +86,8 @@ import { BreakingNos2xFrogPage } from './nos2x-frog/BreakingNos2xFrogPage';
 import { MyceliumAndroidIndex } from './ribbit-android/index';
 import { RelaySystemPage } from './ribbit-android/RelaySystemPage';
 import { ScreensPage } from './ribbit-android/ScreensPage';
+import { CybinIntro } from './cybin/index';
 import { NipsIntro } from './nips/index';
-import { Nips1xxPage, Nips2xxPage, Nips3xxPage, Nips4xxPage, Nips5xxPage, Nips6xxPage, Nips7xxPage, Nips8xxPage, Nips9xxPage } from './nips/CategoryPage';
 
 // ---------------------------------------------------------------------------
 // Route map
@@ -180,16 +180,8 @@ const ROUTES: Record<string, any> = {
   '/docs/nos2x-frog/fixing-nos2x-fox': FixingNos2xFoxPage,
   '/docs/nos2x-frog/upgrading-nos2x-fox': UpgradingNos2xFoxPage,
   '/docs/nos2x-frog/breaking-nos2x-frog': BreakingNos2xFrogPage,
+  '/docs/cybin': CybinIntro,
   '/docs/nips': NipsIntro,
-  '/docs/nips/1xx': Nips1xxPage,
-  '/docs/nips/2xx': Nips2xxPage,
-  '/docs/nips/3xx': Nips3xxPage,
-  '/docs/nips/4xx': Nips4xxPage,
-  '/docs/nips/5xx': Nips5xxPage,
-  '/docs/nips/6xx': Nips6xxPage,
-  '/docs/nips/7xx': Nips7xxPage,
-  '/docs/nips/8xx': Nips8xxPage,
-  '/docs/nips/9xx': Nips9xxPage,
 };
 
 // ---------------------------------------------------------------------------

@@ -205,6 +205,20 @@ const NAV: NavGroup[] = [
     ],
   },
   {
+    title: 'Cybin',
+    basePath: '/docs/cybin',
+    icon: '\uD83E\uDDA0',
+    description: 'Kotlin Nostr protocol library',
+    sections: [
+      {
+        heading: 'Overview',
+        items: [
+          { path: '/docs/cybin', label: 'Introduction' },
+        ],
+      },
+    ],
+  },
+  {
     title: 'NIPs',
     basePath: '/docs/nips',
     icon: '\uD83D\uDCDC',
@@ -213,21 +227,7 @@ const NAV: NavGroup[] = [
       {
         heading: 'Overview',
         items: [
-          { path: '/docs/nips', label: 'Introduction' },
-        ],
-      },
-      {
-        heading: 'Categories',
-        items: [
-          { path: '/docs/nips/1xx', label: '1xx — Core Protocol' },
-          { path: '/docs/nips/2xx', label: '2xx — Identity & Keys' },
-          { path: '/docs/nips/3xx', label: '3xx — Relay Infrastructure' },
-          { path: '/docs/nips/4xx', label: '4xx — Signing & Encryption' },
-          { path: '/docs/nips/5xx', label: '5xx — Social & Content' },
-          { path: '/docs/nips/6xx', label: '6xx — Messaging & Groups' },
-          { path: '/docs/nips/7xx', label: '7xx — Payments & Zaps' },
-          { path: '/docs/nips/8xx', label: '8xx — Media & Files' },
-          { path: '/docs/nips/9xx', label: '9xx — Applications' },
+          { path: '/docs/nips', label: 'Feature Matrix' },
         ],
       },
     ],
