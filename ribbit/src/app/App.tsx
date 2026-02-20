@@ -18,6 +18,10 @@ import { Docs } from './pages/docs/DocsRouter';
 import { BlocksShowcase } from './pages/BlocksShowcase';
 import { ExamplesPage } from './pages/ExamplesPage';
 import { RunItPage } from './pages/RunItPage';
+import { CreateRelay } from './pages/CreateRelay';
+import { FAQ } from './pages/FAQ';
+import { Admin } from './pages/Admin';
+import { Wallet } from './pages/Wallet';
 import { Toaster } from './ui/Toast';
 import { getAuthState, subscribeAuth, restoreSession, resetAllStores } from './store/auth';
 import { connectRelays, getPool } from './store/relay';
@@ -140,6 +144,10 @@ export class App extends Component<{}, AppState> {
         createElement(Route, { path: '/blocks', component: BlocksShowcase }),
         createElement(Route, { path: '/examples', component: ExamplesPage }),
         createElement(Route, { path: '/run', component: RunItPage }),
+        createElement(Route, { path: '/signup', component: CreateRelay }),
+        createElement(Route, { path: '/faq', component: FAQ }),
+        createElement(Route, { path: '/admin', component: Admin }),
+        createElement(Route, { path: '/wallet', component: Wallet }),
         createElement(Route, { path: '/docs', component: Docs }),
         createElement(Route, { path: '/docs/:rest*', component: Docs }),
         createElement(Route, {
