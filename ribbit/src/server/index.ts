@@ -45,7 +45,7 @@ app.route('/', relaysRoute);
 // Serve static assets from dist/public
 app.use('/assets/*', serveStatic({ root: './dist/public' }));
 app.use('/favicon.ico', serveStatic({ root: './dist/public' }));
-app.use('/tink.gif', serveStatic({ root: './dist/public' }));
+app.use('/blazecn.png', serveStatic({ root: './dist/public' }));
 
 // SPA fallback: serve index.html for all non-API routes
 app.get('*', serveStatic({ root: './dist/public', path: '/index.html' }));
