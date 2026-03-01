@@ -4,7 +4,7 @@ dist/
 bun.lock
 
 # Build output
-ribbit/dist/
+mycelium/dist/
 
 # Nested repos (each has its own GitHub repo)
 /nos2x-fox/
@@ -28,3 +28,12 @@ Thumbs.db
 # IDE
 .vscode/
 .idea/
+
+# JVM crash logs
+hs_err_pid*.log
+replay_pid*.log
+
+# Misc
+/live/
+/buntralino/
+/spore-signer/
